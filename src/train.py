@@ -1,4 +1,4 @@
-"""Train the LSTM Autoencoder and evaluate it against held-out flood events."""
+"""Train the LSTM Autoencoder per catchment, then on all four combined."""
 
 from __future__ import annotations
 
@@ -13,7 +13,9 @@ from src.config import (
     EPOCHS,
     FIGURES_DIR,
     MODELS_DIR,
-    THRESHOLD_PERCENTILE,
+    THRESHOLD_SEARCH_MAX,
+    THRESHOLD_SEARCH_MIN,
+    THRESHOLD_SEARCH_STEP,
     VALIDATION_SPLIT,
     WINDOW_LENGTH,
 )
@@ -22,14 +24,8 @@ from src.model import build_lstm_autoencoder
 from src.preprocessing import build_all_splits
 
 
-def pool_splits(splits):
-    """Concatenate every catchment's arrays into one pooled set."""
-    X_train = np.concatenate([s.X_train for s in splits.values()])
-    X_val = np.concatenate([s.X_val for s in splits.values()])
-    y_val = np.concatenate([s.y_val for s in splits.values()])
-    X_test = np.concatenate([s.X_test for s in splits.values()])
-    y_test = np.concatenate([s.y_test for s in splits.values()])
-    return X_train, X_val, y_val, X_test, y_test
+def slugify(name: str) -> str:
+    return name.lower().replace(" ", "_")
 
 
 def reconstruction_error(model, X):
@@ -38,33 +34,36 @@ def reconstruction_error(model, X):
     return np.mean(np.square(X - X_pred), axis=(1, 2))
 
 
-def choose_threshold(errors_normal):
-    """Anomaly cutoff: this percentile of error on normal windows."""
-    return float(np.percentile(errors_normal, THRESHOLD_PERCENTILE))
+def choose_threshold(errors_val, y_val):
+    """Percentile of normal error that gives the best F1 on validation."""
+    normal_errors = errors_val[y_val == 0]
+    best_threshold, best_f1 = None, -1.0
+    for percentile in np.arange(THRESHOLD_SEARCH_MIN, THRESHOLD_SEARCH_MAX, THRESHOLD_SEARCH_STEP):
+        threshold = np.percentile(normal_errors, percentile)
+        y_pred = (errors_val > threshold).astype(int)
+        f1 = f1_score(y_val, y_pred, zero_division=0)
+        if f1 > best_f1:
+            best_f1, best_threshold = f1, threshold
+    return best_threshold
 
 
-def plot_training_curve(history):
-    """Save the train/val loss curve for the report."""
+def plot_training_curve(history, name):
     plt.figure(figsize=(8, 5))
     plt.plot(history.history["loss"], label="train loss", color=COLOUR_YALE_BLUE)
     plt.plot(history.history["val_loss"], label="val loss", color="#B33951")
     plt.xlabel("epoch")
     plt.ylabel("reconstruction loss (MSE)")
-    plt.title("LSTM Autoencoder training")
+    plt.title(f"LSTM Autoencoder training: {name}")
     plt.legend()
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
-    plt.savefig(FIGURES_DIR / "training_curve.png", dpi=150, bbox_inches="tight")
+    plt.savefig(FIGURES_DIR / f"training_curve_{slugify(name)}.png", dpi=150, bbox_inches="tight")
     plt.close()
 
 
-def main():
-    df = load_raw_data()
-    splits = build_all_splits(df)
-    X_train, X_val, y_val, X_test, y_test = pool_splits(splits)
-
+def train_and_evaluate(name, X_train, X_val, y_val, X_test, y_test):
+    """Train one autoencoder, pick a threshold, evaluate it on the test set."""
     n_features = X_train.shape[-1]
     model = build_lstm_autoencoder(WINDOW_LENGTH, n_features)
-    model.summary()
 
     early_stopping = EarlyStopping(monitor="val_loss", patience=5, restore_best_weights=True)
     history = model.fit(
@@ -76,26 +75,51 @@ def main():
         callbacks=[early_stopping],
         verbose=2,
     )
-    plot_training_curve(history)
+    plot_training_curve(history, name)
 
-    # Threshold comes from normal windows in the labelled validation set.
     val_errors = reconstruction_error(model, X_val)
-    threshold = choose_threshold(val_errors[y_val == 0])
+    threshold = choose_threshold(val_errors, y_val)
 
     test_errors = reconstruction_error(model, X_test)
     y_pred = (test_errors > threshold).astype(int)
 
-    precision = precision_score(y_test, y_pred, zero_division=0)
-    recall = recall_score(y_test, y_pred, zero_division=0)
-    f1 = f1_score(y_test, y_pred, zero_division=0)
-
-    print(f"threshold: {threshold:.5f}")
-    print(f"test precision: {precision:.3f}")
-    print(f"test recall: {recall:.3f}")
-    print(f"test F1: {f1:.3f}")
+    result = {
+        "name": name,
+        "threshold": threshold,
+        "precision": precision_score(y_test, y_pred, zero_division=0),
+        "recall": recall_score(y_test, y_pred, zero_division=0),
+        "f1": f1_score(y_test, y_pred, zero_division=0),
+    }
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
-    model.save(MODELS_DIR / "lstm_autoencoder.keras")
+    model.save(MODELS_DIR / f"lstm_autoencoder_{slugify(name)}.keras")
+    return result
+
+
+def main():
+    df = load_raw_data()
+    splits = build_all_splits(df)
+
+    results = []
+
+    # Each catchment on its own first, the same order as the Colab work.
+    for name, split in splits.items():
+        result = train_and_evaluate(
+            name, split.X_train, split.X_val, split.y_val, split.X_test, split.y_test
+        )
+        results.append(result)
+
+    # Then the combined model, pooling all four catchments together.
+    X_train = np.concatenate([s.X_train for s in splits.values()])
+    X_val = np.concatenate([s.X_val for s in splits.values()])
+    y_val = np.concatenate([s.y_val for s in splits.values()])
+    X_test = np.concatenate([s.X_test for s in splits.values()])
+    y_test = np.concatenate([s.y_test for s in splits.values()])
+    results.append(train_and_evaluate("Combined", X_train, X_val, y_val, X_test, y_test))
+
+    print(f"{'model':<16}{'threshold':>12}{'precision':>12}{'recall':>12}{'f1':>10}")
+    for r in results:
+        print(f"{r['name']:<16}{r['threshold']:>12.5f}{r['precision']:>12.3f}{r['recall']:>12.3f}{r['f1']:>10.3f}")
 
 
 if __name__ == "__main__":
