@@ -1,8 +1,4 @@
-"""Data loading for the flood pipeline model training code.
-
-Reads the merged features-and-labels CSV, validates it against the
-expected catchments and columns, and returns a tidy, sorted DataFrame.
-"""
+"""Load and validate the merged features-and-labels dataset."""
 
 from __future__ import annotations
 
@@ -12,13 +8,7 @@ from src.config import CATCHMENTS, FEATURE_COLUMNS, LABEL_COLUMN, RAW_FEATURES_L
 
 
 def load_raw_data(path=RAW_FEATURES_LABELS_FILE) -> pd.DataFrame:
-    """Load the merged features-and-labels dataset.
-
-    The file already has one row per catchment per day, with the
-    ``flood_event`` label merged in, so no separate join is needed here.
-    This function parses dates, sorts the rows, and checks the data is
-    what the rest of the pipeline expects before anything else touches it.
-    """
+    """Load, sort, and validate the raw dataset."""
     df = pd.read_csv(path)
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values(["catchment", "date"]).reset_index(drop=True)
@@ -28,6 +18,7 @@ def load_raw_data(path=RAW_FEATURES_LABELS_FILE) -> pd.DataFrame:
 
 
 def _validate(df: pd.DataFrame) -> None:
+    """Check catchments, columns, missing values, and date gaps."""
     found_catchments = set(df["catchment"].unique())
     expected_catchments = set(CATCHMENTS)
     if found_catchments != expected_catchments:
