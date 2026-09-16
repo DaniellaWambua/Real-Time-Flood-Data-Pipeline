@@ -37,3 +37,10 @@ RANDOM_SEED = 42
 # Diagram and figure palette
 COLOUR_YALE_BLUE = "#0D3B66"
 COLOUR_LEMON_CHIFFON = "#FAF0CA"
+
+# Model architecture
+# Encoder compresses the window down to a single vector (the bottleneck);
+# decoder unrolls that vector back into a reconstructed window.
+ENCODER_UNITS = [64, 32]
+DECODER_UNITS = [32, 64]
+LEARNING_RATE = 1e-3
