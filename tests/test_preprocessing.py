@@ -1,8 +1,4 @@
-"""Sanity checks for the windowing logic in src/preprocessing.py.
-
-These use a small synthetic table rather than the real dataset, so they
-run in a second and do not depend on data/raw being present.
-"""
+"""Sanity checks for make_windows using a small synthetic table."""
 
 import sys
 from pathlib import Path
@@ -32,7 +28,6 @@ def _toy_dataframe(n_days: int) -> pd.DataFrame:
 def test_make_windows_shape():
     df = _toy_dataframe(20)
     X, y = make_windows(df, window_length=14)
-
     assert X.shape == (7, 14, 6)
     assert y.shape == (7,)
 
@@ -40,8 +35,6 @@ def test_make_windows_shape():
 def test_make_windows_label_is_last_day():
     df = _toy_dataframe(20)
     X, y = make_windows(df, window_length=14)
-
-    # Only the final window should end on the flood day.
     assert y[-1] == 1
     assert (y[:-1] == 0).all()
 
