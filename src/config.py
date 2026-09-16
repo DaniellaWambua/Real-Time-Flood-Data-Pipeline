@@ -25,6 +25,15 @@ FEATURE_COLUMNS = [
 ]
 LABEL_COLUMN = "flood_event"
 
+# Windowing and chronological split
+# The dataset runs 2010 to 2025. Splits are by year, not shuffled, so the
+# model is never trained on anything that happens after what it is tested on.
+WINDOW_LENGTH = 14  # days of history used to judge each day
+VAL_START_YEAR = 2022   # 2010-2021 train, 2022-2023 validation, 2024-2025 test
+TEST_START_YEAR = 2024
+
+RANDOM_SEED = 42
+
 # Diagram and figure palette
 COLOUR_YALE_BLUE = "#0D3B66"
 COLOUR_LEMON_CHIFFON = "#FAF0CA"
