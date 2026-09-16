@@ -46,9 +46,14 @@ def slugify(name: str) -> str:
 
 
 def reconstruction_error(model, X):
-    """Mean squared reconstruction error per window."""
+    """Reconstruction error on the final day of each window.
+
+    The flood label belongs to the last day only, so scoring the whole
+    window average dilutes that day's signal against the other thirteen,
+    ordinary ones sitting next to it. Scoring just the last day isolates it.
+    """
     X_pred = model.predict(X, verbose=0)
-    return np.mean(np.square(X - X_pred), axis=(1, 2))
+    return np.mean(np.square(X[:, -1, :] - X_pred[:, -1, :]), axis=1)
 
 
 def print_threshold_curve(name, errors_val, y_val):
