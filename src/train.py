@@ -2,8 +2,12 @@
 
 from __future__ import annotations
 
+import os
+import random
+
 import numpy as np
 import matplotlib.pyplot as plt
+import tensorflow as tf
 from sklearn.metrics import f1_score, precision_score, recall_score
 from tensorflow.keras.callbacks import EarlyStopping
 
@@ -13,6 +17,7 @@ from src.config import (
     EPOCHS,
     FIGURES_DIR,
     MODELS_DIR,
+    RANDOM_SEED,
     THRESHOLD_SEARCH_MAX,
     THRESHOLD_SEARCH_MIN,
     THRESHOLD_SEARCH_STEP,
@@ -22,6 +27,18 @@ from src.config import (
 from src.data_loading import load_raw_data
 from src.model import build_lstm_autoencoder
 from src.preprocessing import build_all_splits
+
+# Reference percentiles printed for every model, so the precision/recall
+# trade-off is visible, not just whichever point the search picks.
+DIAGNOSTIC_PERCENTILES = [80, 85, 90, 95, 97, 99, 99.5]
+
+
+def set_seeds():
+    """Fix the random seed so runs are reproducible and comparable."""
+    os.environ["PYTHONHASHSEED"] = str(RANDOM_SEED)
+    random.seed(RANDOM_SEED)
+    np.random.seed(RANDOM_SEED)
+    tf.random.set_seed(RANDOM_SEED)
 
 
 def slugify(name: str) -> str:
@@ -34,17 +51,34 @@ def reconstruction_error(model, X):
     return np.mean(np.square(X - X_pred), axis=(1, 2))
 
 
-def choose_threshold(errors_val, y_val):
-    """Percentile of normal error that gives the best F1 on validation."""
+def print_threshold_curve(name, errors_val, y_val):
+    """Show precision/recall at a few fixed percentiles, for transparency."""
     normal_errors = errors_val[y_val == 0]
-    best_threshold, best_f1 = None, -1.0
+    print(f"  threshold curve for {name}:")
+    for percentile in DIAGNOSTIC_PERCENTILES:
+        threshold = np.percentile(normal_errors, percentile)
+        y_pred = (errors_val > threshold).astype(int)
+        p = precision_score(y_val, y_pred, zero_division=0)
+        r = recall_score(y_val, y_pred, zero_division=0)
+        print(f"    p{percentile:>5.1f}  threshold={threshold:.5f}  precision={p:.3f}  recall={r:.3f}")
+
+
+def choose_threshold(errors_val, y_val):
+    """Percentile of normal error with the best F1 on validation.
+
+    Many percentiles often tie on the same F1 when there are only a
+    handful of flood windows in validation, so among ties the highest
+    threshold (best precision) is kept, rather than the first one found.
+    """
+    normal_errors = errors_val[y_val == 0]
+    candidates = []
     for percentile in np.arange(THRESHOLD_SEARCH_MIN, THRESHOLD_SEARCH_MAX, THRESHOLD_SEARCH_STEP):
         threshold = np.percentile(normal_errors, percentile)
         y_pred = (errors_val > threshold).astype(int)
         f1 = f1_score(y_val, y_pred, zero_division=0)
-        if f1 > best_f1:
-            best_f1, best_threshold = f1, threshold
-    return best_threshold
+        candidates.append((f1, threshold))
+    best_f1 = max(f1 for f1, _ in candidates)
+    return max(threshold for f1, threshold in candidates if f1 == best_f1)
 
 
 def plot_training_curve(history, name):
@@ -78,6 +112,7 @@ def train_and_evaluate(name, X_train, X_val, y_val, X_test, y_test):
     plot_training_curve(history, name)
 
     val_errors = reconstruction_error(model, X_val)
+    print_threshold_curve(name, val_errors, y_val)
     threshold = choose_threshold(val_errors, y_val)
 
     test_errors = reconstruction_error(model, X_test)
@@ -97,6 +132,8 @@ def train_and_evaluate(name, X_train, X_val, y_val, X_test, y_test):
 
 
 def main():
+    set_seeds()
+
     df = load_raw_data()
     splits = build_all_splits(df)
 
