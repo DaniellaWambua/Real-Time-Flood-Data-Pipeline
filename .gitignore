@@ -24,3 +24,6 @@ data/processed/*
 
 # Environment and secrets
 .env
+
+# Files delivered from chat, not project source
+Claude outputs/
