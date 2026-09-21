@@ -24,8 +24,10 @@ class CatchmentSplit:
     X_train: np.ndarray  # normal windows only, scaled
     X_val: np.ndarray
     y_val: np.ndarray
+    dates_val: np.ndarray  # date each val window's label belongs to
     X_test: np.ndarray
     y_test: np.ndarray
+    dates_test: np.ndarray  # date each test window's label belongs to
     scaler: StandardScaler
 
 
@@ -44,6 +46,7 @@ def make_windows(df: pd.DataFrame, window_length: int = WINDOW_LENGTH):
     """Build sliding windows; a window's label is its last day's flood_event."""
     features = df[FEATURE_COLUMNS].to_numpy()
     labels = df[LABEL_COLUMN].to_numpy()
+    dates = df["date"].to_numpy()
 
     n_windows = len(df) - window_length + 1
     if n_windows <= 0:
@@ -51,16 +54,17 @@ def make_windows(df: pd.DataFrame, window_length: int = WINDOW_LENGTH):
 
     X = np.stack([features[i : i + window_length] for i in range(n_windows)])
     y = labels[window_length - 1 :]
-    return X, y
+    window_dates = dates[window_length - 1 :]
+    return X, y, window_dates
 
 
 def build_catchment_split(df: pd.DataFrame, catchment: str) -> CatchmentSplit:
     """Window, split, and scale one catchment's data."""
     train_df, val_df, test_df = chronological_split(df, catchment)
 
-    X_train_raw, y_train_raw = make_windows(train_df)
-    X_val, y_val = make_windows(val_df)
-    X_test, y_test = make_windows(test_df)
+    X_train_raw, y_train_raw, _ = make_windows(train_df)
+    X_val, y_val, dates_val = make_windows(val_df)
+    X_test, y_test, dates_test = make_windows(test_df)
 
     # Keep only normal windows for training.
     normal_mask = y_train_raw == 0
@@ -80,8 +84,10 @@ def build_catchment_split(df: pd.DataFrame, catchment: str) -> CatchmentSplit:
         X_train=scale(X_train_raw),
         X_val=scale(X_val),
         y_val=y_val,
+        dates_val=dates_val,
         X_test=scale(X_test),
         y_test=y_test,
+        dates_test=dates_test,
         scaler=scaler,
     )
 

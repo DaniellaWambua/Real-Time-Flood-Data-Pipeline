@@ -18,15 +18,13 @@ from src.config import (
     FIGURES_DIR,
     MODELS_DIR,
     RANDOM_SEED,
-    THRESHOLD_SEARCH_MAX,
-    THRESHOLD_SEARCH_MIN,
-    THRESHOLD_SEARCH_STEP,
     VALIDATION_SPLIT,
     WINDOW_LENGTH,
 )
 from src.data_loading import load_raw_data
 from src.model import build_lstm_autoencoder
 from src.preprocessing import build_all_splits
+from src.scoring import choose_threshold, reconstruction_error, slugify
 
 # Reference percentiles printed for every model, so the precision/recall
 # trade-off is visible, not just whichever point the search picks.
@@ -41,21 +39,6 @@ def set_seeds():
     tf.random.set_seed(RANDOM_SEED)
 
 
-def slugify(name: str) -> str:
-    return name.lower().replace(" ", "_")
-
-
-def reconstruction_error(model, X):
-    """Reconstruction error on the final day of each window.
-
-    The flood label belongs to the last day only, so scoring the whole
-    window average dilutes that day's signal against the other thirteen,
-    ordinary ones sitting next to it. Scoring just the last day isolates it.
-    """
-    X_pred = model.predict(X, verbose=0)
-    return np.mean(np.square(X[:, -1, :] - X_pred[:, -1, :]), axis=1)
-
-
 def print_threshold_curve(name, errors_val, y_val):
     """Show precision/recall at a few fixed percentiles, for transparency."""
     normal_errors = errors_val[y_val == 0]
@@ -66,24 +49,6 @@ def print_threshold_curve(name, errors_val, y_val):
         p = precision_score(y_val, y_pred, zero_division=0)
         r = recall_score(y_val, y_pred, zero_division=0)
         print(f"    p{percentile:>5.1f}  threshold={threshold:.5f}  precision={p:.3f}  recall={r:.3f}")
-
-
-def choose_threshold(errors_val, y_val):
-    """Percentile of normal error with the best F1 on validation.
-
-    Many percentiles often tie on the same F1 when there are only a
-    handful of flood windows in validation, so among ties the highest
-    threshold (best precision) is kept, rather than the first one found.
-    """
-    normal_errors = errors_val[y_val == 0]
-    candidates = []
-    for percentile in np.arange(THRESHOLD_SEARCH_MIN, THRESHOLD_SEARCH_MAX, THRESHOLD_SEARCH_STEP):
-        threshold = np.percentile(normal_errors, percentile)
-        y_pred = (errors_val > threshold).astype(int)
-        f1 = f1_score(y_val, y_pred, zero_division=0)
-        candidates.append((f1, threshold))
-    best_f1 = max(f1 for f1, _ in candidates)
-    return max(threshold for f1, threshold in candidates if f1 == best_f1)
 
 
 def plot_training_curve(history, name):
