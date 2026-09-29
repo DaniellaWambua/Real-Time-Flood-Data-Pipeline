@@ -21,7 +21,7 @@ FEATURE_COLUMNS = [
     "rainfall_3day",
     "rainfall_7day",
     "discharge_change",
-    "rainfall_anomaly",
+    # rainfall_anomaly dropped: correlates 1.000 with rainfall_mm, a pure duplicate
 ]
 LABEL_COLUMN = "flood_event"
 
