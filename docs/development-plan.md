@@ -1,6 +1,6 @@
 # Development plan: flood pipeline implementation (VS Code phase)
 
-This covers the move from the Colab prototyping notebooks into a proper local repository, and the phased plan for model training.
+This covers the move from the Colab prototyping notebooks into a proper local repository, and the phased plan for model training. The same file is mirrored in the attached Claude project.
 
 ## Repository layout
 
@@ -36,10 +36,32 @@ This keeps a clean, reviewable history, which matters for the defence, even on a
 
 ## Phases
 
-1. Scaffold the repository: folder structure, `.gitignore`, `README.md`, `requirements.txt`, raw datasets committed, first commit on `main`. Done locally tonight.
+1. Scaffold the repository: folder structure, `.gitignore`, `README.md`, `requirements.txt`, raw datasets committed, first commit on `main`. Done locally.
 2. Connect to GitHub: create an empty repository on github.com, add it as the remote, push `main`, then turn on branch protection.
 3. Feature branch `feature/data-preprocessing`: `data_loading.py` and `preprocessing.py`, producing windowed, scaled train, validation and test splits per catchment. Merged via pull request.
 4. Feature branch `feature/lstm-model`: `model.py`, the LSTM Autoencoder architecture. Merged via pull request.
-5. Feature branch `feature/train`: `train.py`, running training, saving the model and training curves. This is tonight's deliverable. Merged via pull request once the model trains cleanly.
+5. Feature branch `feature/train`: `train.py`, running training, saving the model and training curves. Merged via pull request once the model trains cleanly. Delivered a working per-catchment plus combined model, then a cross-catchment consensus filter to address low precision (see training-results.md).
 
 Each phase is small enough to commit and review on its own, rather than building everything in one pass.
+
+## Phase 6: dataset expansion (in progress)
+
+Prompted by Dr Owuor's feedback that the current class imbalance (roughly 220 flood rows out of 23,000) is a core driver of the low-precision results, and his suggestion to broaden the dataset with other Kenyan rivers.
+
+Three new catchments were selected for well-documented flood history (direct OCHA/ReliefWeb situation reports) and for spreading the dataset beyond Nairobi geographically:
+- Nzoia River, Budalangi area, Busia County. Approximate point: -0.08, 34.07.
+- Nyando River, Kano Plains, near Ahero, Kisumu County. Approximate point: -0.18, 34.93.
+- Tana River, Tana Delta, near Garsen, Tana River County. Approximate point: -2.27, 40.12.
+
+These points are starting estimates, to be confirmed or refined the same way the original four were: a representative 3km-buffered point rather than full watershed delineation (an already-documented limitation).
+
+Data pull happens in the existing Colab pipeline (`dataset_creation.ipynb` / `Historical_Data.ipynb`), reusing the same stages as the original four catchments for consistency: Stage 1 (CHIRPS rainfall via Google Earth Engine), Stage 2 (GloFAS river discharge via Open-Meteo Flood API), Stage 4 (OCHA/ReliefWeb flood event labels). Running in parallel with this is resolving the original four catchments' still-unverified flood-label years (2010, 2011, 2013, 2014, 2016, 2017, 2020, 2021, 2022).
+
+Once exported from Colab, the new rows merge into `Dataset_labels_v4.csv` on the same schema, and `CATCHMENTS` in `config.py` extends from four to seven entries. `data_loading.py` and `preprocessing.py` are already catchment-agnostic (they loop over whatever is in `CATCHMENTS`), so no code changes are expected there, only re-running training across all seven catchments plus the combined model once the new rows land.
+
+## Phase 7: feature pruning
+
+Following Dr Owuor's comment that some features are not needed for training, a correlation analysis was run across the six current features:
+- `rainfall_anomaly` correlates with `rainfall_mm` at exactly 1.000 in every catchment, a perfect linear duplicate, so it is being dropped.
+- The remaining five features are kept for now. `rainfall_3day` and `rainfall_7day` are correlated with `rainfall_mm` (0.65-0.85) but capture genuine accumulation effects and `rainfall_7day` is the single strongest predictor of `flood_event` (correlation 0.380), so they stay. `discharge_change` has near-zero raw correlation with the label but is the least correlated feature with the others, so it is kept pending a proper ablation test rather than dropped on correlation alone.
+- `month`, `day_of_year` and `year` exist in the raw dataset but were confirmed to already be excluded from `FEATURE_COLUMNS`, so nothing changes there.
