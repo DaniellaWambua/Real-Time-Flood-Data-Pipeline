@@ -9,10 +9,13 @@ PROCESSED_DATA_DIR = PROJECT_ROOT / "data" / "processed"
 MODELS_DIR = PROJECT_ROOT / "models"
 FIGURES_DIR = PROJECT_ROOT / "reports" / "figures"
 
-RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v4.csv"
+RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v5.csv"  # adds Nzoia, Nyando, Tana
 
 # Catchments
-CATCHMENTS = ["Nairobi River", "Mathare", "Ngong", "Motoine"]
+CATCHMENTS = [
+    "Nairobi River", "Mathare", "Ngong", "Motoine",
+    "Nzoia River", "Nyando River", "Tana River",
+]
 
 # Feature columns used by the model
 FEATURE_COLUMNS = [
