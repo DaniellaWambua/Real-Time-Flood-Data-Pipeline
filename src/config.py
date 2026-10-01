@@ -9,7 +9,7 @@ PROCESSED_DATA_DIR = PROJECT_ROOT / "data" / "processed"
 MODELS_DIR = PROJECT_ROOT / "models"
 FIGURES_DIR = PROJECT_ROOT / "reports" / "figures"
 
-RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v5.csv"  # adds Nzoia, Nyando, Tana
+RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v6.csv"  # EM-DAT-corrected flood register
 
 # Catchments
 CATCHMENTS = [
