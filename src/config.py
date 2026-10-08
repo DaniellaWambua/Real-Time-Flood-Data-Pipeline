@@ -9,7 +9,7 @@ PROCESSED_DATA_DIR = PROJECT_ROOT / "data" / "processed"
 MODELS_DIR = PROJECT_ROOT / "models"
 FIGURES_DIR = PROJECT_ROOT / "reports" / "figures"
 
-RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v6.csv"  # EM-DAT-corrected flood register
+RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v7.csv"  # v6 + ERA5-Land soil moisture/evaporation and ONI
 
 # Catchments
 CATCHMENTS = [
@@ -24,6 +24,9 @@ FEATURE_COLUMNS = [
     "rainfall_3day",
     "rainfall_7day",
     "discharge_change",
+    "soil_moisture_m3m3",
+    "evaporation_mm",
+    "oni",
     # rainfall_anomaly dropped: correlates 1.000 with rainfall_mm, a pure duplicate
 ]
 LABEL_COLUMN = "flood_event"
