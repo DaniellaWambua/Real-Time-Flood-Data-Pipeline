@@ -30,7 +30,7 @@ LABEL_COLUMN = "flood_event"
 
 # Windowing and chronological split (by year, not shuffled)
 WINDOW_LENGTH = 14
-VAL_START_YEAR = 2022   # 2010-2021 train, 2022-2023 val, 2024-2025 test
+VAL_START_YEAR = 2023   # 2010-2022 train, 2023 val, 2024-2025 test (narrowed to reduce train-test distance)
 TEST_START_YEAR = 2024
 
 RANDOM_SEED = 42
