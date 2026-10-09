@@ -12,12 +12,27 @@ FIGURES_DIR = PROJECT_ROOT / "reports" / "figures"
 RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v7.csv"  # v6 + ERA5-Land soil moisture/evaporation and ONI
 
 # Catchments
+# Nzoia River is deliberately excluded: it has 0 validation-period flood
+# events under this split in every configuration tried, so no catchment-
+# specific threshold could ever be tuned for it, and its only non-zero
+# result anywhere in the investigation (precision 0.039, recall 0.400,
+# under the all-three ERA5 feature set) rode entirely on a pooled
+# threshold borrowed from Nyando River rather than genuine model
+# confidence (see training-results.md, Phase 9/10). Scoped out as a
+# limitation (insufficient verified flood events in the validation
+# window), not dropped from the raw dataset, so it can be reinstated if
+# more flood events are sourced for it later.
 CATCHMENTS = [
     "Nairobi River", "Mathare", "Ngong", "Motoine",
-    "Nzoia River", "Nyando River", "Tana River",
+    "Nyando River", "Tana River",
 ]
 
-# Feature columns used by the model
+# Feature columns used by the model: 5 rainfall/discharge features plus
+# 3 ERA5-Land/climate features (soil moisture, evaporation, ONI). This is
+# the final set, decided after testing each new feature alone and all
+# together (see training-results.md, Phase 9/10 for the full reasoning).
+# rainfall_anomaly was tried and dropped: it correlates 1.000 with
+# rainfall_mm, so it added nothing.
 FEATURE_COLUMNS = [
     "rainfall_mm",
     "river_discharge_m3s",
@@ -27,7 +42,6 @@ FEATURE_COLUMNS = [
     "soil_moisture_m3m3",
     "evaporation_mm",
     "oni",
-    # rainfall_anomaly dropped: correlates 1.000 with rainfall_mm, a pure duplicate
 ]
 LABEL_COLUMN = "flood_event"
 
