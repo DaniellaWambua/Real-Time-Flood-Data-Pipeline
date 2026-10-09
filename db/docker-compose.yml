@@ -1,0 +1,19 @@
+# PostgreSQL with TimescaleDB and PostGIS, per proposal section 3.4.4.
+# Run from the db/ directory: docker compose up -d
+services:
+  db:
+    image: timescale/timescaledb-ha:pg16
+    container_name: flood_pipeline_db
+    environment:
+      POSTGRES_DB: flood_pipeline
+      POSTGRES_USER: flood_pipeline
+      POSTGRES_PASSWORD: flood_pipeline_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - flood_pipeline_data:/home/postgres/pgdata/data
+      - ./init:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+volumes:
+  flood_pipeline_data:
