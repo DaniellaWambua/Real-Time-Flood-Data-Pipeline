@@ -8,10 +8,17 @@ from src.config import CATCHMENTS, FEATURE_COLUMNS, LABEL_COLUMN, RAW_FEATURES_L
 
 
 def load_raw_data(path=RAW_FEATURES_LABELS_FILE) -> pd.DataFrame:
-    """Load, sort, and validate the raw dataset."""
+    """Load, sort, filter to the configured catchments, and validate the dataset."""
     df = pd.read_csv(path)
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values(["catchment", "date"]).reset_index(drop=True)
+
+    # The raw file may contain catchments that CATCHMENTS has deliberately
+    # dropped (for example Nzoia River, excluded for having no verified
+    # flood events in the validation period, see training-results.md Phase
+    # 9), so filter down before validating rather than requiring the file
+    # itself to be edited.
+    df = df[df["catchment"].isin(CATCHMENTS)].reset_index(drop=True)
 
     _validate(df)
     return df
