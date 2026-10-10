@@ -56,3 +56,23 @@ def create_user(username, plain_password, role):
         return new_id
     finally:
         conn.close()
+
+
+def update_password(username, new_password):
+    """Update an existing user's password hash in place. Returns True if
+    a matching user was found and updated, False if no such username
+    exists. Uses the same pbkdf2:sha256 method as create_user() (see
+    that function's comment on why, not Werkzeug's scrypt default)."""
+    password_hash = generate_password_hash(new_password, method="pbkdf2:sha256")
+    conn = db.get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET password_hash = %s WHERE username = %s",
+                (password_hash, username),
+            )
+            updated = cur.rowcount > 0
+        conn.commit()
+        return updated
+    finally:
+        conn.close()
