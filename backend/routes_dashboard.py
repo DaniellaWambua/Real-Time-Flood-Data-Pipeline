@@ -11,7 +11,7 @@ import datetime
 from flask import Blueprint, jsonify, request
 
 import db
-from decorators import login_required
+from decorators import login_required, role_required
 
 
 def _serialize(rows):
@@ -108,3 +108,44 @@ def list_sources():
         "FROM data_sources ORDER BY name"
     )
     return jsonify(_serialize(rows))
+
+
+@dashboard_bp.route("/anomalies/recent", methods=["GET"])
+@login_required
+def recent_anomalies():
+    """Main dashboard's "recent anomaly outputs" panel: LSTM inference
+    results (proposal 3.6.4), separate from the stream processor's
+    rule-based preliminary alerts in /alerts above."""
+    catchment = request.args.get("catchment")
+    limit = min(request.args.get("limit", default=50, type=int) or 50, 500)
+
+    sql = (
+        "SELECT ar.id, ar.detected_at, ca.name AS catchment, "
+        "ar.anomaly_score, ar.threshold_used, ar.is_anomalous, "
+        "ar.hydro_data_record_id "
+        "FROM anomaly_detection_results ar "
+        "JOIN catchment_areas ca ON ca.id = ar.catchment_id "
+    )
+    params = []
+    if catchment:
+        sql += "WHERE ca.name = %s "
+        params.append(catchment)
+    sql += "ORDER BY ar.detected_at DESC LIMIT %s"
+    params.append(limit)
+
+    rows = db.query_all(sql, tuple(params))
+    return jsonify(_serialize(rows))
+
+
+@dashboard_bp.route("/users", methods=["GET"])
+@role_required("system_administrator")
+def list_users():
+    """System Administration screen's user management panel. Restricted
+    to system_administrator (config.ROLES), unlike the other endpoints
+    above which only require being logged in. Password hashes are never
+    returned."""
+    rows = db.query_all(
+        "SELECT id, username, role, created_at FROM users ORDER BY username"
+    )
+    return jsonify(_serialize(rows))
+
