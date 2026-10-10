@@ -23,15 +23,11 @@ running, and after db/seed.py has been run at least once):
 """
 
 import json
-import sys
-from pathlib import Path
 
-from kafka import KafkaConsumer
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
-import db  # noqa: E402  (backend/db.py's psycopg2 connection helper)
+from confluent_kafka import Consumer
 
 import config
+import db
 
 SOURCE_NAME = "simulated-dataset-feed"
 
@@ -106,35 +102,46 @@ def main():
     catchment_ids = get_catchment_ids()
     mark_source_connected(data_source_id)
 
-    consumer = KafkaConsumer(
-        config.TOPIC_RAW_READINGS,
-        bootstrap_servers=config.KAFKA_BROKER,
-        group_id=config.CONSUMER_GROUP,
-        auto_offset_reset="earliest",
-        value_deserializer=lambda v: json.loads(v.decode("utf-8")),
-        key_deserializer=lambda k: k.decode("utf-8") if k else None,
-    )
+    consumer = Consumer({
+        "bootstrap.servers": config.KAFKA_BROKER,
+        "group.id": config.CONSUMER_GROUP,
+        "auto.offset.reset": "earliest",
+    })
+    consumer.subscribe([config.TOPIC_RAW_READINGS])
 
-    print(f"listening on '{config.TOPIC_RAW_READINGS}'...")
+    print(f"listening on '{config.TOPIC_RAW_READINGS}' (Ctrl+C to stop)...")
     processed = 0
     alerts_raised = 0
-    for record in consumer:
-        message = record.value
-        catchment_id = catchment_ids.get(message["catchment"])
-        if catchment_id is None:
-            print(f"skipping unknown catchment '{message['catchment']}'.")
-            continue
+    try:
+        while True:
+            record = consumer.poll(1.0)
+            if record is None:
+                continue
+            if record.error():
+                print(f"consumer error: {record.error()}")
+                continue
 
-        persist_reading(data_source_id, catchment_id, message)
+            message = json.loads(record.value().decode("utf-8"))
+            catchment_id = catchment_ids.get(message["catchment"])
+            if catchment_id is None:
+                print(f"skipping unknown catchment '{message['catchment']}'.")
+                continue
 
-        severity = evaluate_preliminary_risk(message)
-        if severity is not None:
-            raise_alert(catchment_id, severity)
-            alerts_raised += 1
+            persist_reading(data_source_id, catchment_id, message)
 
-        processed += 1
-        if processed % 100 == 0:
-            print(f"processed {processed} readings, raised {alerts_raised} preliminary alerts so far...")
+            severity = evaluate_preliminary_risk(message)
+            if severity is not None:
+                raise_alert(catchment_id, severity)
+                alerts_raised += 1
+
+            processed += 1
+            if processed % 100 == 0:
+                print(f"processed {processed} readings, raised {alerts_raised} preliminary alerts so far...")
+    except KeyboardInterrupt:
+        pass
+    finally:
+        consumer.close()
+        print(f"stopped: processed {processed} readings, raised {alerts_raised} preliminary alerts in total.")
 
 
 if __name__ == "__main__":

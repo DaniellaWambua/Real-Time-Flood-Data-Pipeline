@@ -17,7 +17,7 @@ import csv
 import json
 import time
 
-from kafka import KafkaProducer
+from confluent_kafka import Producer
 
 import config
 
@@ -48,6 +48,11 @@ def to_message(row):
     }
 
 
+def delivery_report(err, msg):
+    if err is not None:
+        print(f"delivery failed for key {msg.key()}: {err}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Simulate the hydrometeorological ingestion feed from the historical dataset."
@@ -62,24 +67,24 @@ def main():
     )
     args = parser.parse_args()
 
-    producer = KafkaProducer(
-        bootstrap_servers=config.KAFKA_BROKER,
-        value_serializer=lambda v: json.dumps(v).encode("utf-8"),
-        key_serializer=lambda k: k.encode("utf-8"),
-    )
+    producer = Producer({"bootstrap.servers": config.KAFKA_BROKER})
 
     count = 0
-    try:
-        for row in read_rows(args.catchment):
-            message = to_message(row)
-            producer.send(config.TOPIC_RAW_READINGS, key=message["catchment"], value=message)
-            count += 1
-            if count % 100 == 0:
-                print(f"published {count} readings...")
-            time.sleep(args.interval)
-    finally:
-        producer.flush()
+    for row in read_rows(args.catchment):
+        message = to_message(row)
+        producer.produce(
+            config.TOPIC_RAW_READINGS,
+            key=message["catchment"].encode("utf-8"),
+            value=json.dumps(message).encode("utf-8"),
+            callback=delivery_report,
+        )
+        producer.poll(0)  # trigger delivery callbacks without blocking
+        count += 1
+        if count % 100 == 0:
+            print(f"published {count} readings...")
+        time.sleep(args.interval)
 
+    producer.flush()
     print(f"done: published {count} readings to '{config.TOPIC_RAW_READINGS}'.")
 
 
