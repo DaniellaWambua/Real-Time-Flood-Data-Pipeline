@@ -1,6 +1,6 @@
 # Development plan: flood pipeline implementation (VS Code phase)
 
-This covers the move from the Colab prototyping notebooks into a proper local repository, and the phased plan for model training. The same file is mirrored in the attached Claude project.
+This covers the move from the Colab prototyping notebooks into a proper local repository, and the phased plan for model training. The same content is mirrored in the attached Claude project's checklist and development-plan docs; if the two ever disagree, this file (committed in the repository) is the one to trust, since it travels with the code.
 
 ## Repository layout
 
@@ -18,50 +18,66 @@ models/          Saved model weights (final model committed, checkpoints ignored
 reports/figures/ Training curves and diagrams
 tests/           Sanity tests for the data and model code
 docs/            This plan and other project documentation
+backend/         Flask authentication module (session-based login, role-based access)
+db/              Docker Compose (PostgreSQL/TimescaleDB/PostGIS, Kafka), schema, seed script
+ingestion/       Kafka producer (simulated feed) and consumer (stream processor)
 ```
 
-The two raw CSVs already contain features and the `flood_event` label merged together, at daily resolution for the four catchments, 2010 to 2025. `Dataset_labels_v4.csv` is the more recent, verified label set and is the one the pipeline reads. Positive events are roughly 0.9 percent of rows, which is the reason an LSTM Autoencoder was chosen over a supervised classifier.
+The raw CSV contains features and the `flood_event` label merged together, at daily resolution, 2010 to 2025. The pipeline now reads `Dataset_labels_v7.csv` (v6 plus ERA5-Land soil moisture, evaporation and ONI; earlier versions kept for provenance), over the final six catchments (Nzoia River excluded, see training-results.md Phase 10). Positive events are a small fraction of rows, which is the reason an LSTM Autoencoder was chosen over a supervised classifier (though see Phase 8 in training-results.md: several supervised classifiers were tried as a comparison and did not outperform it either, so the bottleneck looks like feature richness rather than the autoencoder-vs-classifier choice itself).
 
 ## GitHub workflow
 
-`main` is the protected branch. All work happens on short-lived feature branches named `feature/<topic>` (for example `feature/data-preprocessing`), merged back through a pull request rather than pushed directly. Commit messages follow a simple prefix convention: `feat:` for new functionality, `fix:` for bug fixes, `docs:` for documentation, `chore:` for scaffolding or tooling.
+`main` is the protected branch. Branch protection (Settings, Branches, Add rule): pull request required before merging, conversation resolution required, no force pushes, branches must be up to date before merging. All work happens on short-lived feature branches, merged back through a pull request rather than pushed directly.
 
-Branch protection on `main` (set once the GitHub repository exists, under Settings, Branches, Add rule):
-- Require a pull request before merging
-- Require conversation resolution before merging
-- Block force pushes
-- Require branches to be up to date before merging
+Commit messages follow a prefix convention: `feat:` for new functionality, `fix:` for bug fixes, `docs:` for documentation, `chore:` for scaffolding or tooling.
 
-This keeps a clean, reviewable history, which matters for the defence, even on a solo project.
+Branch names originally followed `feature/<topic>` (e.g. `feature/data-preprocessing`, used through Phase 5). Since the GitHub Kanban board and milestone structure were set up, branch names switched to match the commit-prefix convention directly: `feat/<topic>`, `fix/<topic>`, `docs/<topic>`, `chore/<topic>` (e.g. `feat/database-schema`, `feat/authentication-module`, `feat/kafka-ingestion`, `fix/kafka-docker-image`). This is the current convention; use it for all new branches.
 
 ## Phases
 
-1. Scaffold the repository: folder structure, `.gitignore`, `README.md`, `requirements.txt`, raw datasets committed, first commit on `main`. Done locally.
-2. Connect to GitHub: create an empty repository on github.com, add it as the remote, push `main`, then turn on branch protection.
-3. Feature branch `feature/data-preprocessing`: `data_loading.py` and `preprocessing.py`, producing windowed, scaled train, validation and test splits per catchment. Merged via pull request.
-4. Feature branch `feature/lstm-model`: `model.py`, the LSTM Autoencoder architecture. Merged via pull request.
-5. Feature branch `feature/train`: `train.py`, running training, saving the model and training curves. Merged via pull request once the model trains cleanly. Delivered a working per-catchment plus combined model, then a cross-catchment consensus filter to address low precision (see training-results.md).
+1. Scaffold the repository: folder structure, `.gitignore`, `README.md`, `requirements.txt`, raw datasets committed, first commit on `main`. Done.
+2. Connect to GitHub: create an empty repository, add it as the remote, push `main`, turn on branch protection. Done.
+3. Feature branch `feature/data-preprocessing`: `data_loading.py` and `preprocessing.py`. Merged.
+4. Feature branch `feature/lstm-model`: `model.py`, the LSTM Autoencoder architecture. Merged.
+5. Feature branch `feature/train`: `train.py`. Merged. Delivered a working per-catchment plus combined model, then a cross-catchment consensus filter to address low precision (see training-results.md).
+6. Dataset expansion to seven catchments (later six, see Phase 10), EM-DAT-corrected flood register, and feature pruning. Done, see training-results.md Phases 6-7.
+7. Threshold-selection investigation, model comparison, split-narrowing experiment. Done, see training-results.md Phase 8.
+8. ERA5-Land feature additions (soil moisture, evaporation, ONI) and the Phase 10 catchment-scope/feature-set decision (Nzoia excluded). Done, see training-results.md Phases 9-10. Committed via `feat/finalize-catchment-scope` and `docs/log-phase-8-to-11` (both merged to `main`).
+9. GitHub Kanban board, milestones and issues covering the full system, branch structure confirmed. Done, set up directly in GitHub's UI. Deadlines: implementation milestones (database, authentication, Kafka, dashboard, alerts, integration) by 14 October 2026; documentation and defence prep by 18 October 2026.
+10. Database layer: PostgreSQL/TimescaleDB/PostGIS via Docker Compose, schema matching proposal 3.4.3/3.4.4. Branch `feat/database-schema`, merged (PR #57).
+11. Authentication module: Flask backend (`backend/`), session-based login/logout/me, password hashing, role-based decorators, a seed script. Branch `feat/authentication-module`, merged (PR #58). Not yet exercised end to end (no user created or login tried).
+12. Kafka ingestion and stream processing: `ingestion/producer.py` (simulates the live CHIRPS/GloFAS/KMD feeds by replaying the historical dataset) and `ingestion/consumer.py` (persists readings to `hydro_data_records`, raises simple rule-based preliminary alerts). Branch `feat/kafka-ingestion`, merged (PR #59). Needed three follow-up fixes after merging, all on branch `fix/kafka-docker-image` (not yet pushed/merged as of this writing): Bitnami's Kafka image tags were withdrawn from Docker Hub (switched to `apache/kafka:4.2.2`); the `kafka-python` client library has an unresolved bug against newer brokers (switched to `confluent-kafka`); the broker's listener was bound to `localhost` inside the container rather than `0.0.0.0`, so Docker's host port-forwarding never reached it (fixed by binding the PLAINTEXT listener to `0.0.0.0` while keeping `KAFKA_ADVERTISED_LISTENERS` at `localhost:9092`). Confirmed working end to end: a full run published all 40,908 rows and the consumer processed and persisted readings, raising preliminary alerts. **Push `fix/kafka-docker-image` to origin and open its PR before doing anything else on this branch.**
+13. Next, in order: dashboard module, alert generation proper (LSTM-driven, not just the stream processor's rule-based preliminary alerts), full system integration. Then return to the model: confirm the final six-catchment run, walk-forward validation on that configuration, and the model-comparison re-run (see Phase 8 note below and training-results.md).
 
 Each phase is small enough to commit and review on its own, rather than building everything in one pass.
 
-## Phase 6: dataset expansion (in progress)
+`db/seed.py` seeds `catchment_areas` with placeholder coordinates for the six catchments, since the real coordinates from the ERA5/CHIRPS extraction notebooks have not been located in this repository (searched, not found; those notebooks most likely live outside it, e.g. in Google Colab/Drive). Replace them once the real values are available.
 
-Prompted by Dr Owuor's feedback that the current class imbalance (roughly 220 flood rows out of 23,000) is a core driver of the low-precision results, and his suggestion to broaden the dataset with other Kenyan rivers.
+## Phase 6: dataset expansion (complete)
 
-Three new catchments were selected for well-documented flood history (direct OCHA/ReliefWeb situation reports) and for spreading the dataset beyond Nairobi geographically:
-- Nzoia River, Budalangi area, Busia County. Approximate point: -0.08, 34.07.
-- Nyando River, Kano Plains, near Ahero, Kisumu County. Approximate point: -0.18, 34.93.
-- Tana River, Tana Delta, near Garsen, Tana River County. Approximate point: -2.27, 40.12.
+Prompted by Dr Owuor's feedback that the current class imbalance (roughly 220 flood rows out of 23,000) is a core driver of the low-precision results, and his suggestion to broaden the dataset with other Kenyan rivers: Nzoia River (Budalangi, Busia County), Nyando River (Kano Plains, near Ahero, Kisumu County) and Tana River (Tana Delta, near Garsen, Tana River County), each chosen for well-documented flood history and for spreading the dataset beyond Nairobi geographically. Catchment points used are estimates pending confirmation, the same 3km-buffered-point approach as the original four.
 
-These points are starting estimates, to be confirmed or refined the same way the original four were: a representative 3km-buffered point rather than full watershed delineation (an already-documented limitation).
+The extraction pipeline turned out to live across two notebooks: `Historical_Data_extraction 1.ipynb` pulls CHIRPS (Earth Engine batch export to Drive) and GloFAS (Open-Meteo REST loop) into `chirps_raw.csv`/`glofas_raw.csv`, generically over two small catchment dictionaries; `Historical_Data.ipynb` merges those, applies the flood register, and engineers features into `final_dataset.csv`. Adding the three new catchments only needed the two dictionaries extended and the flood register's `"catchment": "All"` design fixed to an explicit `"catchments"` list per event (full detail and the sourced dates, ultimately from EM-DAT, in training-results.md).
 
-Data pull happens in the existing Colab pipeline (`dataset_creation.ipynb` / `Historical_Data.ipynb`), reusing the same stages as the original four catchments for consistency: Stage 1 (CHIRPS rainfall via Google Earth Engine), Stage 2 (GloFAS river discharge via Open-Meteo Flood API), Stage 4 (OCHA/ReliefWeb flood event labels). Running in parallel with this is resolving the original four catchments' still-unverified flood-label years (2010, 2011, 2013, 2014, 2016, 2017, 2020, 2021, 2022).
+`Dataset_labels_v6.csv` is landed, committed, and current: 40,908 rows, 5,844 per catchment, 592 flood-positive rows overall (1.45%), sourced from EM-DAT with explicit DisNo. citations per event. All seven catchments have been retrained against it at least twice (once after a corrupted model file forced a full retrain, once more after narrowing the train/validation split in Phase 8), and the results in training-results.md Phase 8 are from the second of those.
 
-Once exported from Colab, the new rows merge into `Dataset_labels_v4.csv` on the same schema, and `CATCHMENTS` in `config.py` extends from four to seven entries. `data_loading.py` and `preprocessing.py` are already catchment-agnostic (they loop over whatever is in `CATCHMENTS`), so no code changes are expected there, only re-running training across all seven catchments plus the combined model once the new rows land.
+Running in parallel: still resolving the original four catchments' unverified flood-label years (2010, 2011, 2014, 2017, 2021, 2022) and continuing to source flood dates for Nzoia River and Nyando River specifically, since both remain data-starved in validation (0 and 3 positives respectively) in a way no threshold or modelling scheme in Phase 8 was able to work around.
 
-## Phase 7: feature pruning
+## Phase 7: feature pruning (complete)
 
 Following Dr Owuor's comment that some features are not needed for training, a correlation analysis was run across the six current features:
-- `rainfall_anomaly` correlates with `rainfall_mm` at exactly 1.000 in every catchment, a perfect linear duplicate, so it is being dropped.
+- `rainfall_anomaly` correlates with `rainfall_mm` at exactly 1.000 in every catchment. Reading the labelling notebook confirmed why: it is computed as `rainfall_mm` minus a constant (each catchment's mean over the full 2010-2025 span), so it is a pure linear shift of `rainfall_mm` and contributes no new information. Dropped from `FEATURE_COLUMNS` in `src/config.py` (done).
 - The remaining five features are kept for now. `rainfall_3day` and `rainfall_7day` are correlated with `rainfall_mm` (0.65-0.85) but capture genuine accumulation effects and `rainfall_7day` is the single strongest predictor of `flood_event` (correlation 0.380), so they stay. `discharge_change` has near-zero raw correlation with the label but is the least correlated feature with the others, so it is kept pending a proper ablation test rather than dropped on correlation alone.
 - `month`, `day_of_year` and `year` exist in the raw dataset but were confirmed to already be excluded from `FEATURE_COLUMNS`, so nothing changes there.
+
+## Phase 8: threshold selection, model comparison, split narrowing (see training-results.md for full detail)
+
+Four different ways of choosing an anomaly threshold were tried against the seven-catchment dataset (raw pooling, normalised pooling, independent-with-recalibration, and a drift-conditional version that only recalibrates a catchment whose test-period error has drifted meaningfully from its validation-period error). The drift-conditional version is the best of the four, but still well short of Daniella's 50% precision / 65% recall target.
+
+A comparison against four other model families (logistic regression, random forest, gradient boosting, isolation forest), using the same engineered features plus the autoencoder's own reconstruction error, converged on the same ceiling despite having far more labelled training examples available to them than the autoencoder's own threshold search ever had. That result points at feature richness, not model choice, as the actual limiting factor.
+
+Narrowing the train/validation/test split (`VAL_START_YEAR` moved from 2022 to 2023 in `src/config.py`, shrinking the gap between the end of training and the test window) gave a real but partial improvement (combined F1 0.199 to 0.242). Full walk-forward validation across multiple chronological folds, on the final six-catchment configuration, remains the agreed next step once the independent (non-model) milestones above are finished: Daniella asked to work through those first and return to model tuning afterwards.
+
+## Phases 9-10: ERA5-Land features and final scope (complete, see training-results.md)
+
+Soil moisture, evaporation and ONI (El Nino/La Nina index) added as features via ERA5-Land. Nzoia River excluded from the final system: 0 validation-period flood events under every configuration tried, a temporal-split problem rather than a true data-volume one, documented as a limitation rather than carried forward on a borrowed threshold. Final scope: six catchments (Nairobi River, Mathare, Ngong, Motoine, Nyando River, Tana River), eight features (the original five plus all three ERA5-Land features). Committed via `feat/finalize-catchment-scope`, merged to `main`.
