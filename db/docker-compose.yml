@@ -30,7 +30,15 @@ services:
       # controller, so no separate Zookeeper service is needed.
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://localhost:9092,CONTROLLER://localhost:9093
+      # The broker's own client-facing listener (PLAINTEXT) must bind to
+      # 0.0.0.0, not localhost: Docker's port forwarding from the host
+      # lands on the container's external interface, and a socket bound
+      # only to the container's own loopback never sees that traffic,
+      # which is what was causing every host-side connection to reset
+      # immediately (see Docker's own Kafka guide for this pattern).
+      # ADVERTISED_LISTENERS is what the host-side client is told to use
+      # for all subsequent connections, so that one does stay "localhost".
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://localhost:9093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
