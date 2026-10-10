@@ -8,16 +8,23 @@ Run directly for local development:
 """
 
 from flask import Flask
+from flask_cors import CORS
 
 import config
 from routes_auth import auth_bp
+from routes_dashboard import dashboard_bp
 
 
 def create_app():
     app = Flask(__name__)
     app.secret_key = config.SECRET_KEY
 
+    # supports_credentials so the React dev server can send/receive the
+    # session cookie set by routes_auth.py's /login.
+    CORS(app, supports_credentials=True, origins=config.FRONTEND_ORIGINS)
+
     app.register_blueprint(auth_bp)
+    app.register_blueprint(dashboard_bp)
 
     @app.route("/health")
     def health():
