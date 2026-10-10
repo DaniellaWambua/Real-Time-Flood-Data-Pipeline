@@ -18,23 +18,29 @@ services:
     restart: unless-stopped
 
   kafka:
-    image: bitnami/kafka:3.7
+    # Official Apache Kafka image (bitnami/kafka's free tags were
+    # withdrawn from Docker Hub after this was first written; see
+    # https://hub.docker.com/r/apache/kafka).
+    image: apache/kafka:4.2.2
     container_name: flood_pipeline_kafka
     ports:
       - "9092:9092"
     environment:
-      # Single-node KRaft mode: no separate Zookeeper service needed.
-      KAFKA_CFG_NODE_ID: 0
-      KAFKA_CFG_PROCESS_ROLES: controller,broker
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@flood_pipeline_kafka:9093
-      ALLOW_PLAINTEXT_LISTENER: "yes"
-    volumes:
-      - flood_pipeline_kafka_data:/bitnami/kafka
+      # Single-node KRaft mode: this one container is both broker and
+      # controller, so no separate Zookeeper service is needed.
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://localhost:9092,CONTROLLER://localhost:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
     restart: unless-stopped
 
 volumes:
   flood_pipeline_data:
-  flood_pipeline_kafka_data:
