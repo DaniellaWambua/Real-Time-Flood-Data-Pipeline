@@ -17,3 +17,10 @@ ROLES = [
     "government_official",
     "system_administrator",
 ]
+
+# The dashboard's React dev server. Vite's default port (5173) and
+# Create React App's default port (3000) are both allowed out of the
+# box; override via env if the frontend ends up running elsewhere.
+FRONTEND_ORIGINS = os.environ.get(
+    "FRONTEND_ORIGINS", "http://localhost:5173,http://localhost:3000"
+).split(",")
