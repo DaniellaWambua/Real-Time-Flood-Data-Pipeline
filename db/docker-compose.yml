@@ -1,4 +1,6 @@
-# PostgreSQL with TimescaleDB and PostGIS, per proposal section 3.4.4.
+# PostgreSQL with TimescaleDB and PostGIS (proposal 3.4.4), plus a
+# single-node Apache Kafka broker (proposal 3.5.2/3.6.3) for the
+# ingestion and stream processing layers.
 # Run from the db/ directory: docker compose up -d
 services:
   db:
@@ -15,5 +17,24 @@ services:
       - ./init:/docker-entrypoint-initdb.d
     restart: unless-stopped
 
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: flood_pipeline_kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # Single-node KRaft mode: no separate Zookeeper service needed.
+      KAFKA_CFG_NODE_ID: 0
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@flood_pipeline_kafka:9093
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    volumes:
+      - flood_pipeline_kafka_data:/bitnami/kafka
+    restart: unless-stopped
+
 volumes:
   flood_pipeline_data:
+  flood_pipeline_kafka_data:
