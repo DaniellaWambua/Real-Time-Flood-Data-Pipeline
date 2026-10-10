@@ -35,7 +35,14 @@ def verify_password(user, plain_password):
 
 def create_user(username, plain_password, role):
     """Insert a new user with a hashed password. Returns the new user's id."""
-    password_hash = generate_password_hash(plain_password)
+    # Explicit pbkdf2 method: Werkzeug's default ("scrypt") needs
+    # hashlib.scrypt, which is missing on a Python built against LibreSSL
+    # rather than OpenSSL 1.1+ (notably the Python that ships with Xcode
+    # Command Line Tools on macOS), raising AttributeError at hash time.
+    # pbkdf2 uses hashlib.pbkdf2_hmac instead, which has no such
+    # dependency. check_password_hash() reads the method back out of the
+    # stored hash string itself, so verify_password() needs no change.
+    password_hash = generate_password_hash(plain_password, method="pbkdf2:sha256")
     conn = db.get_connection()
     try:
         with conn.cursor() as cur:
