@@ -10,6 +10,12 @@ DB_PASSWORD = os.environ.get("DB_PASSWORD", "flood_pipeline_dev")
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-before-deploying")
 
+# Not 5000: macOS's AirPlay Receiver (System Settings, General, AirDrop
+# and Handoff) also listens on 127.0.0.1:5000 and answers with its own
+# 403 page before Flask ever sees the request, which looks like an auth
+# failure but is not one. Override via env if 5001 is also taken.
+API_PORT = int(os.environ.get("API_PORT", "5001"))
+
 # Actor roles, per Chapter 3's use case diagram.
 ROLES = [
     "disaster_management_agency",
