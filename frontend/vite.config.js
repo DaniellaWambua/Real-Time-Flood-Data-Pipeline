@@ -11,5 +11,9 @@ export default defineConfig({
     // would break every /api/* request with a CORS error, not a 401.
     port: 5173,
     strictPort: true,
+    // Binds to localhost by default (host is left unset), which matters:
+    // src/api.js's backend URL has to use the same host "localhost", not
+    // "127.0.0.1", or the session cookie from /login silently fails to
+    // attach to later requests. See the comment there for why.
   },
 })
