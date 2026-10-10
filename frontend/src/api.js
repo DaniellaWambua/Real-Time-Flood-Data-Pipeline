@@ -3,11 +3,19 @@
 // which is why CORS on the backend (config.FRONTEND_ORIGINS) has to name
 // this dev server's exact origin rather than using a wildcard.
 //
+// Host here has to match the host the frontend itself is served from
+// (localhost, not 127.0.0.1, see vite.config.js), not just the port.
+// They are the same machine either way, but browsers treat "localhost"
+// and "127.0.0.1" as different sites, so a mismatch here means the
+// session cookie /login sets never gets attached to later requests,
+// every dashboard endpoint then fails with "authentication required"
+// even though login itself appeared to work.
+//
 // Defaults to the backend's documented dev port (backend/config.py's
 // API_PORT, 5001 by default because macOS's AirPlay Receiver sits on
 // 5000). Override with a .env.local file (VITE_API_BASE=...) if you run
 // the backend somewhere else.
-const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:5001";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:5001";
 
 async function request(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
