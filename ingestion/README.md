@@ -12,20 +12,22 @@ are wired in.
    ```
    docker compose up -d
    ```
-2. Install dependencies (from this directory, ideally in a virtualenv):
+2. Install dependencies, ideally in a virtualenv:
    ```
-   pip install -r requirements.txt
-   pip install -r ../backend/requirements.txt
+   pip install -r requirements.txt            # from this directory
+   pip install -r ../backend/requirements.txt  # needed by db/seed.py below
    ```
 3. Seed the catchments and data sources, once (from the `db/` directory):
    ```
    python seed.py
    ```
-4. In one terminal, start the consumer (the stream processor):
+4. In one terminal, start the consumer (the stream processor), from this
+   directory:
    ```
    python consumer.py
    ```
-5. In another terminal, start the producer (the simulated feed):
+5. In another terminal, also from this directory, start the producer (the
+   simulated feed):
    ```
    python producer.py --interval 0.1
    ```
@@ -47,3 +49,6 @@ docker compose exec db psql -U flood_pipeline -d flood_pipeline \
   project-checklist.md). Replace them once the real values are found.
 - The consumer's threshold checks are simple and rule-based, separate from
   the LSTM anomaly detection module, which is its own, heavier milestone.
+- Uses confluent-kafka rather than kafka-python: the latter has a known,
+  unresolved bug (dpkp/kafka-python#2450) negotiating with newer brokers,
+  which this project's Kafka image hits.
