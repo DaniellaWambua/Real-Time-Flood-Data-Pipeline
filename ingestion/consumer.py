@@ -23,15 +23,11 @@ running, and after db/seed.py has been run at least once):
 """
 
 import json
-import sys
-from pathlib import Path
 
 from kafka import KafkaConsumer
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
-import db  # noqa: E402  (backend/db.py's psycopg2 connection helper)
-
 import config
+import db
 
 SOURCE_NAME = "simulated-dataset-feed"
 

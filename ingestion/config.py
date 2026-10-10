@@ -9,6 +9,18 @@ KAFKA_BROKER = os.environ.get("KAFKA_BROKER", "localhost:9092")
 TOPIC_RAW_READINGS = "hydro-raw-readings"
 CONSUMER_GROUP = "stream-processor"
 
+# Matches db/docker-compose.yml's defaults; override with real values in
+# production via environment variables, never commit real credentials here.
+# (Deliberately duplicated from backend/config.py rather than imported
+# from it: both this file and that one are named config.py, and having
+# ingestion/ reach into backend/'s sys.path caused the two to shadow each
+# other. Keeping ingestion/ self-contained avoids that entirely.)
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_PORT = os.environ.get("DB_PORT", "5432")
+DB_NAME = os.environ.get("DB_NAME", "flood_pipeline")
+DB_USER = os.environ.get("DB_USER", "flood_pipeline")
+DB_PASSWORD = os.environ.get("DB_PASSWORD", "flood_pipeline_dev")
+
 # The dataset used to simulate a live feed until the real CHIRPS/GloFAS/KMD
 # sources are wired in (see producer.py's read_rows()).
 SIMULATION_DATA_FILE = PROJECT_ROOT / "data" / "raw" / "Dataset_labels_v7.csv"
