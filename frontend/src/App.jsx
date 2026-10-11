@@ -1,18 +1,12 @@
 import { useEffect, useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
-import { get, login, logout, me } from "./api";
-
-// Endpoints the dashboard API currently serves (backend/routes_dashboard.py).
-// "Users" is listed last and only shown to a system_administrator, since
-// that one endpoint is role-restricted rather than just login-required.
-const ENDPOINTS = [
-  { key: "catchments", label: "Catchments", path: "/api/catchments" },
-  { key: "readings", label: "Recent readings", path: "/api/readings/recent" },
-  { key: "alerts", label: "Alerts", path: "/api/alerts" },
-  { key: "anomalies", label: "Recent anomalies", path: "/api/anomalies/recent" },
-  { key: "sources", label: "Sources", path: "/api/sources" },
-  { key: "users", label: "Users", path: "/api/users", adminOnly: true },
-];
+import { login, me } from "./api";
+import Layout from "./components/Layout";
+import Dashboard from "./pages/Dashboard";
+import DataStream from "./pages/DataStream";
+import Alerts from "./pages/Alerts";
+import Admin from "./pages/Admin";
 
 function LoginForm({ onLoggedIn }) {
   const [username, setUsername] = useState("");
@@ -68,69 +62,6 @@ function LoginForm({ onLoggedIn }) {
   );
 }
 
-function DataExplorer({ user, onLoggedOut }) {
-  const [activeKey, setActiveKey] = useState(null);
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  const visibleEndpoints = ENDPOINTS.filter(
-    (endpoint) => !endpoint.adminOnly || user.role === "system_administrator",
-  );
-
-  async function loadEndpoint(endpoint) {
-    setActiveKey(endpoint.key);
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await get(endpoint.path);
-      setData(result);
-    } catch (err) {
-      setData(null);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleLogout() {
-    await logout().catch(() => {});
-    onLoggedOut();
-  }
-
-  return (
-    <div className="explorer">
-      <header>
-        <div>
-          Signed in as <strong>{user.username}</strong> ({user.role})
-        </div>
-        <button onClick={handleLogout}>Sign out</button>
-      </header>
-
-      <nav>
-        {visibleEndpoints.map((endpoint) => (
-          <button
-            key={endpoint.key}
-            className={endpoint.key === activeKey ? "active" : ""}
-            onClick={() => loadEndpoint(endpoint)}
-          >
-            {endpoint.label}
-          </button>
-        ))}
-      </nav>
-
-      <section className="result">
-        {loading && <p>Loading...</p>}
-        {error && <p className="error">{error}</p>}
-        {!loading && !error && data && <pre>{JSON.stringify(data, null, 2)}</pre>}
-        {!loading && !error && !data && (
-          <p className="subtitle">Pick an endpoint above to see its raw response.</p>
-        )}
-      </section>
-    </div>
-  );
-}
-
 export default function App() {
   const [user, setUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
@@ -148,9 +79,21 @@ export default function App() {
     return <p className="subtitle centered">Checking session...</p>;
   }
 
-  return user ? (
-    <DataExplorer user={user} onLoggedOut={() => setUser(null)} />
-  ) : (
-    <LoginForm onLoggedIn={setUser} />
+  if (!user) {
+    return <LoginForm onLoggedIn={setUser} />;
+  }
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout user={user} onLoggedOut={() => setUser(null)} />}>
+          <Route index element={<Dashboard />} />
+          <Route path="data-stream" element={<DataStream />} />
+          <Route path="alerts" element={<Alerts />} />
+          <Route path="admin" element={<Admin />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
