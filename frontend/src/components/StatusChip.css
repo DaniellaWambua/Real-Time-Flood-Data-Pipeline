@@ -1,0 +1,32 @@
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.status-chip-glyph {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.status-good {
+  color: var(--status-good);
+}
+
+.status-warning {
+  color: var(--status-warning);
+}
+
+.status-serious {
+  color: var(--status-serious);
+}
+
+.status-critical {
+  color: var(--status-critical);
+}

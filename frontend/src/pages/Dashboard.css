@@ -1,0 +1,27 @@
+.stat-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.map-card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.catchment-map {
+  height: 420px;
+  width: 100%;
+}
+
+.map-caption {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+.anomaly-list {
+  font-size: 0.9rem;
+  padding-left: 1.2rem;
+}

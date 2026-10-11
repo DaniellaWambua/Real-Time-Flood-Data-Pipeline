@@ -1,0 +1,103 @@
+.line-chart {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.line-chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+
+.line-chart-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.table-toggle {
+  font-size: 0.8rem;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.line-chart-svg {
+  width: 100%;
+  height: auto;
+  touch-action: none;
+}
+
+.gridline {
+  stroke: var(--gridline);
+  stroke-width: 1;
+}
+
+.axis-label {
+  fill: var(--text-muted);
+  font-size: 11px;
+}
+
+.line-path {
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.end-marker {
+  fill: var(--accent);
+  stroke: var(--surface-1);
+  stroke-width: 2;
+}
+
+.crosshair {
+  stroke: var(--axis);
+  stroke-width: 1;
+}
+
+.line-chart-tooltip {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.line-chart-tooltip strong {
+  color: var(--text-primary);
+}
+
+.line-chart-tooltip span {
+  color: var(--text-secondary);
+}
+
+.line-chart-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  max-height: 280px;
+  display: block;
+  overflow-y: auto;
+}
+
+.line-chart-table th {
+  text-align: left;
+  color: var(--text-muted);
+  padding: 0.3rem 0.5rem;
+}
+
+.line-chart-table td {
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--gridline);
+}
+
+.chart-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
