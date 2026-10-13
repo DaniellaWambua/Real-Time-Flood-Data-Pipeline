@@ -1,8 +1,48 @@
+.admin-panel-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* A noticeably larger corner radius on this page's cards, closer to
+   the pill-shaped pickers on the Data stream page, per Daniella's
+   request - not a literal 999px, since these panels hold a full
+   table with left-aligned content close to the corner, where a true
+   pill radius would curve the background away before it reaches
+   that content. */
+.admin-panel-stack .panel {
+  border-radius: 24px;
+}
+
+.admin-metric-row .metric-card {
+  border-radius: 24px;
+}
+
+/* Force all six stat cards onto one line, per the reference mockup,
+   instead of shared.css's generic auto-fit wrap (which is right for
+   Overview's four-card row but not this one). Falls back to wrapping
+   only once the screen is too narrow for six columns to stay legible. */
+.admin-metric-row {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .admin-metric-row {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  }
+}
+
+/* The identifying cell of a row (a source's name, a user's username) -
+   everything else in the row is a value, this is what the row is. */
+.admin-table-strong {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 .admin-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.9rem;
-  margin-bottom: 1.5rem;
 }
 
 .admin-table th {
@@ -18,4 +58,170 @@
 .admin-table td {
   padding: 0.6rem 0.75rem;
   border-bottom: 1px solid var(--gridline);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.admin-table select {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.3rem 0.5rem;
+}
+
+.admin-table-link-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.admin-reconnect-button {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+}
+
+/* Full opacity even though it's disabled: the mockup shows this
+   control as a plain, crisp button (not visibly greyed out), and
+   there's nothing misleading about that here - the title attribute
+   and cursor still say why it doesn't do anything. */
+.admin-reconnect-button:disabled {
+  opacity: 1;
+}
+
+/* "View stream" matches Reconnect's size/shape exactly (same action
+   column, same row height) but reads as a real, working link - border
+   and text in the accent color instead of the page's ink color. */
+.admin-stream-link {
+  display: inline-block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--accent-strong);
+  border-radius: var(--radius-sm);
+  color: var(--accent-strong);
+  text-decoration: none;
+  background: var(--surface-1);
+}
+
+.admin-stream-link:hover {
+  background: var(--accent-soft);
+}
+
+.admin-table-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-table-actions button {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+}
+
+/* The small "You" marker next to the signed-in user's own row, same
+   pill shape as MetricCard's badge, in the accent family rather than
+   a status color since it isn't a state. */
+.admin-you-badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* A labeled field grid spanning the full row width, evenly spread
+   (three equal-width fields plus an end button), the same width the
+   table itself spans below it - rather than fields bunched to their
+   own minimum width. */
+.admin-new-user {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  align-items: end;
+  gap: 0.85rem;
+  margin: 0 0 1.1rem;
+}
+
+.admin-new-user-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+}
+
+.admin-new-user-field input,
+.admin-new-user-field select {
+  width: 100%;
+}
+
+.admin-new-user-submit {
+  height: min-content;
+}
+
+@media (max-width: 760px) {
+  .admin-new-user {
+    grid-template-columns: 1fr;
+  }
+}
+
+.admin-reset-password {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.admin-reset-password input {
+  font: inherit;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-page);
+  color: var(--text-primary);
+}
+
+.admin-reset-password button {
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+}
+
+.admin-panel-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.admin-logs-empty {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.5rem 0;
+}
+
+.admin-logs-empty-icon {
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  padding: 0.4rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-page);
+  color: var(--text-muted);
+  box-sizing: border-box;
+}
+
+.admin-logs-empty-title {
+  margin: 0 0 0.2rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.admin-logs-empty-caption {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
 }

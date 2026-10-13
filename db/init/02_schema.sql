@@ -64,5 +64,19 @@ CREATE TABLE users (
     username        TEXT NOT NULL UNIQUE,
     password_hash   TEXT NOT NULL,
     role            TEXT NOT NULL,   -- actor roles per Chapter 3 use case diagram
+    is_active       BOOLEAN NOT NULL DEFAULT true,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- System Administration screen's log panel (proposal 3.4.6). One row
+-- per notable event (sign-ins, account changes); actor is a username,
+-- null for an attempt that never resolved to a real account (e.g. a
+-- login for an unknown username).
+CREATE TABLE system_logs (
+    id              BIGSERIAL PRIMARY KEY,
+    occurred_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    actor           TEXT,
+    action          TEXT NOT NULL,
+    detail          TEXT
+);
+CREATE INDEX idx_system_logs_occurred_at ON system_logs (occurred_at DESC);

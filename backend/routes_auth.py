@@ -22,11 +22,21 @@ def login():
 
     user = models.get_user_by_username(username)
     if user is None or not models.verify_password(user, password):
+        # Logged under the attempted username even when it doesn't match
+        # a real account, so a run of failed logins against one name is
+        # visible on the System Administration screen's log panel.
+        models.log_event(username, "login_failure", "invalid username or password")
         return jsonify({"error": "invalid username or password"}), 401
+
+    if not user.get("is_active", True):
+        models.log_event(username, "login_failure", "account is deactivated")
+        return jsonify({"error": "this account has been deactivated"}), 403
 
     session["user_id"] = user["id"]
     session["username"] = user["username"]
     session["role"] = user["role"]
+
+    models.log_event(username, "login_success", None)
 
     return jsonify(
         {"id": user["id"], "username": user["username"], "role": user["role"]}

@@ -2,6 +2,20 @@
   color-scheme: light;
 }
 
+/* A standard border-box reset. Without it, a form control given an
+   explicit width (e.g. admin-new-user-field's `width: 100%` inputs)
+   adds its padding and border on TOP of that width under the
+   default content-box model, so it overflows past its own grid
+   column and visually overlaps the next one - "boxes connected
+   together" with no visible gap, even though the layout's own gap
+   value is correctly set. border-box keeps padding and border inside
+   the width/height you set everywhere in the app. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
 }

@@ -2,14 +2,17 @@
 Seed data_sources and catchment_areas so the ingestion pipeline has
 somewhere to write to.
 
-Catchment coordinates below are rough, single-point estimates for each
-river (consistent with catchment_areas.geom's own column comment in
-02_schema.sql: "catchment reference point, 3km-buffered estimate"), picked
-to get the end-to-end pipeline running now. They are NOT the coordinates
-used in the ERA5/CHIRPS extraction notebooks, which live outside this
-repository (see project-checklist.md). Replace CATCHMENT_COORDS below with
-those exact values once that notebook (or Daniella) supplies them, then
-re-run this script; it is safe to re-run, existing rows are left as is.
+CATCHMENT_COORDS below are single points actually on each named river's
+channel, taken from OpenStreetMap's own "waterway" data for that river,
+near the locality CATCHMENT_COUNTY already associates it with (CBD,
+Huruma, Kibera, Karen, Ahero, Garissa), not hand-picked guesses. They
+are NOT the coordinates used in the ERA5/CHIRPS extraction notebooks,
+which live outside this repository (see project-checklist.md) and
+remain the more authoritative source if they turn up; replace
+CATCHMENT_COORDS with those exact values if so, then re-run this script
+(it is safe to re-run, existing rows are left as is: see
+update_catchment_coords.py in this directory for moving an already-
+seeded database onto a new CATCHMENT_COORDS value instead).
 
 Usage (from the db/ directory, with the db container running):
     python seed.py
@@ -23,13 +26,26 @@ import db  # noqa: E402  (backend/db.py's psycopg2 connection helper)
 
 # name -> (longitude, latitude). Longitude first, to match PostGIS's
 # ST_MakePoint(lon, lat) argument order.
+# Each point is a node on that river's own OSM waterway way, nearest to
+# the locality below, queried via the Overpass API on 2026-10-11 (see
+# db/COORDS_SOURCES.md for the exact queries and OSM way ids).
 CATCHMENT_COORDS = {
-    "Nairobi River": (36.8265, -1.2864),   # Nairobi River at the CBD
-    "Mathare": (36.8550, -1.2611),         # Mathare Valley
-    "Ngong": (36.7820, -1.3103),           # Ngong River near Kibera
-    "Motoine": (36.7524, -1.3975),         # Motoine River, Ongata Rongai
-    "Nyando River": (34.8333, -0.1500),    # Nyando River mouth, Kano Plains
-    "Tana River": (39.6401, -0.4536),      # Tana River at Garissa
+    # On "Nairobi River" (OSM way), 0.84km from the CBD.
+    "Nairobi River": (36.8222826, -1.2790314),
+    # On "Mathare River" (OSM way), 0.39km from Huruma.
+    "Mathare": (36.8688588, -1.2564097),
+    # On "Ngong river" (OSM way), 0.10km from Kibera.
+    "Ngong": (36.7897207, -1.3107824),
+    # On "Motoine River" (OSM way); OSM's mapped extent of this river
+    # currently stops in Karen, about 8.5km north of Ongata Rongai town
+    # (where Motoine flooding is usually reported) with no mapped
+    # segment there to verify against, so this is the southmost point
+    # OSM has actually mapped on the channel, not an Ongata Rongai point.
+    "Motoine": (36.7529515, -1.3196194),
+    # On "Nyando river" (OSM way), 0.21km from Ahero.
+    "Nyando River": (34.9208784, -0.172945),
+    # On "Tana River" (OSM way), 0.79km from central Garissa.
+    "Tana River": (39.6356341, -0.4695316),
 }
 
 CATCHMENT_COUNTY = {

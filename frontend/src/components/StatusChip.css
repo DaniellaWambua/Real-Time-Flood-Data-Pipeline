@@ -1,18 +1,10 @@
+/* No pill, no glyph - per Daniella's request, a status is now just
+   its label in the matching color. A flat, inline run of text rather
+   than a chip, so it sits in a table cell exactly like any other
+   value. */
 .status-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: 1px solid var(--border);
+  font-weight: 700;
   white-space: nowrap;
-}
-
-.status-chip-glyph {
-  font-size: 0.7rem;
-  line-height: 1;
 }
 
 .status-good {
@@ -29,4 +21,17 @@
 
 .status-critical {
   color: var(--status-critical);
+}
+
+/* The one role that stays neutral rather than colored: an honest
+   "off" state (a deactivated account) rather than a severity. */
+.status-muted {
+  color: var(--text-muted);
+}
+
+/* An alert's workflow state (active/resolved), independent of
+   severity - blue, so it never duplicates what the Severity column
+   in the same row already says. */
+.status-active {
+  color: var(--accent-strong);
 }

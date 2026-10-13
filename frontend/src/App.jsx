@@ -3,6 +3,8 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
 import { login, me } from "./api";
 import Layout from "./components/Layout";
+import Footer from "./components/Footer";
+import { IconBell } from "./components/icons";
 import Dashboard from "./pages/Dashboard";
 import DataStream from "./pages/DataStream";
 import Alerts from "./pages/Alerts";
@@ -29,36 +31,52 @@ function LoginForm({ onLoggedIn }) {
   }
 
   return (
-    <form className="login-form" onSubmit={handleSubmit}>
-      <h1>Flood Risk Dashboard</h1>
-      <p className="subtitle">Sign in with a user created via backend/create_user.py.</p>
+    <div className="auth-shell">
+      <header className="auth-header">
+        <div className="auth-brand">
+          <span className="auth-brand-mark" aria-hidden="true">
+            <IconBell />
+          </span>
+          <div className="auth-brand-text">
+            <span className="auth-brand-title">Flood Early Warning</span>
+            <span className="auth-brand-tagline">Nairobi river catchments</span>
+          </div>
+        </div>
+      </header>
+      <main className="auth-main">
+        <form className="login-form panel" onSubmit={handleSubmit}>
+          <h1>Sign in</h1>
+          <p className="subtitle">Use an account created via backend/create_user.py.</p>
 
-      <label>
-        Username
-        <input
-          value={username}
-          onChange={(event) => setUsername(event.target.value)}
-          autoFocus
-          required
-        />
-      </label>
+          <label>
+            Username
+            <input
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              autoFocus
+              required
+            />
+          </label>
 
-      <label>
-        Password
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-        />
-      </label>
+          <label>
+            Password
+            <input
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+            />
+          </label>
 
-      {error && <p className="error">{error}</p>}
+          {error && <p className="error">{error}</p>}
 
-      <button type="submit" disabled={submitting}>
-        {submitting ? "Signing in..." : "Sign in"}
-      </button>
-    </form>
+          <button type="submit" disabled={submitting}>
+            {submitting ? "Signing in..." : "Sign in"}
+          </button>
+        </form>
+      </main>
+      <Footer />
+    </div>
   );
 }
 

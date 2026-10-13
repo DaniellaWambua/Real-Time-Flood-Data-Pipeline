@@ -1,79 +1,84 @@
 /*
  * Design tokens for the dashboard, one hue per role rather than ad hoc
- * colors in component files. Values come from the dataviz skill's
- * reference palette (validated for colorblind-safety and contrast),
- * not picked by eye. Dark mode is a selected set of steps on the same
- * ramps, not an automatic filter, per that skill's rules.
+ * colors in component files.
+ *
+ * Palette: "Soft Blue + White" (#8DB4D6 / #D6E6F2 / #F2F7FB / #FFFFFF),
+ * per Daniella's reference moodboard. --accent is the moodboard blue
+ * itself, used for borders, focus rings and light fills; --accent-
+ * strong is a darker shade from the same hue, used wherever text sits
+ * directly on an accent-colored background (buttons, active nav/tab
+ * states), since white-on-#8DB4D6 falls well short of WCAG AA contrast
+ * (~2.2:1) while white-on-accent-strong clears it (~5.4:1). The footer
+ * itself stays on the page's own light surface, not an accent fill
+ * (see components/Footer.jsx).
+ *
+ * Light-only: Daniella asked for every screen to stay on a light
+ * background rather than following the OS's dark mode setting.
  *
  * Status colors (good/warning/serious/critical) are reserved for alert
  * severity and connection status specifically, and are never reused as
- * a generic "series 4" color elsewhere in the dashboard.
+ * a generic "series 4" color, or for branding/chrome, elsewhere in the
+ * dashboard.
  */
 
 :root {
   color-scheme: light;
 
-  --surface-1: #fcfcfb;
-  --surface-page: #f9f9f7;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #898781;
-  --gridline: #e1e0d9;
-  --axis: #c3c2b7;
-  --border: rgba(11, 11, 11, 0.10);
+  --surface-1: #ffffff;
+  --surface-page: #f2f7fb;
+  --text-primary: #132331;
+  --text-secondary: #526679;
+  --text-muted: #8a9bab;
+  --gridline: #dde9f2;
+  --axis: #b9cddd;
+  --border: rgba(19, 35, 49, 0.12);
 
-  --accent: #2a78d6; /* categorical slot 1 (blue), used for sequential/general accents */
-
-  --status-good: #0ca30c;
-  --status-warning: #fab219;
-  --status-serious: #ec835a;
-  --status-critical: #d03b3b;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-
-    --surface-1: #1a1a19;
-    --surface-page: #0d0d0d;
-    --text-primary: #f0efec;
-    --text-secondary: #c3c2b7;
-    --text-muted: #898781;
-    --gridline: #2c2c2a;
-    --axis: #383835;
-    --border: rgba(255, 255, 255, 0.10);
-
-    --accent: #3987e5;
-
-    --status-good: #0ca30c;
-    --status-warning: #fab219;
-    --status-serious: #ec835a;
-    --status-critical: #d03b3b;
-  }
-}
-
-:root[data-theme="dark"] {
-  color-scheme: dark;
-
-  --surface-1: #1a1a19;
-  --surface-page: #0d0d0d;
-  --text-primary: #f0efec;
-  --text-secondary: #c3c2b7;
-  --text-muted: #898781;
-  --gridline: #2c2c2a;
-  --axis: #383835;
-  --border: rgba(255, 255, 255, 0.10);
-
-  --accent: #3987e5;
+  --accent: #8db4d6;
+  --accent-soft: #d6e6f2;
+  --accent-strong: #3f6e99;
 
   --status-good: #0ca30c;
   --status-warning: #fab219;
   --status-serious: #ec835a;
   --status-critical: #d03b3b;
+
+  /* Sidebar chrome: the one dark element in an otherwise light app,
+     per Daniella's reference layout (a persistent dark-navy nav rail
+     rather than a light top bar). Built from a darker shade of the
+     same blue family, not an unrelated dark gray, so it still reads
+     as part of the same palette. */
+  --sidebar-bg: #0e2235;
+  --sidebar-bg-raised: #17344d;
+  --sidebar-text: #eef3f8;
+  --sidebar-text-muted: rgba(238, 243, 248, 0.64);
+  --sidebar-border: rgba(238, 243, 248, 0.12);
+  --sidebar-active-bg: var(--accent-strong);
+
+  /* Form controls and cards, kept as tokens so every page's inputs,
+     selects and panels pick up the same look rather than each page
+     defining its own border/radius numbers. */
+  --input-border: rgba(19, 35, 49, 0.2);
+  --input-border-hover: rgba(19, 35, 49, 0.36);
+  --focus-ring: rgba(141, 180, 214, 0.45);
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-card: 0 1px 2px rgba(19, 35, 49, 0.05), 0 4px 14px rgba(19, 35, 49, 0.07);
+
+  /* One sans-serif family everywhere, per Daniella's request - the
+     app previously split body/heading/figure text across three
+     different self-hosted typefaces; --font-heading and --font-mono
+     now just point back to --font-sans instead of naming a second
+     or third face, so every existing var(--font-heading)/
+     var(--font-mono) usage across the CSS picks up Lato too without
+     needing to touch each of those rules individually. */
+  --font-sans: "Lato", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: var(--font-sans);
 }
 
 body {
   background: var(--surface-page);
   color: var(--text-primary);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
 }

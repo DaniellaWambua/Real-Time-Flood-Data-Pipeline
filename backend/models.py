@@ -1,5 +1,6 @@
 """
-User-related queries against the `users` table (db/init/02_schema.sql).
+User-related queries against the `users` table (db/init/02_schema.sql),
+plus system_logs writes (the System Administration screen's log panel).
 
 Kept separate from db.py so routes_auth.py can import just what it needs
 (user lookups) without pulling in the lower-level query helpers directly.
@@ -13,7 +14,7 @@ import db
 def get_user_by_username(username):
     """Return the user row (dict) for a username, or None if not found."""
     return db.query_one(
-        "SELECT id, username, password_hash, role, created_at "
+        "SELECT id, username, password_hash, role, is_active, created_at "
         "FROM users WHERE username = %s",
         (username,),
     )
@@ -22,7 +23,7 @@ def get_user_by_username(username):
 def get_user_by_id(user_id):
     """Return the user row (dict) for a user id, or None if not found."""
     return db.query_one(
-        "SELECT id, username, password_hash, role, created_at "
+        "SELECT id, username, password_hash, role, is_active, created_at "
         "FROM users WHERE id = %s",
         (user_id,),
     )
@@ -76,3 +77,48 @@ def update_password(username, new_password):
         return updated
     finally:
         conn.close()
+
+
+def update_user_role(user_id, new_role):
+    """Change an existing user's role in place. Returns True if a
+    matching user was found and updated, False otherwise. The caller
+    (routes_dashboard.py) is responsible for checking new_role against
+    config.ROLES first; this function trusts what it's given, same
+    division of responsibility create_user.py's CLI script already
+    has with models.create_user()."""
+    conn = db.get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET role = %s WHERE id = %s", (new_role, user_id))
+            updated = cur.rowcount > 0
+        conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
+def set_user_active(user_id, is_active):
+    """Activate or deactivate a user in place (the System Administration
+    screen's "deactivate" control). A deactivated account still exists,
+    so its alert/reading history stays intact, it just can't sign in
+    (see routes_auth.py's login()). Returns True if a matching user was
+    found and updated, False otherwise."""
+    conn = db.get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET is_active = %s WHERE id = %s", (is_active, user_id))
+            updated = cur.rowcount > 0
+        conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
+def log_event(actor, action, detail=None):
+    """Append one row to system_logs (the System Administration screen's
+    log panel, proposal 3.4.6). actor is a username, or None for a
+    login attempt that never resolved to a real account."""
+    db.execute(
+        "INSERT INTO system_logs (actor, action, detail) VALUES (%s, %s, %s)",
+        (actor, action, detail),
+    )

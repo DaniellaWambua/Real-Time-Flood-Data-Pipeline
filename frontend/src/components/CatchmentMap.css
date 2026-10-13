@@ -1,0 +1,32 @@
+.catchment-map-card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+/* Compact default, used as-is by the data stream monitor; the main
+   dashboard opts into the much taller variant below. */
+.catchment-map {
+  width: 100%;
+  height: 300px;
+}
+
+.catchment-map--tall {
+  height: 70vh;
+  min-height: 520px;
+  max-height: 760px;
+}
+
+/* The focused single-river view's permanent marker label. */
+.leaflet-tooltip.catchment-map-label {
+  background: var(--surface-1);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.55rem;
+}
+
+.leaflet-tooltip-right.catchment-map-label::before {
+  border-right-color: var(--surface-1);
+}
