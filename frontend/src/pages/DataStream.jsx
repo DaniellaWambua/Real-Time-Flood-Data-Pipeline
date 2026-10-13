@@ -1,90 +1,209 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import CatchmentMap from "../components/CatchmentMap";
 import LineChart from "../components/LineChart";
+import PageHeader from "../components/PageHeader";
+import EmptyState from "../components/EmptyState";
+import { formatCompactTimestamp } from "../formatTimestamp";
 import { get } from "../api";
+import "./DataStream.css";
 
-// One feature per chart, deliberately: rainfall (mm) and river discharge
-// (m3/s) are different scales, and the dataviz skill's "one axis" rule
-// means they never share a y-axis. Soil moisture, evaporation and ONI
-// come from hydro_data_records too (db/init/02_schema.sql) but need the
-// backend to have been fed through Kafka with the ERA5 fields populated
-// to be worth plotting; rainfall and discharge are what the Kafka test
-// run actually produced.
+// All four features side by side on one page, each as its own
+// small-multiple chart with its own axis, rather than a single
+// feature + dropdown. This mirrors the Power BI reference dashboard
+// Daniella shared (a river's metrics together on one screen, a river
+// picker to the side) with one deliberate change: that reference
+// combines rainfall and water level on shared dual axes, which the
+// dataviz skill treats as the single most common charting mistake
+// (two y-scales on one chart). Rainfall (mm) and river discharge
+// (m3/s) are different scales here too, so they stay as separate
+// charts instead. Rainfall is discrete event data, so it renders as
+// bars rather than a connected line; the other three are continuous
+// readings and keep the line (with an area fill).
 const FEATURES = [
-  { key: "rainfall_mm", label: "Rainfall", unit: "mm" },
-  { key: "river_discharge_m3s", label: "River discharge", unit: "m3/s" },
-  { key: "soil_moisture_m3m3", label: "Soil moisture", unit: "m3/m3" },
-  { key: "evaporation_mm", label: "Evaporation", unit: "mm" },
+  { key: "rainfall_mm", label: "Rainfall", unit: "mm", variant: "bars" },
+  { key: "river_discharge_m3s", label: "River discharge", unit: "m3/s", variant: "line" },
+  { key: "soil_moisture_m3m3", label: "Soil moisture", unit: "m3/m3", variant: "line" },
+  { key: "evaporation_mm", label: "Evaporation", unit: "mm", variant: "line" },
 ];
+
+// GET /api/readings/recent only takes a row limit, not a date range,
+// so "7 days"/"30 days" are approximated from the dataset's own
+// 3-hourly cadence rather than a real server-side date filter; "All"
+// is the API's own 500-row cap, the most it will ever return in one
+// page, not literally every reading on record.
+const RANGES = [
+  { key: "latest200", label: "Latest 200", limit: 200 },
+  { key: "7d", label: "7 days", limit: 56 },
+  { key: "30d", label: "30 days", limit: 240 },
+  { key: "all", label: "All", limit: 500, title: "Capped at the 500 most recent readings the API returns" },
+];
+
+function pointsFor(readings, featureKey) {
+  // The API returns newest first; charts read left-to-right in time.
+  return (readings ?? [])
+    .filter((row) => row[featureKey] !== null)
+    .map((row) => ({ x: new Date(row.recorded_at), y: row[featureKey] }))
+    .reverse();
+}
 
 export default function DataStream() {
   const [catchments, setCatchments] = useState([]);
   const [catchment, setCatchment] = useState("");
-  const [featureKey, setFeatureKey] = useState(FEATURES[0].key);
+  const [rangeKey, setRangeKey] = useState(RANGES[0].key);
   const [readings, setReadings] = useState(null);
+  const [tableView, setTableView] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    get("/api/catchments").then((rows) => {
-      setCatchments(rows);
-      if (rows.length > 0) setCatchment(rows[0].name);
-    });
+    get("/api/catchments")
+      .then((rows) => {
+        setCatchments(rows);
+        if (rows.length > 0) setCatchment(rows[0].name);
+      })
+      .catch((err) => setError(err.message));
   }, []);
+
+  const range = RANGES.find((r) => r.key === rangeKey) ?? RANGES[0];
 
   useEffect(() => {
     if (!catchment) return;
-    get("/api/readings/recent", { catchment, limit: 200 })
+    get("/api/readings/recent", { catchment, limit: range.limit })
       .then((rows) => {
         setReadings(rows);
         setError(null);
       })
       .catch((err) => setError(err.message));
-  }, [catchment]);
+  }, [catchment, range.limit]);
 
-  const feature = FEATURES.find((f) => f.key === featureKey);
+  const selected = catchments.find((c) => c.name === catchment) ?? null;
 
-  // The API returns newest first; the chart reads left-to-right in time.
-  const points = (readings ?? [])
-    .filter((row) => row[featureKey] !== null)
-    .map((row) => ({ x: new Date(row.recorded_at), y: row[featureKey] }))
-    .reverse();
+  // Interval is measured from the data itself (consecutive readings'
+  // own timestamps), not assumed, so this stays correct even if the
+  // dataset's cadence ever changes.
+  const intervalHours = useMemo(() => {
+    if (!readings || readings.length < 2) return null;
+    const diffMs = new Date(readings[0].recorded_at) - new Date(readings[1].recorded_at);
+    return Math.round(Math.abs(diffMs) / 3600000);
+  }, [readings]);
+
+  const windowSpanDays = useMemo(() => {
+    if (!readings || readings.length < 2) return null;
+    const spanMs = new Date(readings[0].recorded_at) - new Date(readings[readings.length - 1].recorded_at);
+    return Math.round(Math.abs(spanMs) / 86400000);
+  }, [readings]);
 
   return (
     <section>
-      <h1>Data stream monitor</h1>
+      <PageHeader
+        title="Data stream"
+        subtitle="Rainfall, river discharge, soil moisture and evaporation, aligned on one time axis"
+      />
 
-      <div className="filter-row">
-        <label>
-          Catchment
-          <select value={catchment} onChange={(e) => setCatchment(e.target.value)}>
-            {catchments.map((c) => (
-              <option key={c.id} value={c.name}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="datastream-controls">
+        <div className="river-picker">
+          {catchments.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className={c.name === catchment ? "active" : ""}
+              onClick={() => setCatchment(c.name)}
+            >
+              {c.name}
+            </button>
+          ))}
+        </div>
 
-        <label>
-          Feature
-          <select value={featureKey} onChange={(e) => setFeatureKey(e.target.value)}>
-            {FEATURES.map((f) => (
-              <option key={f.key} value={f.key}>
-                {f.label}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="range-picker">
+          {RANGES.map((r) => (
+            <button
+              key={r.key}
+              type="button"
+              title={r.title}
+              className={r.key === rangeKey ? "active" : ""}
+              onClick={() => setRangeKey(r.key)}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {error && <p className="error">{error}</p>}
+      <div className="datastream-layout">
+        <div className="datastream-main">
+          {error && <p className="error">{error}</p>}
 
-      {readings && (
-        <LineChart
-          title={`${feature.label} at ${catchment}, most recent ${points.length} readings`}
-          unit={feature.unit}
-          points={points}
-        />
-      )}
+          {selected && (
+            <div className="datastream-main-header">
+              <div>
+                <h2 className="panel-title">
+                  {selected.name}, {selected.county}
+                </h2>
+                <span className="panel-caption">
+                  Dashed line marks each chart&rsquo;s own peak reading
+                </span>
+              </div>
+              <button type="button" className="table-toggle" onClick={() => setTableView((v) => !v)}>
+                {tableView ? "View as chart" : "View as table"}
+              </button>
+            </div>
+          )}
+
+          {readings && (
+            <div className="datastream-grid">
+              {FEATURES.map((feature) => (
+                <LineChart
+                  key={feature.key}
+                  title={feature.label}
+                  unit={feature.unit}
+                  variant={feature.variant}
+                  points={pointsFor(readings, feature.key)}
+                  forceTable={tableView}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        <aside className="datastream-aside">
+          {/* Just the selected river, closely zoomed and labelled, per
+              Daniella's Google Maps reference, not the whole-catchments
+              view the main dashboard uses: switching rivers here happens
+              through the picker above, not by clicking the map. */}
+          <CatchmentMap catchments={selected ? [selected] : []} />
+
+          {selected && (
+            <div className="panel datastream-detail-card">
+              <h3 className="panel-title">{selected.name}</h3>
+              <dl className="datastream-detail-grid">
+                <dt>County</dt>
+                <dd>{selected.county}</dd>
+
+                <dt>Window</dt>
+                <dd className="figure">
+                  {readings ? `${readings.length} readings` : "—"}
+                  {windowSpanDays !== null ? `, about ${windowSpanDays} days` : ""}
+                </dd>
+
+                <dt>Interval</dt>
+                <dd className="figure">{intervalHours !== null ? `${intervalHours}-hourly` : "—"}</dd>
+
+                <dt>Last reading</dt>
+                <dd className="figure">{readings && readings[0] ? formatCompactTimestamp(readings[0].recorded_at) : "—"}</dd>
+
+                <dt>Source</dt>
+                <dd>{readings && readings[0] ? `${readings[0].source}, historical replay` : "—"}</dd>
+              </dl>
+
+              <Link to={`/alerts?catchment=${encodeURIComponent(selected.name)}`} className="btn-primary datastream-open-alerts">
+                Open {selected.name} alerts
+              </Link>
+            </div>
+          )}
+        </aside>
+      </div>
+
+      {catchments.length === 0 && <EmptyState>Loading catchments.</EmptyState>}
     </section>
   );
 }

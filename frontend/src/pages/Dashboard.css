@@ -1,27 +1,245 @@
-.stat-row {
-  display: flex;
-  gap: 1rem;
+/*
+ * Two-column main row (map card left, risk panel right) under the
+ * metric-card row, modelled on Daniella's reference layout: a big map
+ * that never needs manual resizing, a ranked "catchments by risk"
+ * list beside it that swaps to a single catchment's detail view when
+ * one is selected (from the map or from the list itself), and a
+ * high-severity alerts table full width underneath.
+ */
+
+.dashboard-main-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 1.25rem;
+  align-items: start;
   margin-bottom: 1.5rem;
 }
 
-.map-card {
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  overflow: hidden;
+.dashboard-map-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
 }
 
-.catchment-map {
-  height: 420px;
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.dashboard-risk-panel {
+  min-height: 520px;
+  max-height: 760px;
+  overflow-y: auto;
+}
+
+.risk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* A thin separator between rows rather than a gap, so a long ranked
+   list reads as one continuous list (like the reference dashboard)
+   instead of a stack of separate floating rows. */
+.risk-list li {
+  border-bottom: 1px solid var(--gridline);
+}
+
+.risk-list li:last-child {
+  border-bottom: none;
+}
+
+.risk-list-row {
   width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.5rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  text-align: left;
+  cursor: pointer;
 }
 
-.map-caption {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-top: 0.5rem;
+.risk-list-row:hover {
+  background: var(--surface-page);
+  border-color: transparent;
+  color: inherit;
 }
 
-.anomaly-list {
+.risk-list-dot {
+  flex-shrink: 0;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+}
+
+.risk-list-dot--good {
+  background: var(--status-good);
+}
+
+.risk-list-dot--warning {
+  background: var(--status-warning);
+}
+
+.risk-list-dot--critical {
+  background: var(--status-critical);
+}
+
+.risk-list-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+
+.risk-list-name {
   font-size: 0.9rem;
-  padding-left: 1.2rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.risk-list-county {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.risk-list-chevron {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  color: var(--text-muted);
+}
+
+.catchment-details-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.catchment-details-close {
+  flex-shrink: 0;
+  width: 1.8rem;
+  height: 1.8rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.catchment-details h3 {
+  margin: 0 0 0.15rem;
+  font-size: 1.05rem;
+}
+
+.catchment-county {
+  margin: 0 0 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.catchment-details h4 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.detail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.detail-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.detail-time {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.reading-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 0.45rem;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.reading-grid dt {
+  color: var(--text-secondary);
+}
+
+.reading-grid dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  text-align: right;
+}
+
+.dashboard-high-severity-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.dashboard-high-severity-table th {
+  text-align: left;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--gridline);
+}
+
+.dashboard-high-severity-table td:last-child {
+  font-family: var(--font-mono);
+}
+
+.dashboard-high-severity-table td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--gridline);
+}
+
+.dashboard-high-severity-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Below ~960px there isn't room for the map + risk panel side by
+   side: stack the risk panel under the map, full width. */
+@media (max-width: 960px) {
+  .dashboard-main-row {
+    grid-template-columns: 1fr;
+  }
+
+  .catchment-map--tall {
+    height: 60vh;
+  }
+
+  .dashboard-risk-panel {
+    max-height: none;
+  }
 }

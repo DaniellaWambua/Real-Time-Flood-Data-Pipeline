@@ -1,6 +1,93 @@
-/* Small set of rules shared across pages, so filter rows, errors and
-   empty states look the same everywhere rather than being redefined
-   per page. */
+/* Small set of rules shared across pages, so filter rows, form
+   controls, buttons, panels, errors and empty states look the same
+   everywhere rather than being redefined per page. This is the base
+   layer: page-specific stylesheets (loaded after this one) override
+   individual rules where a screen genuinely needs something different
+   (pill-shaped picker buttons, pale sidebar buttons, and so on). */
+
+input,
+select,
+textarea {
+  font: inherit;
+  font-size: 0.92rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--input-border-hover);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+button {
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.5rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* --accent (the moodboard's soft blue) is too light for white text
+   to sit on at AA contrast, so filled buttons use --accent-strong, a
+   darker shade from the same hue, instead. */
+button[type="submit"],
+.btn-primary {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: #ffffff;
+}
+
+button[type="submit"]:hover:not(:disabled),
+.btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent-strong) 85%, black);
+  border-color: color-mix(in srgb, var(--accent-strong) 85%, black);
+  color: #ffffff;
+}
+
+/* A bordered, slightly elevated panel, for the cards each screen
+   already builds its own version of (admin-new-user, river-select,
+   dashboard-details, severity-breakdown-table); new panels can use
+   this directly instead of restating the same four declarations. */
+.panel {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  padding: 1rem 1.25rem;
+}
 
 .filter-row {
   display: flex;
@@ -14,14 +101,13 @@
 .filter-row label {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.3rem;
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
 .filter-row select {
-  padding: 0.35rem 0.5rem;
-  font-size: 0.9rem;
+  min-width: 160px;
 }
 
 .error {
@@ -35,10 +121,87 @@
 }
 
 h1 {
-  font-size: 1.3rem;
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 h2 {
-  font-size: 1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
   margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+/* --font-heading is just an alias for --font-sans (one typeface, Lato,
+   everywhere) - kept as its own variable/rule rather than removed so
+   headings (h1 through h4, including .panel-title's h2/h3s) stay
+   independently themeable if that ever changes again. */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-heading);
+}
+
+/* --font-mono is likewise just an alias for --font-sans now (figures,
+   timestamps and chart axes use the same Lato as everything else) -
+   tabular-nums is kept regardless, so a column of numbers or dates
+   still doesn't jitter even without a dedicated monospace face.
+   Applied directly where a dedicated class already exists (metric
+   cards, chart axes, stat rows); this utility is for the handful of
+   one-off JSX spots that don't have one. */
+.figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A responsive row of MetricCards (or StatTiles), used at the top of
+   the Overview and Alerts screens. */
+.metric-card-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* A card's own header row: a title plus an optional caption or link
+   aligned to the right, used by every "panel" card across Dashboard,
+   DataStream and Alerts instead of each restating this layout. */
+.panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.panel-caption {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.panel-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--accent-strong);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.panel-link:hover {
+  text-decoration: underline;
 }

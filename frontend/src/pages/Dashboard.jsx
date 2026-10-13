@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
-import { CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import StatTile from "../components/StatTile";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import CatchmentMap from "../components/CatchmentMap";
+import MetricCard from "../components/MetricCard";
 import StatusChip from "../components/StatusChip";
+import PageHeader from "../components/PageHeader";
+import { IconChevronRight } from "../components/icons";
 import { severityRole } from "../statusRoles";
 import EmptyState from "../components/EmptyState";
 import { get } from "../api";
@@ -20,6 +22,14 @@ const ROLE_COLOR = {
   critical: "#d03b3b",
 };
 
+const LEGEND = [
+  { role: "good", label: "No active alerts" },
+  { role: "warning", label: "Medium severity active" },
+  { role: "critical", label: "High severity active" },
+];
+
+const RISK_LABEL = { critical: "High", warning: "Medium", good: "No active alert" };
+
 // A catchment's map color is its highest-severity ACTIVE alert right
 // now, there is no live LSTM risk score yet (see project-checklist.md,
 // "needs a finished training run first"), so this is the most honest
@@ -36,103 +46,309 @@ function riskRoleFor(catchmentName, activeAlerts) {
   return severityRole(role);
 }
 
+function formatValue(value, unit) {
+  return value === null || value === undefined ? "—" : `${value} ${unit}`;
+}
+
+function CatchmentDetails({ catchment, role, alerts, latestReading, anomalies, onClose }) {
+  return (
+    <div className="catchment-details">
+      <div className="catchment-details-header">
+        <div>
+          <h3>{catchment.name}</h3>
+          <p className="catchment-county">{catchment.county}</p>
+        </div>
+        <button type="button" className="catchment-details-close" onClick={onClose} aria-label="Back to the risk list">
+          ✕
+        </button>
+      </div>
+      <StatusChip role={role} label={role === "good" ? "no active alerts" : `${role} risk`} />
+
+      <h4>Active alerts</h4>
+      {alerts.length === 0 ? (
+        <EmptyState>None right now.</EmptyState>
+      ) : (
+        <ul className="detail-list">
+          {alerts.map((a) => (
+            <li key={a.id}>
+              <StatusChip role={severityRole(a.severity)} label={a.severity} />
+              <span className="detail-time">{new Date(a.created_at).toLocaleString()}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <h4>Latest reading</h4>
+      {latestReading ? (
+        <dl className="reading-grid">
+          <dt>Rainfall</dt>
+          <dd>{formatValue(latestReading.rainfall_mm, "mm")}</dd>
+          <dt>River discharge</dt>
+          <dd>{formatValue(latestReading.river_discharge_m3s, "m3/s")}</dd>
+          <dt>Soil moisture</dt>
+          <dd>{formatValue(latestReading.soil_moisture_m3m3, "m3/m3")}</dd>
+          <dt>Evaporation</dt>
+          <dd>{formatValue(latestReading.evaporation_mm, "mm")}</dd>
+        </dl>
+      ) : (
+        <EmptyState>No readings recorded for this catchment yet.</EmptyState>
+      )}
+
+      <h4>Recent anomaly scores</h4>
+      {anomalies.length === 0 ? (
+        <EmptyState>
+          None yet, real-time LSTM inference is not wired into the running
+          system (see project-checklist.md).
+        </EmptyState>
+      ) : (
+        <ul className="detail-list">
+          {anomalies.map((a) => (
+            <li key={a.id}>
+              score {a.anomaly_score.toFixed(3)} (threshold {a.threshold_used.toFixed(3)})
+              {a.is_anomalous ? ", anomalous" : ""}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function RiskList({ catchments, activeAlerts, onSelect }) {
+  const ranked = useMemo(() => {
+    const rank = { critical: 2, warning: 1, good: 0 };
+    return [...catchments]
+      .map((c) => ({ catchment: c, role: riskRoleFor(c.name, activeAlerts) }))
+      .sort((a, b) => rank[b.role] - rank[a.role]);
+  }, [catchments, activeAlerts]);
+
+  return (
+    <ul className="risk-list">
+      {ranked.map(({ catchment, role }) => (
+        <li key={catchment.id}>
+          <button type="button" className="risk-list-row" onClick={() => onSelect(catchment.name)}>
+            <span className={`risk-list-dot risk-list-dot--${role}`} aria-hidden="true" />
+            <span className="risk-list-text">
+              <span className="risk-list-name">{catchment.name}</span>
+              <span className="risk-list-county">{catchment.county}</span>
+            </span>
+            <StatusChip role={role} label={RISK_LABEL[role]} />
+            <IconChevronRight className="risk-list-chevron" />
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default function Dashboard() {
   const [catchments, setCatchments] = useState(null);
   const [activeAlerts, setActiveAlerts] = useState([]);
-  const [anomalies, setAnomalies] = useState(null);
+  const [anomalies, setAnomalies] = useState([]);
+  const [sources, setSources] = useState([]);
+  const [alertsSummary, setAlertsSummary] = useState(null);
+  const [recentHighSeverity, setRecentHighSeverity] = useState([]);
   const [error, setError] = useState(null);
+  const [selectedName, setSelectedName] = useState(null);
+  const [latestReading, setLatestReading] = useState(null);
 
   useEffect(() => {
     Promise.all([
       get("/api/catchments"),
       get("/api/alerts", { status: "active", limit: 500 }),
-      get("/api/anomalies/recent", { limit: 10 }),
+      get("/api/anomalies/recent", { limit: 50 }),
+      get("/api/sources"),
+      get("/api/alerts/summary"),
+      get("/api/alerts", { severity: "high", limit: 5 }),
     ])
-      .then(([catchmentRows, alertRows, anomalyRows]) => {
+      .then(([catchmentRows, alertRows, anomalyRows, sourceRows, summary, highSeverity]) => {
         setCatchments(catchmentRows);
         setActiveAlerts(alertRows);
         setAnomalies(anomalyRows);
+        setSources(sourceRows);
+        setAlertsSummary(summary);
+        setRecentHighSeverity(highSeverity);
       })
       .catch((err) => setError(err.message));
   }, []);
 
-  if (error) return <p className="error">{error}</p>;
-  if (!catchments) return null;
+  // Clearing the selection resets latestReading from the event that
+  // caused it (selectCatchment below), not synchronously inside this
+  // effect; the effect's own job is only the fetch for a real selection.
+  function selectCatchment(name) {
+    setSelectedName(name);
+    setLatestReading(null);
+  }
 
-  const bounds = catchments.map((c) => [c.latitude, c.longitude]);
-  const elevatedCount = catchments.filter(
-    (c) => riskRoleFor(c.name, activeAlerts) !== "good",
-  ).length;
+  // Fetch the selected catchment's latest reading separately: it is the
+  // one piece of detail not already loaded for every catchment up front
+  // (readings/recent is per-catchment and potentially large, unlike
+  // catchments/alerts/anomalies which are small enough to load whole).
+  useEffect(() => {
+    if (!selectedName) return;
+    get("/api/readings/recent", { catchment: selectedName, limit: 1 })
+      .then((rows) => setLatestReading(rows[0] ?? null))
+      .catch(() => setLatestReading(null));
+  }, [selectedName]);
+
+  const selectedCatchment = useMemo(
+    () => catchments?.find((c) => c.name === selectedName) ?? null,
+    [catchments, selectedName],
+  );
+
+  if (error) return <p className="error">{error}</p>;
+  if (!catchments || !alertsSummary) return null;
+
+  const elevated = catchments.filter((c) => riskRoleFor(c.name, activeAlerts) !== "good");
+  const elevatedHigh = elevated.filter((c) => riskRoleFor(c.name, activeAlerts) === "critical").length;
+  const elevatedMedium = elevated.length - elevatedHigh;
+
+  const connectedSources = sources.filter((s) => s.connection_status === "connected");
+  const disconnectedNames = sources
+    .filter((s) => s.connection_status !== "connected")
+    .map((s) => s.name);
+
+  const selectedRole = selectedCatchment ? riskRoleFor(selectedCatchment.name, activeAlerts) : null;
+  const selectedAlerts = selectedCatchment
+    ? activeAlerts.filter((a) => a.catchment === selectedCatchment.name)
+    : [];
+  const selectedAnomalies = selectedCatchment
+    ? anomalies.filter((a) => a.catchment === selectedCatchment.name)
+    : [];
 
   return (
     <section>
-      <h1>Flood risk overview</h1>
+      <PageHeader
+        title="Overview"
+        subtitle={`Flood risk across ${catchments.length} monitored catchments`}
+      />
 
-      <div className="stat-row">
-        <StatTile label="Active alerts" value={activeAlerts.length} />
-        <StatTile
+      <div className="metric-card-row">
+        <MetricCard
           label="Catchments at elevated risk"
-          value={`${elevatedCount} / ${catchments.length}`}
-          accent={elevatedCount > 0 ? "var(--status-critical)" : "var(--status-good)"}
+          value={elevated.length}
+          valueSuffix={`of ${catchments.length}`}
+          segments={[
+            { amount: elevatedHigh, color: "var(--status-critical)" },
+            { amount: elevatedMedium, color: "var(--status-warning)" },
+          ]}
+          segmentsTotal={catchments.length}
+          description={`${elevatedHigh} high, ${elevatedMedium} medium`}
+        />
+        <MetricCard
+          label="Active alerts"
+          value={alertsSummary.active.toLocaleString()}
+          segments={[
+            { amount: alertsSummary.by_severity.high.active, color: "var(--status-critical)" },
+            { amount: alertsSummary.by_severity.medium.active, color: "var(--status-warning)" },
+          ]}
+          segmentsTotal={alertsSummary.active}
+          description={`${alertsSummary.by_severity.high.active} high, ${alertsSummary.by_severity.medium.active} medium, ${alertsSummary.resolved} resolved`}
+        />
+        <MetricCard
+          label="Data sources connected"
+          value={connectedSources.length}
+          valueSuffix={`of ${sources.length}`}
+          segments={[{ amount: connectedSources.length, color: "var(--status-good)" }]}
+          segmentsTotal={sources.length}
+          description={
+            disconnectedNames.length === 0
+              ? "All data sources connected"
+              : `${disconnectedNames.join(", ")} ${disconnectedNames.length === 1 ? "is" : "are"} disconnected`
+          }
+        />
+        <MetricCard
+          label="LSTM anomaly results"
+          value={anomalies.length}
+          badge={{ role: "muted", glyph: "○", label: "Not scoring" }}
+          description="Risk on this screen comes from rule-based alerts"
         />
       </div>
 
-      <div className="map-card">
-        {bounds.length > 0 && (
-          <MapContainer bounds={bounds} className="catchment-map" scrollWheelZoom={false}>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      <div className="dashboard-main-row">
+        <div className="panel dashboard-map-panel">
+          <div className="panel-header">
+            <h2 className="panel-title">Catchment risk map</h2>
+            <span className="panel-caption">Colour shows the highest active alert in each catchment</span>
+          </div>
+
+          <CatchmentMap
+            catchments={catchments}
+            selectedName={selectedName}
+            onSelect={selectCatchment}
+            colorFor={(catchment) => ROLE_COLOR[riskRoleFor(catchment.name, activeAlerts)]}
+            mapClassName="catchment-map--tall"
+          />
+
+          <div className="map-legend">
+            {LEGEND.map((item) => (
+              <StatusChip key={item.role} role={item.role} label={item.label} />
+            ))}
+          </div>
+        </div>
+
+        <aside className="panel dashboard-risk-panel">
+          {selectedCatchment ? (
+            <CatchmentDetails
+              catchment={selectedCatchment}
+              role={selectedRole}
+              alerts={selectedAlerts}
+              latestReading={latestReading}
+              anomalies={selectedAnomalies}
+              onClose={() => selectCatchment(null)}
             />
-            {catchments.map((catchment) => {
-              const role = riskRoleFor(catchment.name, activeAlerts);
-              return (
-                <CircleMarker
-                  key={catchment.id}
-                  center={[catchment.latitude, catchment.longitude]}
-                  radius={10}
-                  pathOptions={{
-                    color: ROLE_COLOR[role],
-                    fillColor: ROLE_COLOR[role],
-                    fillOpacity: 0.85,
-                  }}
-                >
-                  <Popup>
-                    <strong>{catchment.name}</strong>
-                    <br />
-                    {catchment.county}
-                    <br />
-                    <StatusChip role={role} label={role === "good" ? "no active alerts" : role} />
-                  </Popup>
-                </CircleMarker>
-              );
-            })}
-          </MapContainer>
+          ) : (
+            <>
+              <div className="panel-header">
+                <h2 className="panel-title">Catchments by risk</h2>
+                <span className="panel-caption">Highest first</span>
+              </div>
+              <RiskList catchments={catchments} activeAlerts={activeAlerts} onSelect={selectCatchment} />
+            </>
+          )}
+        </aside>
+      </div>
+
+      <div className="panel dashboard-high-severity-panel">
+        <div className="panel-header">
+          <h2 className="panel-title">Latest high-severity alerts</h2>
+          <Link to="/alerts?severity=high" className="panel-link">
+            View all {alertsSummary.by_severity.high.active + alertsSummary.by_severity.high.resolved} high-severity alerts
+          </Link>
+        </div>
+
+        {recentHighSeverity.length === 0 ? (
+          <EmptyState>No high-severity alerts right now.</EmptyState>
+        ) : (
+          <table className="dashboard-high-severity-table">
+            <thead>
+              <tr>
+                <th>Severity</th>
+                <th>Catchment</th>
+                <th>Status</th>
+                <th>Raised</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentHighSeverity.map((alert) => (
+                <tr key={alert.id}>
+                  <td>
+                    <StatusChip role={severityRole(alert.severity)} label={alert.severity} />
+                  </td>
+                  <td>{alert.catchment}</td>
+                  <td>
+                    <StatusChip
+                      role={alert.status === "resolved" ? "good" : "active"}
+                      label={alert.status}
+                    />
+                  </td>
+                  <td>{new Date(alert.created_at).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
-      <p className="map-caption">
-        Coloured by the highest-severity active alert per catchment. Catchment
-        positions are still the placeholder coordinates in db/seed.py, not the
-        real ERA5/CHIRPS extraction values.
-      </p>
-
-      <h2>Recent anomaly outputs</h2>
-      {anomalies && anomalies.length === 0 && (
-        <EmptyState>
-          No anomaly scores yet, real-time LSTM inference is not wired into
-          the running system (see project-checklist.md).
-        </EmptyState>
-      )}
-      {anomalies && anomalies.length > 0 && (
-        <ul className="anomaly-list">
-          {anomalies.map((a) => (
-            <li key={a.id}>
-              {a.catchment}: score {a.anomaly_score.toFixed(3)} (threshold{" "}
-              {a.threshold_used.toFixed(3)}){a.is_anomalous ? ", anomalous" : ""}
-            </li>
-          ))}
-        </ul>
-      )}
     </section>
   );
 }

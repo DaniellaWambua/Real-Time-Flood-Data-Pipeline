@@ -1,0 +1,18 @@
+.app-footer {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding: 1.1rem 1.75rem;
+  border-top: 1px solid var(--gridline);
+  background: var(--surface-page);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+
+@media (max-width: 640px) {
+  .app-footer {
+    flex-direction: column;
+  }
+}

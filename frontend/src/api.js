@@ -56,3 +56,11 @@ export function get(path, params = {}) {
   const query = new URLSearchParams(cleaned).toString();
   return request(`${path}${query ? `?${query}` : ""}`);
 }
+
+export function post(path, body) {
+  return request(path, { method: "POST", body: JSON.stringify(body) });
+}
+
+export function patch(path, body) {
+  return request(path, { method: "PATCH", body: JSON.stringify(body) });
+}

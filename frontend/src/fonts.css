@@ -1,0 +1,32 @@
+/*
+ * One self-hosted type family, Lato, used everywhere - body text,
+ * headings, and figures/timestamps/chart axes alike (there is no
+ * longer a separate heading or monospace face; --font-heading and
+ * --font-mono in theme.css both just point back to --font-sans).
+ * Self-hosted as a repo asset rather than loaded from Google Fonts,
+ * so the dashboard still renders at a defence demo with no internet.
+ * Taken from the @fontsource/lato npm package, licensed under the
+ * SIL Open Font License 1.1 (assets/fonts/OFL-LICENSE.txt).
+ *
+ * Lato ships as static weights, not a variable font, and only
+ * 400 (regular) and 700 (bold) are bundled here - the two weights
+ * actually needed; any 500/600 ("semibold") usage elsewhere in the
+ * CSS falls back to the nearest of these two per the browser's own
+ * font-weight matching, rather than shipping extra files for it.
+ */
+
+@font-face {
+  font-family: "Lato";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./assets/fonts/lato-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Lato";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./assets/fonts/lato-latin-700-normal.woff2") format("woff2");
+}
