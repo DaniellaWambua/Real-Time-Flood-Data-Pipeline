@@ -30,9 +30,12 @@
 
 .alert-hero-value {
   font-size: 2.6rem;
-  font-weight: 700;
+  /* Same hero-number treatment as MetricCard's headline figures:
+     Lato Black (900) in --brand-deep rather than the regular dark
+     text color - this is the single biggest number on the page. */
+  font-weight: 900;
   line-height: 1;
-  color: var(--text-primary);
+  color: var(--brand-deep);
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono);
 }

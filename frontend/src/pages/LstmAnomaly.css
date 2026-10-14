@@ -1,0 +1,46 @@
+
+.lstm-panel-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.lstm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.lstm-table th {
+  text-align: left;
+  padding: 0.5rem 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--gridline);
+}
+
+.lstm-table td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--gridline);
+}
+
+.lstm-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.lstm-table-strong {
+  font-weight: 700;
+}
+
+.lstm-table-note {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.lstm-caveat {
+  margin: 1rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}

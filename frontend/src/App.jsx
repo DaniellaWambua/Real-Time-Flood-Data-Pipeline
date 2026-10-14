@@ -7,6 +7,8 @@ import Footer from "./components/Footer";
 import { IconBell } from "./components/icons";
 import Dashboard from "./pages/Dashboard";
 import DataStream from "./pages/DataStream";
+import LstmAnomaly from "./pages/LstmAnomaly";
+import RoleSwitcher from "./pages/RoleSwitcher";
 import Alerts from "./pages/Alerts";
 import Admin from "./pages/Admin";
 
@@ -107,8 +109,10 @@ export default function App() {
         <Route element={<Layout user={user} onLoggedOut={() => setUser(null)} />}>
           <Route index element={<Dashboard />} />
           <Route path="data-stream" element={<DataStream />} />
+          <Route path="lstm-anomaly" element={<LstmAnomaly />} />
           <Route path="alerts" element={<Alerts />} />
           <Route path="admin" element={<Admin />} />
+          <Route path="role-switcher" element={<RoleSwitcher />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

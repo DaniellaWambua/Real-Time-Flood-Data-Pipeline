@@ -13,6 +13,15 @@ import "./MetricCard.css";
  * track's own neutral background, same as an unfilled progress bar.
  * `badge` is `{ role, glyph, label }` and takes the bar's place when
  * there's no meaningful proportion to show.
+ *
+ * `tone` is the optional filled-card treatment from Daniella's
+ * palette spec - "soft" (Pale Ice Blue fill, plain dark text) or
+ * "deep" (Forest Green fill, white text), alternated across the
+ * Overview screen's four hero cards to match the reference's
+ * checkerboard of pale-blue/forest-green cards. Left unset, a card
+ * stays the plain white panel it always was (used for Admin's
+ * smaller database-overview tiles, which aren't "hero" cards in the
+ * same sense).
  */
 export default function MetricCard({
   label,
@@ -22,9 +31,11 @@ export default function MetricCard({
   segmentsTotal,
   badge,
   description,
+  tone,
 }) {
+  const toneClass = tone ? ` metric-card--${tone}` : "";
   return (
-    <div className="metric-card">
+    <div className={`metric-card${toneClass}`}>
       <div className="metric-card-label">{label}</div>
       <div className="metric-card-value">
         {value}

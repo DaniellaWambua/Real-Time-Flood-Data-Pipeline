@@ -91,6 +91,27 @@
   gap: 1.1rem;
 }
 
+.datastream-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+}
+
+.datastream-pair-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.datastream-pair .line-chart {
+  border-color: transparent;
+  box-shadow: none;
+}
+
 .datastream-aside {
   display: flex;
   flex-direction: column;

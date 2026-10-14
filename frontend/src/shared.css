@@ -60,21 +60,27 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* --accent (the moodboard's soft blue) is too light for white text
-   to sit on at AA contrast, so filled buttons use --accent-strong, a
-   darker shade from the same hue, instead. */
+/* Filled buttons use --accent-soft (the moodboard's Pale Ice Blue),
+   per Daniella's palette spec ("button fills"). That's too light for
+   white text at AA contrast, so unlike the old --accent-strong fill,
+   the label stays dark (--text-primary) instead of white - the same
+   fix applied to Admin/Alerts' status text elsewhere, just for a
+   fill instead of a glyph. --accent-strong still borders the fill,
+   both so the button reads against white/pale-blue surfaces and to
+   keep a visual link to the sidebar's active-tab color, which is
+   still --accent-strong. */
 button[type="submit"],
 .btn-primary {
-  background: var(--accent-strong);
+  background: var(--accent-soft);
   border-color: var(--accent-strong);
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 button[type="submit"]:hover:not(:disabled),
 .btn-primary:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent-strong) 85%, black);
-  border-color: color-mix(in srgb, var(--accent-strong) 85%, black);
-  color: #ffffff;
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--accent-strong));
+  border-color: var(--accent-strong);
+  color: var(--text-primary);
 }
 
 /* A bordered, slightly elevated panel, for the cards each screen

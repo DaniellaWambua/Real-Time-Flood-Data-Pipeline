@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import CatchmentMap from "../components/CatchmentMap";
+import RiskDistribution from "../components/RiskDistribution";
 import MetricCard from "../components/MetricCard";
 import StatusChip from "../components/StatusChip";
 import PageHeader from "../components/PageHeader";
@@ -17,9 +18,9 @@ const SEVERITY_RANK = { low: 1, medium: 2, high: 3 };
 // a literal color prop, it cannot read CSS custom properties.
 const ROLE_COLOR = {
   good: "#0ca30c",
-  warning: "#fab219",
+  warning: "#e5a83b",
   serious: "#ec835a",
-  critical: "#d03b3b",
+  critical: "#e05656",
 };
 
 const LEGEND = [
@@ -225,6 +226,7 @@ export default function Dashboard() {
 
       <div className="metric-card-row">
         <MetricCard
+          tone="soft"
           label="Catchments at elevated risk"
           value={elevated.length}
           valueSuffix={`of ${catchments.length}`}
@@ -236,6 +238,7 @@ export default function Dashboard() {
           description={`${elevatedHigh} high, ${elevatedMedium} medium`}
         />
         <MetricCard
+          tone="deep"
           label="Active alerts"
           value={alertsSummary.active.toLocaleString()}
           segments={[
@@ -246,6 +249,7 @@ export default function Dashboard() {
           description={`${alertsSummary.by_severity.high.active} high, ${alertsSummary.by_severity.medium.active} medium, ${alertsSummary.resolved} resolved`}
         />
         <MetricCard
+          tone="soft"
           label="Data sources connected"
           value={connectedSources.length}
           valueSuffix={`of ${sources.length}`}
@@ -258,6 +262,7 @@ export default function Dashboard() {
           }
         />
         <MetricCard
+          tone="deep"
           label="LSTM anomaly results"
           value={anomalies.length}
           badge={{ role: "muted", glyph: "○", label: "Not scoring" }}
@@ -303,6 +308,14 @@ export default function Dashboard() {
                 <h2 className="panel-title">Catchments by risk</h2>
                 <span className="panel-caption">Highest first</span>
               </div>
+              <RiskDistribution
+                total={catchments.length}
+                segments={[
+                  { role: "critical", label: "High", count: elevatedHigh },
+                  { role: "warning", label: "Medium", count: elevatedMedium },
+                  { role: "good", label: "No active alert", count: catchments.length - elevated.length },
+                ]}
+              />
               <RiskList catchments={catchments} activeAlerts={activeAlerts} onSelect={selectCatchment} />
             </>
           )}
