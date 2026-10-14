@@ -20,10 +20,15 @@
 
 .metric-card-value {
   font-size: 1.9rem;
-  font-weight: 700;
+  /* 900 (black), not 700 - these are the dashboard's headline KPI
+     numbers, so they get Lato's heaviest weight plus --brand-deep
+     (the moodboard's Forest Green), matching how the reference
+     dashboard's own hero numbers read: heavier and in the hero
+     color, not just the default dark text. */
+  font-weight: 900;
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono);
-  color: var(--text-primary);
+  color: var(--brand-deep);
   line-height: 1.1;
 }
 

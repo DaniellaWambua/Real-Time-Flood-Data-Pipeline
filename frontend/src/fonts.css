@@ -8,12 +8,23 @@
  * Taken from the @fontsource/lato npm package, licensed under the
  * SIL Open Font License 1.1 (assets/fonts/OFL-LICENSE.txt).
  *
- * Lato ships as static weights, not a variable font, and only
- * 400 (regular) and 700 (bold) are bundled here - the two weights
- * actually needed; any 500/600 ("semibold") usage elsewhere in the
- * CSS falls back to the nearest of these two per the browser's own
- * font-weight matching, rather than shipping extra files for it.
+ * Four static weights are bundled: 300 (light) and 900 (black) were
+ * added for Daniella's palette/typography spec, which calls for
+ * weights 300/400/700/900 across KPI numbers, chart labels and table
+ * text; 400 (regular) and 700 (bold) were already here from the
+ * earlier Lato switch. Lato has no 500/600 ("semibold") weight at
+ * all, so any existing CSS asking for one still falls back to the
+ * nearest bundled weight via the browser's own font-weight matching
+ * rather than shipping a fifth file for it.
  */
+
+@font-face {
+  font-family: "Lato";
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url("./assets/fonts/lato-latin-300-normal.woff2") format("woff2");
+}
 
 @font-face {
   font-family: "Lato";
@@ -29,4 +40,12 @@
   font-weight: 700;
   font-display: swap;
   src: url("./assets/fonts/lato-latin-700-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Lato";
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url("./assets/fonts/lato-latin-900-normal.woff2") format("woff2");
 }
