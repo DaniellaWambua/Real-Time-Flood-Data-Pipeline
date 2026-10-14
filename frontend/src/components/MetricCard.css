@@ -83,3 +83,47 @@
   color: var(--text-muted);
   line-height: 1.4;
 }
+
+/* Filled-card tones from Daniella's palette spec, alternated across
+   the Overview screen's hero row (see MetricCard.jsx). Both keep the
+   same border-radius/shadow/padding as the plain card - only the
+   fill and the text colors that need to change for contrast on it
+   are overridden below. */
+.metric-card--soft {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+
+.metric-card--soft .metric-card-value {
+  color: var(--text-primary);
+}
+
+.metric-card--soft .metric-card-label,
+.metric-card--soft .metric-card-suffix,
+.metric-card--soft .metric-card-description {
+  color: var(--text-secondary);
+}
+
+.metric-card--deep {
+  background: var(--brand-deep);
+  border-color: transparent;
+}
+
+.metric-card--deep .metric-card-value {
+  color: #ffffff;
+}
+
+.metric-card--deep .metric-card-label,
+.metric-card--deep .metric-card-suffix,
+.metric-card--deep .metric-card-description {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.metric-card--deep .metric-card-bar {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.metric-card--deep .metric-card-badge {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.85);
+}

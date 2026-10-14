@@ -20,9 +20,22 @@ import "./DataStream.css";
 // charts instead. Rainfall is discrete event data, so it renders as
 // bars rather than a connected line; the other three are continuous
 // readings and keep the line (with an area fill).
-const FEATURES = [
+//
+// Rainfall and discharge are also the specific pair Daniella pointed
+// to from a later "Temporal Alignment" reference screenshot (a
+// dual-axis combo chart). Asked how to carry that comparison over
+// without the dual axis, she chose two aligned single-axis charts -
+// which is what the two already were below - so they're now grouped
+// under their own heading and rendered first, rather than left as
+// two of four generically-labelled small multiples, to make that
+// specific comparison as visible as the reference made it, just
+// without sharing a scale.
+const RAINFALL_DISCHARGE = [
   { key: "rainfall_mm", label: "Rainfall", unit: "mm", variant: "bars" },
   { key: "river_discharge_m3s", label: "River discharge", unit: "m3/s", variant: "line" },
+];
+
+const OTHER_FEATURES = [
   { key: "soil_moisture_m3m3", label: "Soil moisture", unit: "m3/m3", variant: "line" },
   { key: "evaporation_mm", label: "Evaporation", unit: "mm", variant: "line" },
 ];
@@ -151,7 +164,26 @@ export default function DataStream() {
 
           {readings && (
             <div className="datastream-grid">
-              {FEATURES.map((feature) => (
+              <div className="datastream-pair">
+                <div className="datastream-pair-header">
+                  <h3 className="panel-title">Rainfall vs river discharge</h3>
+                  <span className="panel-caption">
+                    Two aligned charts on the same time axis, not one shared scale
+                  </span>
+                </div>
+                {RAINFALL_DISCHARGE.map((feature) => (
+                  <LineChart
+                    key={feature.key}
+                    title={feature.label}
+                    unit={feature.unit}
+                    variant={feature.variant}
+                    points={pointsFor(readings, feature.key)}
+                    forceTable={tableView}
+                  />
+                ))}
+              </div>
+
+              {OTHER_FEATURES.map((feature) => (
                 <LineChart
                   key={feature.key}
                   title={feature.label}

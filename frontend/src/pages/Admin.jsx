@@ -91,6 +91,39 @@ function SourcesPanel() {
         </span>
       </div>
 
+      {/* A glanceable status grid above the detail table, per
+          Daniella's request for something closer to how Kubernetes
+          shows node/pod health - one small tile per source with its
+          live connection status up front, rather than only a text
+          row buried in a wider table. Same /api/sources data as the
+          table below, not a second fetch or a separate concept. */}
+      <div className="pipeline-health-grid">
+        {sources.map((source) => (
+          <div key={source.id} className="pipeline-health-tile">
+            <div className="pipeline-health-tile-header">
+              <span
+                className={`pipeline-health-dot pipeline-health-dot--${connectionRole(source.connection_status)}`}
+                aria-hidden="true"
+              />
+              <span className="pipeline-health-tile-name">{source.name}</span>
+            </div>
+            <StatusChip role={connectionRole(source.connection_status)} label={source.connection_status} />
+            <dl className="pipeline-health-tile-stats">
+              <div>
+                <dt>Last ingested</dt>
+                <dd className="figure">
+                  {source.last_ingested_at ? new Date(source.last_ingested_at).toLocaleString() : "No data yet"}
+                </dd>
+              </div>
+              <div>
+                <dt>Records</dt>
+                <dd className="figure">{source.record_count.toLocaleString()}</dd>
+              </div>
+            </dl>
+          </div>
+        ))}
+      </div>
+
       <table className="admin-table">
         <thead>
           <tr>
