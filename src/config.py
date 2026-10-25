@@ -1,5 +1,6 @@
 """Shared configuration for the flood pipeline model training code."""
 
+import os
 from pathlib import Path
 
 # Paths
@@ -9,7 +10,7 @@ PROCESSED_DATA_DIR = PROJECT_ROOT / "data" / "processed"
 MODELS_DIR = PROJECT_ROOT / "models"
 FIGURES_DIR = PROJECT_ROOT / "reports" / "figures"
 
-RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v7.csv"  # v6 + ERA5-Land soil moisture/evaporation and ONI
+RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v8.csv"  # v6 + ERA5-Land soil moisture/evaporation and ONI
 
 # Catchments
 # Nzoia River is deliberately excluded: it has 0 validation-period flood
@@ -44,6 +45,20 @@ FEATURE_COLUMNS = [
     "oni",
 ]
 LABEL_COLUMN = "flood_event"
+
+# Dataset switch. v7 (above) is the default. Setting FLOOD_DATASET=v6
+# trains on the earlier v6 file instead: no ERA5-Land/ONI features, but
+# with Nzoia River back in. Nzoia was dropped because the single 2023
+# validation year has no Nzoia floods; src/model_selection.py validates
+# on 2015-2023 in four blocks, which do include Nzoia's 2013/2015 floods.
+DATASET = os.environ.get("FLOOD_DATASET", "v8")
+if DATASET == "v6":
+    RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v6.csv"
+    CATCHMENTS = CATCHMENTS + ["Nzoia River"]
+    FEATURE_COLUMNS = [c for c in FEATURE_COLUMNS
+                       if c not in ("soil_moisture_m3m3", "evaporation_mm", "oni")]
+elif DATASET != "v8":
+    raise ValueError(f"FLOOD_DATASET must be v6 or v8, not {DATASET!r}")
 
 # Windowing and chronological split (by year, not shuffled)
 WINDOW_LENGTH = 14
