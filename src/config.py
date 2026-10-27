@@ -88,4 +88,10 @@ THRESHOLD_SEARCH_STEP = 0.5
 # LSTM layers, the first change tested that targets the documented
 # validation-to-test drift problem directly rather than recalibrating
 # the threshold after training.
-AUTOENCODER_DROPOUT = 0.2
+AUTOENCODER_DROPOUT = 0.1
+
+# Added 2026-10-27 (Phase 12 finalisation): dropout for the autoencoder's
+# LSTM layers, the first change tested that targets the documented
+# validation-to-test drift problem directly rather than recalibrating
+# the threshold after training.
+AUTOENCODER_DROPOUT = 0.1
