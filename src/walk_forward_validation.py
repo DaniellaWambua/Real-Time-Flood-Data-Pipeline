@@ -52,10 +52,14 @@ FOLDS = [
 
 
 def set_seeds():
+    """See src/train.py's set_seeds() for why enable_op_determinism() matters
+    here: without it, repeated folds on GPU are not actually reproducible
+    despite the fixed seed."""
     os.environ["PYTHONHASHSEED"] = str(RANDOM_SEED)
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
     tf.random.set_seed(RANDOM_SEED)
+    tf.config.experimental.enable_op_determinism()
 
 
 def bounded_split(df: pd.DataFrame, catchment: str, val_start: int, test_start: int, test_end: int):

@@ -32,11 +32,21 @@ DIAGNOSTIC_PERCENTILES = [80, 85, 90, 95, 97, 99, 99.5]
 
 
 def set_seeds():
-    """Fix the random seed so runs are reproducible and comparable."""
+    """Fix the random seed so runs are reproducible and comparable.
+
+    Seeding alone does not make GPU training reproducible: cuDNN's LSTM
+    kernels use non-deterministic reduction ops in the backward pass unless
+    TensorFlow's op-determinism switch is explicitly enabled. Without this,
+    two runs with the same seed can still diverge substantially on GPU (as
+    seen 2026-10-25/27: Mathare's F1 moved from 0.667 to 0.160 between runs
+    with no code or data change). This may fall back to a slightly slower
+    non-cuDNN kernel for some ops, which is immaterial at this dataset size.
+    """
     os.environ["PYTHONHASHSEED"] = str(RANDOM_SEED)
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
     tf.random.set_seed(RANDOM_SEED)
+    tf.config.experimental.enable_op_determinism()
 
 
 def print_threshold_curve(name, errors_val, y_val):
