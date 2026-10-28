@@ -1,0 +1,288 @@
+{
+  "model": "LSTM",
+  "params": {
+    "window": 14,
+    "units": 64,
+    "dropout": 0.2,
+    "pos_weight_scale": 0.25
+  },
+  "threshold": 0.06338544189929962,
+  "cv_ap": 0.06930759707900648,
+  "cv_fold_aps": [
+    0.04410280638598654,
+    0.03711929889722671,
+    0.07564620224616127,
+    0.12036208078665141
+  ],
+  "cv": {
+    "precision": 0.0927105449398443,
+    "recall": 0.2997711670480549,
+    "f1": 0.14162162162162162,
+    "flagged_days": 1413,
+    "flood_days": 437
+  },
+  "cv_tolerant": {
+    "precision": 0.10474168435951875,
+    "event_recall": 0.52,
+    "events": 25,
+    "events_caught": 13
+  },
+  "test_ap": 0.41616733731684563,
+  "test": {
+    "precision": 0.13711583924349882,
+    "recall": 0.6744186046511628,
+    "f1": 0.22789783889980353,
+    "flagged_days": 423,
+    "flood_days": 86
+  },
+  "test_tolerant": {
+    "precision": 0.22458628841607564,
+    "event_recall": 0.8888888888888888,
+    "events": 9,
+    "events_caught": 8
+  },
+  "test_per_catchment": {
+    "Nairobi River": {
+      "precision": 0.21621621621621623,
+      "recall": 1.0,
+      "f1": 0.35555555555555557,
+      "flagged_days": 37,
+      "flood_days": 8
+    },
+    "Mathare": {
+      "precision": 0.2,
+      "recall": 1.0,
+      "f1": 0.3333333333333333,
+      "flagged_days": 50,
+      "flood_days": 10
+    },
+    "Ngong": {
+      "precision": 0.14035087719298245,
+      "recall": 1.0,
+      "f1": 0.24615384615384617,
+      "flagged_days": 57,
+      "flood_days": 8
+    },
+    "Motoine": {
+      "precision": 0.14035087719298245,
+      "recall": 1.0,
+      "f1": 0.24615384615384617,
+      "flagged_days": 57,
+      "flood_days": 8
+    },
+    "Nyando River": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_days": 13,
+      "flood_days": 5
+    },
+    "Tana River": {
+      "precision": 0.24358974358974358,
+      "recall": 0.4523809523809524,
+      "f1": 0.31666666666666665,
+      "flagged_days": 78,
+      "flood_days": 42
+    },
+    "Nzoia River": {
+      "precision": 0.03816793893129771,
+      "recall": 1.0,
+      "f1": 0.07352941176470588,
+      "flagged_days": 131,
+      "flood_days": 5
+    }
+  },
+  "n_seeds": 5,
+  "all_trials": [
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.066904653263865
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.08838448372349521
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.4,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.07569309789471261
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.4,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.059902290381706996
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 64,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.07877385073646492
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 64,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.06608528092584398
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 64,
+        "dropout": 0.4,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.055393805729592974
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 64,
+        "dropout": 0.4,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.0661962763754719
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.0737844156134573
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.06056465528034479
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 32,
+        "dropout": 0.4,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.06520506827206518
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 32,
+        "dropout": 0.4,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.06638083981439391
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 64,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.05219533158733655
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 64,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.056765022332511
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 64,
+        "dropout": 0.4,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.059652504663630056
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 64,
+        "dropout": 0.4,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.07910938769036949
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.05920534123724658
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 64,
+        "dropout": 0.4,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.06025867300728102
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 64,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.06930759707900648
+    }
+  ]
+}

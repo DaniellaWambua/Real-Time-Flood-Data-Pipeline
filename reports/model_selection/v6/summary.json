@@ -1,0 +1,209 @@
+{
+  "best_model": "LSTM + Random Forest",
+  "selected_by": "cross-validated F1",
+  "tolerance_days": 3,
+  "cv_folds": [
+    [
+      2015,
+      2016
+    ],
+    [
+      2017,
+      2019
+    ],
+    [
+      2020,
+      2021
+    ],
+    [
+      2022,
+      2023
+    ]
+  ],
+  "models": {
+    "LSTM": {
+      "params": {
+        "window": 14,
+        "units": 64,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.25
+      },
+      "threshold": 0.06338544189929962,
+      "cv_ap": 0.06930759707900648,
+      "cv": {
+        "precision": 0.0927105449398443,
+        "recall": 0.2997711670480549,
+        "f1": 0.14162162162162162,
+        "flagged_days": 1413,
+        "flood_days": 437
+      },
+      "cv_tolerant": {
+        "precision": 0.10474168435951875,
+        "event_recall": 0.52,
+        "events": 25,
+        "events_caught": 13
+      },
+      "test_ap": 0.41616733731684563,
+      "test": {
+        "precision": 0.13711583924349882,
+        "recall": 0.6744186046511628,
+        "f1": 0.22789783889980353,
+        "flagged_days": 423,
+        "flood_days": 86
+      },
+      "test_tolerant": {
+        "precision": 0.22458628841607564,
+        "event_recall": 0.8888888888888888,
+        "events": 9,
+        "events_caught": 8
+      }
+    },
+    "1D CNN": {
+      "params": {
+        "window": 14,
+        "filters": 32,
+        "kernel_size": 3,
+        "pos_weight_scale": 1.0
+      },
+      "threshold": 0.23871548473834991,
+      "cv_ap": 0.05961127349186411,
+      "cv": {
+        "precision": 0.08708414872798434,
+        "recall": 0.2036613272311213,
+        "f1": 0.12200137080191913,
+        "flagged_days": 1022,
+        "flood_days": 437
+      },
+      "cv_tolerant": {
+        "precision": 0.10176125244618395,
+        "event_recall": 0.4,
+        "events": 25,
+        "events_caught": 10
+      },
+      "test_ap": 0.4828173763320316,
+      "test": {
+        "precision": 0.125,
+        "recall": 0.8604651162790697,
+        "f1": 0.2182890855457227,
+        "flagged_days": 592,
+        "flood_days": 86
+      },
+      "test_tolerant": {
+        "precision": 0.1875,
+        "event_recall": 0.8888888888888888,
+        "events": 9,
+        "events_caught": 8
+      }
+    },
+    "Gradient Boosting": {
+      "params": {
+        "learning_rate": 0.01,
+        "max_depth": 2,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "threshold": 0.7327942115408312,
+      "cv_ap": 0.07379881916011,
+      "cv": {
+        "precision": 0.08467153284671533,
+        "recall": 0.2654462242562929,
+        "f1": 0.1283895960154953,
+        "flagged_days": 1370,
+        "flood_days": 437
+      },
+      "cv_tolerant": {
+        "precision": 0.12189781021897811,
+        "event_recall": 0.64,
+        "events": 25,
+        "events_caught": 16
+      },
+      "test_ap": 0.1656824218044393,
+      "test": {
+        "precision": 0.15436241610738255,
+        "recall": 0.5348837209302325,
+        "f1": 0.23958333333333334,
+        "flagged_days": 298,
+        "flood_days": 86
+      },
+      "test_tolerant": {
+        "precision": 0.2181208053691275,
+        "event_recall": 0.8888888888888888,
+        "events": 9,
+        "events_caught": 8
+      }
+    },
+    "Random Forest": {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 100,
+        "max_features": "sqrt"
+      },
+      "threshold": 0.5200420625913955,
+      "cv_ap": 0.08011791770697779,
+      "cv": {
+        "precision": 0.0817490494296578,
+        "recall": 0.19679633867276888,
+        "f1": 0.1155137676292814,
+        "flagged_days": 1052,
+        "flood_days": 437
+      },
+      "cv_tolerant": {
+        "precision": 0.13022813688212928,
+        "event_recall": 0.6,
+        "events": 25,
+        "events_caught": 15
+      },
+      "test_ap": 0.20877508096058692,
+      "test": {
+        "precision": 0.171990171990172,
+        "recall": 0.813953488372093,
+        "f1": 0.2839756592292089,
+        "flagged_days": 407,
+        "flood_days": 86
+      },
+      "test_tolerant": {
+        "precision": 0.22358722358722358,
+        "event_recall": 0.8888888888888888,
+        "events": 9,
+        "events_caught": 8
+      }
+    },
+    "LSTM + Random Forest": {
+      "params": {
+        "average_of": [
+          "LSTM",
+          "Random Forest"
+        ]
+      },
+      "threshold": 0.35050565672862327,
+      "cv_ap": 0.07412983507028531,
+      "cv": {
+        "precision": 0.10976837865055387,
+        "recall": 0.2494279176201373,
+        "f1": 0.15244755244755245,
+        "flagged_days": 993,
+        "flood_days": 437
+      },
+      "cv_tolerant": {
+        "precision": 0.14602215508559918,
+        "event_recall": 0.56,
+        "events": 25,
+        "events_caught": 14
+      },
+      "test_ap": 0.41516934699053076,
+      "test": {
+        "precision": 0.17682926829268292,
+        "recall": 0.6744186046511628,
+        "f1": 0.28019323671497587,
+        "flagged_days": 328,
+        "flood_days": 86
+      },
+      "test_tolerant": {
+        "precision": 0.28353658536585363,
+        "event_recall": 0.8888888888888888,
+        "events": 9,
+        "events_caught": 8
+      }
+    }
+  }
+}

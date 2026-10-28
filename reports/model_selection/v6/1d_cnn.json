@@ -1,0 +1,288 @@
+{
+  "model": "1D CNN",
+  "params": {
+    "window": 14,
+    "filters": 32,
+    "kernel_size": 3,
+    "pos_weight_scale": 1.0
+  },
+  "threshold": 0.23871548473834991,
+  "cv_ap": 0.05961127349186411,
+  "cv_fold_aps": [
+    0.0597763408947765,
+    0.03494365857801441,
+    0.06411405989108777,
+    0.07961103460357777
+  ],
+  "cv": {
+    "precision": 0.08708414872798434,
+    "recall": 0.2036613272311213,
+    "f1": 0.12200137080191913,
+    "flagged_days": 1022,
+    "flood_days": 437
+  },
+  "cv_tolerant": {
+    "precision": 0.10176125244618395,
+    "event_recall": 0.4,
+    "events": 25,
+    "events_caught": 10
+  },
+  "test_ap": 0.4828173763320316,
+  "test": {
+    "precision": 0.125,
+    "recall": 0.8604651162790697,
+    "f1": 0.2182890855457227,
+    "flagged_days": 592,
+    "flood_days": 86
+  },
+  "test_tolerant": {
+    "precision": 0.1875,
+    "event_recall": 0.8888888888888888,
+    "events": 9,
+    "events_caught": 8
+  },
+  "test_per_catchment": {
+    "Nairobi River": {
+      "precision": 0.11267605633802817,
+      "recall": 1.0,
+      "f1": 0.20253164556962025,
+      "flagged_days": 71,
+      "flood_days": 8
+    },
+    "Mathare": {
+      "precision": 0.12658227848101267,
+      "recall": 1.0,
+      "f1": 0.2247191011235955,
+      "flagged_days": 79,
+      "flood_days": 10
+    },
+    "Ngong": {
+      "precision": 0.09195402298850575,
+      "recall": 1.0,
+      "f1": 0.16842105263157894,
+      "flagged_days": 87,
+      "flood_days": 8
+    },
+    "Motoine": {
+      "precision": 0.10810810810810811,
+      "recall": 1.0,
+      "f1": 0.1951219512195122,
+      "flagged_days": 74,
+      "flood_days": 8
+    },
+    "Nyando River": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_days": 18,
+      "flood_days": 5
+    },
+    "Tana River": {
+      "precision": 0.3103448275862069,
+      "recall": 0.8571428571428571,
+      "f1": 0.45569620253164556,
+      "flagged_days": 116,
+      "flood_days": 42
+    },
+    "Nzoia River": {
+      "precision": 0.027210884353741496,
+      "recall": 0.8,
+      "f1": 0.05263157894736842,
+      "flagged_days": 147,
+      "flood_days": 5
+    }
+  },
+  "n_seeds": 5,
+  "all_trials": [
+    {
+      "params": {
+        "window": 14,
+        "filters": 32,
+        "kernel_size": 3,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.058719919236489046
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 32,
+        "kernel_size": 3,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.05608406916016616
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 32,
+        "kernel_size": 5,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.053028027331703476
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 32,
+        "kernel_size": 5,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.05478824754715354
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 64,
+        "kernel_size": 3,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.04844658333422121
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 64,
+        "kernel_size": 3,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.04303125090370061
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 64,
+        "kernel_size": 5,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.04570858309606944
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 64,
+        "kernel_size": 5,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.04416748409444039
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 32,
+        "kernel_size": 3,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.041119816503980736
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 32,
+        "kernel_size": 3,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.03660074071944497
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 32,
+        "kernel_size": 5,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.03255834723403683
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 32,
+        "kernel_size": 5,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.024786922245851942
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 64,
+        "kernel_size": 3,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.03752744358084881
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 64,
+        "kernel_size": 3,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.03168383448708796
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 64,
+        "kernel_size": 5,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.044029971611630137
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 64,
+        "kernel_size": 5,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.0346807294495817
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 32,
+        "kernel_size": 3,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.05727284697022442
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 32,
+        "kernel_size": 3,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.05961127349186411
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 32,
+        "kernel_size": 5,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.055181101610848805
+    }
+  ]
+}

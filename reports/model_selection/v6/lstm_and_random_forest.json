@@ -1,0 +1,95 @@
+{
+  "model": "LSTM + Random Forest",
+  "params": {
+    "average_of": [
+      "LSTM",
+      "Random Forest"
+    ]
+  },
+  "threshold": 0.35050565672862327,
+  "cv_ap": 0.07412983507028531,
+  "cv_fold_aps": [
+    0.03956366400930309,
+    0.04995848497314705,
+    0.11267359323971954,
+    0.09432359805897153
+  ],
+  "cv": {
+    "precision": 0.10976837865055387,
+    "recall": 0.2494279176201373,
+    "f1": 0.15244755244755245,
+    "flagged_days": 993,
+    "flood_days": 437
+  },
+  "cv_tolerant": {
+    "precision": 0.14602215508559918,
+    "event_recall": 0.56,
+    "events": 25,
+    "events_caught": 14
+  },
+  "test_ap": 0.41516934699053076,
+  "test": {
+    "precision": 0.17682926829268292,
+    "recall": 0.6744186046511628,
+    "f1": 0.28019323671497587,
+    "flagged_days": 328,
+    "flood_days": 86
+  },
+  "test_tolerant": {
+    "precision": 0.28353658536585363,
+    "event_recall": 0.8888888888888888,
+    "events": 9,
+    "events_caught": 8
+  },
+  "test_per_catchment": {
+    "Nairobi River": {
+      "precision": 0.19047619047619047,
+      "recall": 1.0,
+      "f1": 0.32,
+      "flagged_days": 42,
+      "flood_days": 8
+    },
+    "Mathare": {
+      "precision": 0.2127659574468085,
+      "recall": 1.0,
+      "f1": 0.3508771929824561,
+      "flagged_days": 47,
+      "flood_days": 10
+    },
+    "Ngong": {
+      "precision": 0.15384615384615385,
+      "recall": 1.0,
+      "f1": 0.26666666666666666,
+      "flagged_days": 52,
+      "flood_days": 8
+    },
+    "Motoine": {
+      "precision": 0.18604651162790697,
+      "recall": 1.0,
+      "f1": 0.3137254901960784,
+      "flagged_days": 43,
+      "flood_days": 8
+    },
+    "Nyando River": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_days": 11,
+      "flood_days": 5
+    },
+    "Tana River": {
+      "precision": 0.3064516129032258,
+      "recall": 0.4523809523809524,
+      "f1": 0.36538461538461536,
+      "flagged_days": 62,
+      "flood_days": 42
+    },
+    "Nzoia River": {
+      "precision": 0.07042253521126761,
+      "recall": 1.0,
+      "f1": 0.13157894736842105,
+      "flagged_days": 71,
+      "flood_days": 5
+    }
+  }
+}

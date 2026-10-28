@@ -211,6 +211,33 @@ A new document, `system-overview-simple.md`, gives the plain-English version: wh
 
 The final six-catchment, final-feature, simple-method numbers have not been generated yet. The code changes above were verified with the pandas-only checks available (`load_raw_data()` loads cleanly, `CATCHMENTS` and `FEATURE_COLUMNS` are correct), but training itself needs TensorFlow with the Apple Silicon `tensorflow-metal` build, which only exists in Daniella's own project virtualenv on her Mac, not in any environment Claude can execute code in directly. Running `python -m src.train` once, from the repository root with that virtualenv active, is the one remaining step; the output should be logged here as the confirmed final result once available, and used to fill in the numbers section of `system-overview-simple.md`.
 
+## Phase 12: supervised model comparison (LSTM, 1D CNN, random forest, gradient boosting)
+
+The autoencoder never sees a labelled flood day, so it can only flag "unusual" days, and 2024-2025 was unusually wet throughout (Phase 8). Phase 12 replaces it with supervised classifiers that learn from the labelled flood days directly. `python -m src.model_selection` runs the whole comparison.
+
+**Features (`src/features.py`).** The eight v7 features, plus inputs that ask "how unusual is today for this catchment, compared with its own past year": trailing 365-day percentile ranks of discharge, 7- and 30-day rainfall and soil moisture, a 30-day rainfall total, and the season as a point on a circle. Same-day averages of those ranks across all catchments are added as region-wide features, plus a one-hot catchment indicator. Every feature only looks backwards in time, so all of them could be computed live from the ingestion stream.
+
+**Protocol.** Hyperparameters are tuned with expanding-window cross-validation on 2010-2023 (validation blocks 2015-16, 2017-19, 2020-21 and 2022-23, each trained on all earlier years), scored by mean average precision. The probability cut-off is the one with the best F1 on the pooled out-of-fold predictions. The best model is chosen on cross-validated F1, and the 2024-2025 test set is scored once at the end and never used to choose anything. A single small LSTM turned out to be mostly luck (the same config scored 0.17, 0.20 or 0.26 depending only on its random seed), so the LSTM and CNN are averages of five networks with different seeds.
+
+**Results, v7 dataset (six catchments), test set 2024-2025:**
+
+| model | CV F1 | test precision | test recall | test F1 |
+|---|---|---|---|---|
+| LSTM autoencoder (before) | - | 0.113 | 0.541 | 0.187 |
+| LSTM, 5-seed average (selected) | 0.333 | 0.153 | 0.580 | 0.242 |
+| 1D CNN, 5-seed average | 0.243 | 0.259 | 0.519 | 0.346 |
+| Random forest | 0.200 | 0.244 | 0.790 | 0.373 |
+| Gradient boosting | 0.166 | 0.147 | 0.815 | 0.250 |
+| LSTM + random forest averaged | 0.281 | 0.230 | 0.494 | 0.314 |
+
+The selected LSTM uses a 30-day window, 32 units, dropout 0.2 and full class weighting, with a cut-off of 0.147. It catches every test flood day on Nairobi River, Mathare, Ngong and Motoine, at precision 0.14-0.23. Every model catches 7 of the 8 test flood events if a flag within three days of a labelled flood counts. The random forest and CNN score higher on test but lower in cross-validation; switching to them after seeing test scores would amount to tuning on the test set, so the LSTM stays selected.
+
+**What still limits precision is the data rather than the model.** Tana River (42 of the 81 test flood days) has a discharge point that reads zero on 85% of days, so it is not on the river channel. Flood-register dates often sit a few days off the rainfall/discharge peak: in 2023, for example, the highest-scoring Nairobi River days are 21-30 November against a labelled 8-20 November. Nyando River's register has no April-May 2024 entry, although discharge peaked then and Kano Plains flooding was widely reported.
+
+**v6 comparison.** Re-running everything on `Dataset_labels_v6.csv` (`FLOOD_DATASET=v6`: seven catchments with Nzoia River back in, no soil moisture, evaporation or ONI) was worse for every model. LSTM cross-validated average precision fell from 0.244 to 0.069 and test F1 from 0.242 to 0.228. Nzoia's five test flood days were all caught, but at precision 0.07. v7 stays the dataset in use.
+
+Results are in `reports/model_selection/<dataset>/` and models in `models/flood_classifiers/<dataset>/`. The dashboard's LSTM page shows the v7 LSTM figures above.
+
 ## Files produced
 
 `models/lstm_autoencoder_<catchment>.keras` and `models/lstm_autoencoder_combined.keras`, with matching figures under `reports/figures/training_curve_<name>.png`. The six core pipeline files are `config.py`, `data_loading.py`, `preprocessing.py`, `model.py`, `scoring.py` and `train.py`; `src/evaluate_pooled_threshold.py`, `src/diagnose_separation.py`, `src/diagnose_overfitting.py`, `src/evaluate_consensus.py`, `src/compare_models.py` (and its `_rank_only`/`_richer_features` variants) and `src/walk_forward_validation.py` are investigation/evaluation scripts documenting how the six core files' choices were reached, not part of running the system day to day. `src/config.py` documents the Phase 10 final feature set and catchment-scope decisions directly in its comments and, as of Phase 11, holds a single flat `FEATURE_COLUMNS` list with no runtime branching. `src/data_loading.py` filters the loaded dataframe to `CATCHMENTS` before validating, so a catchment can be scoped in or out via `CATCHMENTS` alone without editing the raw dataset file. `system-overview-simple.md` is the plain-English companion to this file, meant to be read and explained on its own. Phases 8 to 11 are committed and merged to `main`: Phases 8-9 via earlier PRs, and the Phase 10/11 `config.py`/`data_loading.py` changes via `feat/finalize-catchment-scope` (merged). The database, authentication and Kafka ingestion/stream-processing layers have since been built on top of this (see docs/development-plan.md phases 9-12).

@@ -1,0 +1,278 @@
+{
+  "model": "Gradient Boosting",
+  "params": {
+    "learning_rate": 0.01,
+    "max_depth": 2,
+    "max_iter": 150,
+    "l2_regularization": 1.0
+  },
+  "threshold": 0.7327942115408312,
+  "cv_ap": 0.07379881916011,
+  "cv_fold_aps": [
+    0.04048282698045188,
+    0.07558702196515568,
+    0.11711645296401194,
+    0.062008974730820496
+  ],
+  "cv": {
+    "precision": 0.08467153284671533,
+    "recall": 0.2654462242562929,
+    "f1": 0.1283895960154953,
+    "flagged_days": 1370,
+    "flood_days": 437
+  },
+  "cv_tolerant": {
+    "precision": 0.12189781021897811,
+    "event_recall": 0.64,
+    "events": 25,
+    "events_caught": 16
+  },
+  "test_ap": 0.1656824218044393,
+  "test": {
+    "precision": 0.15436241610738255,
+    "recall": 0.5348837209302325,
+    "f1": 0.23958333333333334,
+    "flagged_days": 298,
+    "flood_days": 86
+  },
+  "test_tolerant": {
+    "precision": 0.2181208053691275,
+    "event_recall": 0.8888888888888888,
+    "events": 9,
+    "events_caught": 8
+  },
+  "test_per_catchment": {
+    "Nairobi River": {
+      "precision": 0.14893617021276595,
+      "recall": 0.875,
+      "f1": 0.2545454545454545,
+      "flagged_days": 47,
+      "flood_days": 8
+    },
+    "Mathare": {
+      "precision": 0.18,
+      "recall": 0.9,
+      "f1": 0.3,
+      "flagged_days": 50,
+      "flood_days": 10
+    },
+    "Ngong": {
+      "precision": 0.1346153846153846,
+      "recall": 0.875,
+      "f1": 0.23333333333333334,
+      "flagged_days": 52,
+      "flood_days": 8
+    },
+    "Motoine": {
+      "precision": 0.12727272727272726,
+      "recall": 0.875,
+      "f1": 0.2222222222222222,
+      "flagged_days": 55,
+      "flood_days": 8
+    },
+    "Nyando River": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_days": 26,
+      "flood_days": 5
+    },
+    "Tana River": {
+      "precision": 0.6111111111111112,
+      "recall": 0.2619047619047619,
+      "f1": 0.36666666666666664,
+      "flagged_days": 18,
+      "flood_days": 42
+    },
+    "Nzoia River": {
+      "precision": 0.1,
+      "recall": 1.0,
+      "f1": 0.18181818181818182,
+      "flagged_days": 50,
+      "flood_days": 5
+    }
+  },
+  "n_seeds": 1,
+  "all_trials": [
+    {
+      "params": {
+        "learning_rate": 0.01,
+        "max_depth": 2,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.07379881916011
+    },
+    {
+      "params": {
+        "learning_rate": 0.01,
+        "max_depth": 2,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.061057841346356855
+    },
+    {
+      "params": {
+        "learning_rate": 0.01,
+        "max_depth": 3,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.06115632974770526
+    },
+    {
+      "params": {
+        "learning_rate": 0.01,
+        "max_depth": 3,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.04845195610012022
+    },
+    {
+      "params": {
+        "learning_rate": 0.01,
+        "max_depth": 5,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.05169454835295548
+    },
+    {
+      "params": {
+        "learning_rate": 0.01,
+        "max_depth": 5,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.04542289871644456
+    },
+    {
+      "params": {
+        "learning_rate": 0.03,
+        "max_depth": 2,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.0589572483070885
+    },
+    {
+      "params": {
+        "learning_rate": 0.03,
+        "max_depth": 2,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.045607874507418295
+    },
+    {
+      "params": {
+        "learning_rate": 0.03,
+        "max_depth": 3,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.04525018902688556
+    },
+    {
+      "params": {
+        "learning_rate": 0.03,
+        "max_depth": 3,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.04077768575361443
+    },
+    {
+      "params": {
+        "learning_rate": 0.03,
+        "max_depth": 5,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.04656423586966156
+    },
+    {
+      "params": {
+        "learning_rate": 0.03,
+        "max_depth": 5,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.047249165527233
+    },
+    {
+      "params": {
+        "learning_rate": 0.1,
+        "max_depth": 2,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.04835748804079558
+    },
+    {
+      "params": {
+        "learning_rate": 0.1,
+        "max_depth": 2,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.04381909268790624
+    },
+    {
+      "params": {
+        "learning_rate": 0.1,
+        "max_depth": 3,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.041133678131935164
+    },
+    {
+      "params": {
+        "learning_rate": 0.1,
+        "max_depth": 3,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.04017757560123096
+    },
+    {
+      "params": {
+        "learning_rate": 0.1,
+        "max_depth": 5,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.044313715122409184
+    },
+    {
+      "params": {
+        "learning_rate": 0.1,
+        "max_depth": 5,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.04275389304252631
+    }
+  ]
+}

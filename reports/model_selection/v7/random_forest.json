@@ -1,0 +1,234 @@
+{
+  "model": "Random Forest",
+  "params": {
+    "max_depth": null,
+    "min_samples_leaf": 100,
+    "max_features": 0.3
+  },
+  "threshold": 0.4235937991621405,
+  "cv_ap": 0.12498800258626155,
+  "cv_fold_aps": [
+    0.03932450620299647,
+    0.0635160370427761,
+    0.2410270164797197,
+    0.15608445061955392
+  ],
+  "cv": {
+    "precision": 0.20810810810810812,
+    "recall": 0.1925,
+    "f1": 0.2,
+    "flagged_days": 370,
+    "flood_days": 400
+  },
+  "cv_tolerant": {
+    "precision": 0.3,
+    "event_recall": 0.5833333333333334,
+    "events": 24,
+    "events_caught": 14
+  },
+  "test_ap": 0.2621211905269837,
+  "test": {
+    "precision": 0.24427480916030533,
+    "recall": 0.7901234567901234,
+    "f1": 0.37317784256559766,
+    "flagged_days": 262,
+    "flood_days": 81
+  },
+  "test_tolerant": {
+    "precision": 0.3244274809160305,
+    "event_recall": 0.875,
+    "events": 8,
+    "events_caught": 7
+  },
+  "test_per_catchment": {
+    "Nairobi River": {
+      "precision": 0.20588235294117646,
+      "recall": 0.875,
+      "f1": 0.3333333333333333,
+      "flagged_days": 34,
+      "flood_days": 8
+    },
+    "Mathare": {
+      "precision": 0.28125,
+      "recall": 0.9,
+      "f1": 0.42857142857142855,
+      "flagged_days": 32,
+      "flood_days": 10
+    },
+    "Ngong": {
+      "precision": 0.23333333333333334,
+      "recall": 0.875,
+      "f1": 0.3684210526315789,
+      "flagged_days": 30,
+      "flood_days": 8
+    },
+    "Motoine": {
+      "precision": 0.1794871794871795,
+      "recall": 0.875,
+      "f1": 0.2978723404255319,
+      "flagged_days": 39,
+      "flood_days": 8
+    },
+    "Nyando River": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_days": 48,
+      "flood_days": 5
+    },
+    "Tana River": {
+      "precision": 0.43037974683544306,
+      "recall": 0.8095238095238095,
+      "f1": 0.5619834710743802,
+      "flagged_days": 79,
+      "flood_days": 42
+    }
+  },
+  "n_seeds": 1,
+  "all_trials": [
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 10,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.09559408851106968
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 10,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.08978117176515571
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 20,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.09943890533394827
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 20,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.09305565600484751
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.1105400784232712
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.10703889509505884
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 100,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.11544895010319799
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 100,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.1216847812602121
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 10,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.10098047056754939
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 10,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.0970280624854655
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 20,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.10724153553298732
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 20,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.10449806524508624
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 50,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.11547694194188451
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 50,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.11665748103213744
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 100,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.11826585474030783
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 100,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.12498800258626155
+    }
+  ]
+}

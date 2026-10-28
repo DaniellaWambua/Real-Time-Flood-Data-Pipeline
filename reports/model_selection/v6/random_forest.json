@@ -1,0 +1,241 @@
+{
+  "model": "Random Forest",
+  "params": {
+    "max_depth": 8,
+    "min_samples_leaf": 100,
+    "max_features": "sqrt"
+  },
+  "threshold": 0.5200420625913955,
+  "cv_ap": 0.08011791770697779,
+  "cv_fold_aps": [
+    0.03963682283208603,
+    0.05051135520514698,
+    0.1636070053699103,
+    0.06671648742076784
+  ],
+  "cv": {
+    "precision": 0.0817490494296578,
+    "recall": 0.19679633867276888,
+    "f1": 0.1155137676292814,
+    "flagged_days": 1052,
+    "flood_days": 437
+  },
+  "cv_tolerant": {
+    "precision": 0.13022813688212928,
+    "event_recall": 0.6,
+    "events": 25,
+    "events_caught": 15
+  },
+  "test_ap": 0.20877508096058692,
+  "test": {
+    "precision": 0.171990171990172,
+    "recall": 0.813953488372093,
+    "f1": 0.2839756592292089,
+    "flagged_days": 407,
+    "flood_days": 86
+  },
+  "test_tolerant": {
+    "precision": 0.22358722358722358,
+    "event_recall": 0.8888888888888888,
+    "events": 9,
+    "events_caught": 8
+  },
+  "test_per_catchment": {
+    "Nairobi River": {
+      "precision": 0.12280701754385964,
+      "recall": 0.875,
+      "f1": 0.2153846153846154,
+      "flagged_days": 57,
+      "flood_days": 8
+    },
+    "Mathare": {
+      "precision": 0.16666666666666666,
+      "recall": 0.9,
+      "f1": 0.28125,
+      "flagged_days": 54,
+      "flood_days": 10
+    },
+    "Ngong": {
+      "precision": 0.12280701754385964,
+      "recall": 0.875,
+      "f1": 0.2153846153846154,
+      "flagged_days": 57,
+      "flood_days": 8
+    },
+    "Motoine": {
+      "precision": 0.15555555555555556,
+      "recall": 0.875,
+      "f1": 0.2641509433962264,
+      "flagged_days": 45,
+      "flood_days": 8
+    },
+    "Nyando River": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_days": 24,
+      "flood_days": 5
+    },
+    "Tana River": {
+      "precision": 0.3125,
+      "recall": 0.8333333333333334,
+      "f1": 0.45454545454545453,
+      "flagged_days": 112,
+      "flood_days": 42
+    },
+    "Nzoia River": {
+      "precision": 0.08620689655172414,
+      "recall": 1.0,
+      "f1": 0.15873015873015872,
+      "flagged_days": 58,
+      "flood_days": 5
+    }
+  },
+  "n_seeds": 1,
+  "all_trials": [
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 10,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.06177486393774098
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 10,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.055427120123551415
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 20,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.06330558154101237
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 20,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.054775306286343
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.07665228132667327
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 50,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.06208244460599022
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 100,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.08011791770697779
+    },
+    {
+      "params": {
+        "max_depth": 8,
+        "min_samples_leaf": 100,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.06319890547410781
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 10,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.05121500151680363
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 10,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.047478245397355144
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 20,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.05384360203795558
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 20,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.05004938428482395
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 50,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.06912935727754668
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 50,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.05571003750695337
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 100,
+        "max_features": "sqrt"
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.07763884858047428
+    },
+    {
+      "params": {
+        "max_depth": null,
+        "min_samples_leaf": 100,
+        "max_features": 0.3
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.06412941592806692
+    }
+  ]
+}

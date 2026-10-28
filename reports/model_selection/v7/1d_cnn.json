@@ -1,0 +1,281 @@
+{
+  "model": "1D CNN",
+  "params": {
+    "window": 14,
+    "filters": 64,
+    "kernel_size": 3,
+    "pos_weight_scale": 0.25
+  },
+  "threshold": 0.1300962269306183,
+  "cv_ap": 0.22842503663881075,
+  "cv_fold_aps": [
+    0.1798857987415791,
+    0.06338150048077876,
+    0.31186721494783326,
+    0.3585656323850519
+  ],
+  "cv": {
+    "precision": 0.21023765996343693,
+    "recall": 0.2875,
+    "f1": 0.24287222808870115,
+    "flagged_days": 547,
+    "flood_days": 400
+  },
+  "cv_tolerant": {
+    "precision": 0.2449725776965265,
+    "event_recall": 0.5,
+    "events": 24,
+    "events_caught": 12
+  },
+  "test_ap": 0.39189755978793145,
+  "test": {
+    "precision": 0.25925925925925924,
+    "recall": 0.5185185185185185,
+    "f1": 0.345679012345679,
+    "flagged_days": 162,
+    "flood_days": 81
+  },
+  "test_tolerant": {
+    "precision": 0.4506172839506173,
+    "event_recall": 0.875,
+    "events": 8,
+    "events_caught": 7
+  },
+  "test_per_catchment": {
+    "Nairobi River": {
+      "precision": 0.3333333333333333,
+      "recall": 1.0,
+      "f1": 0.5,
+      "flagged_days": 24,
+      "flood_days": 8
+    },
+    "Mathare": {
+      "precision": 0.45454545454545453,
+      "recall": 1.0,
+      "f1": 0.625,
+      "flagged_days": 22,
+      "flood_days": 10
+    },
+    "Ngong": {
+      "precision": 0.3333333333333333,
+      "recall": 1.0,
+      "f1": 0.5,
+      "flagged_days": 24,
+      "flood_days": 8
+    },
+    "Motoine": {
+      "precision": 0.2222222222222222,
+      "recall": 1.0,
+      "f1": 0.36363636363636365,
+      "flagged_days": 36,
+      "flood_days": 8
+    },
+    "Nyando River": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_days": 8,
+      "flood_days": 5
+    },
+    "Tana River": {
+      "precision": 0.16666666666666666,
+      "recall": 0.19047619047619047,
+      "f1": 0.17777777777777778,
+      "flagged_days": 48,
+      "flood_days": 42
+    }
+  },
+  "n_seeds": 5,
+  "all_trials": [
+    {
+      "params": {
+        "window": 14,
+        "filters": 32,
+        "kernel_size": 3,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.1806773696560719
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 32,
+        "kernel_size": 3,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.17468391506024913
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 32,
+        "kernel_size": 5,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.17250922779900488
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 32,
+        "kernel_size": 5,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.19233157736810086
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 64,
+        "kernel_size": 3,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.22597816846819693
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 64,
+        "kernel_size": 3,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.15837710998553284
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 64,
+        "kernel_size": 5,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.2206690535769738
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 64,
+        "kernel_size": 5,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.16423971954862315
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 32,
+        "kernel_size": 3,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.10118806686988943
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 32,
+        "kernel_size": 3,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.11435089677738201
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 32,
+        "kernel_size": 5,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.11754077287378513
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 32,
+        "kernel_size": 5,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.15548115636226645
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 64,
+        "kernel_size": 3,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.08839844305113537
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 64,
+        "kernel_size": 3,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.14747173092882815
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 64,
+        "kernel_size": 5,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.12876851528546673
+    },
+    {
+      "params": {
+        "window": 30,
+        "filters": 64,
+        "kernel_size": 5,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.12059154222319447
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 64,
+        "kernel_size": 3,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.22842503663881075
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 64,
+        "kernel_size": 5,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.15105854437174612
+    },
+    {
+      "params": {
+        "window": 14,
+        "filters": 32,
+        "kernel_size": 5,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.1888058884342118
+    }
+  ]
+}

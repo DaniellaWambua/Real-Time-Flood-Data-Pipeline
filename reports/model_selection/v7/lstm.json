@@ -1,0 +1,281 @@
+{
+  "model": "LSTM",
+  "params": {
+    "window": 30,
+    "units": 32,
+    "dropout": 0.2,
+    "pos_weight_scale": 1.0
+  },
+  "threshold": 0.14719973504543304,
+  "cv_ap": 0.24422969346762635,
+  "cv_fold_aps": [
+    0.14525160803934,
+    0.03807193506457139,
+    0.4375783935814175,
+    0.3560168371851765
+  ],
+  "cv": {
+    "precision": 0.2839506172839506,
+    "recall": 0.4025,
+    "f1": 0.3329886246122027,
+    "flagged_days": 567,
+    "flood_days": 400
+  },
+  "cv_tolerant": {
+    "precision": 0.3474426807760141,
+    "event_recall": 0.5,
+    "events": 24,
+    "events_caught": 12
+  },
+  "test_ap": 0.2503497167091126,
+  "test": {
+    "precision": 0.1525974025974026,
+    "recall": 0.5802469135802469,
+    "f1": 0.2416452442159383,
+    "flagged_days": 308,
+    "flood_days": 81
+  },
+  "test_tolerant": {
+    "precision": 0.262987012987013,
+    "event_recall": 0.875,
+    "events": 8,
+    "events_caught": 7
+  },
+  "test_per_catchment": {
+    "Nairobi River": {
+      "precision": 0.22857142857142856,
+      "recall": 1.0,
+      "f1": 0.37209302325581395,
+      "flagged_days": 35,
+      "flood_days": 8
+    },
+    "Mathare": {
+      "precision": 0.18518518518518517,
+      "recall": 1.0,
+      "f1": 0.3125,
+      "flagged_days": 54,
+      "flood_days": 10
+    },
+    "Ngong": {
+      "precision": 0.14035087719298245,
+      "recall": 1.0,
+      "f1": 0.24615384615384617,
+      "flagged_days": 57,
+      "flood_days": 8
+    },
+    "Motoine": {
+      "precision": 0.16326530612244897,
+      "recall": 1.0,
+      "f1": 0.2807017543859649,
+      "flagged_days": 49,
+      "flood_days": 8
+    },
+    "Nyando River": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "flagged_days": 26,
+      "flood_days": 5
+    },
+    "Tana River": {
+      "precision": 0.14942528735632185,
+      "recall": 0.30952380952380953,
+      "f1": 0.20155038759689922,
+      "flagged_days": 87,
+      "flood_days": 42
+    }
+  },
+  "n_seeds": 5,
+  "all_trials": [
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.149
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.175
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.4,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.188
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.4,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.168
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 64,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.226
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 64,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.182
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 64,
+        "dropout": 0.4,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.242
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 64,
+        "dropout": 0.4,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.181
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.243
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.252
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 32,
+        "dropout": 0.4,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.165
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 32,
+        "dropout": 0.4,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.232
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 64,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.237
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 64,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.241
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 64,
+        "dropout": 0.4,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.171
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 64,
+        "dropout": 0.4,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.264
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 64,
+        "dropout": 0.4,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.21515142465691744
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.24422969346762635
+    },
+    {
+      "params": {
+        "window": 30,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.20271014180334954
+    }
+  ]
+}

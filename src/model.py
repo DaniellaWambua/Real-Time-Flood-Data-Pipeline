@@ -32,3 +32,41 @@ def build_lstm_autoencoder(window_length: int, n_features: int) -> tf.keras.Mode
         loss="mse",
     )
     return autoencoder
+
+
+def build_lstm_classifier(window_length: int, n_features: int, units: int = 32,
+                          dropout: float = 0.3) -> tf.keras.Model:
+    """Supervised LSTM: reads the whole window, outputs P(flood on the last day).
+
+    Unlike the autoencoder above, this learns directly from labelled flood
+    days, so it is told what a flood looks like rather than only what
+    "normal" looks like.
+    """
+    inputs = layers.Input(shape=(window_length, n_features), name="window")
+    x = layers.LSTM(units, name="lstm")(inputs)
+    x = layers.Dropout(dropout)(x)
+    x = layers.Dense(16, activation="relu")(x)
+    outputs = layers.Dense(1, activation="sigmoid", name="flood_probability")(x)
+
+    model = models.Model(inputs, outputs, name="lstm_classifier")
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+                  loss="binary_crossentropy")
+    return model
+
+
+def build_cnn_classifier(window_length: int, n_features: int, filters: int = 32,
+                         kernel_size: int = 3, dropout: float = 0.3) -> tf.keras.Model:
+    """1D convolutional network: slides short filters along the window
+    looking for local patterns (e.g. a sharp three-day rise), then pools."""
+    inputs = layers.Input(shape=(window_length, n_features), name="window")
+    x = layers.Conv1D(filters, kernel_size, activation="relu", padding="causal")(inputs)
+    x = layers.Conv1D(filters, kernel_size, activation="relu", padding="causal")(x)
+    x = layers.GlobalMaxPooling1D()(x)
+    x = layers.Dropout(dropout)(x)
+    x = layers.Dense(16, activation="relu")(x)
+    outputs = layers.Dense(1, activation="sigmoid", name="flood_probability")(x)
+
+    model = models.Model(inputs, outputs, name="cnn_classifier")
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+                  loss="binary_crossentropy")
+    return model
