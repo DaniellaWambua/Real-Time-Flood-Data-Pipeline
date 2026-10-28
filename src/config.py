@@ -90,3 +90,15 @@ VALIDATION_SPLIT = 0.1
 THRESHOLD_SEARCH_MIN = 80
 THRESHOLD_SEARCH_MAX = 99.9
 THRESHOLD_SEARCH_STEP = 0.5
+
+# Added 2026-10-27 (Phase 12 finalisation): dropout for the autoencoder's
+# LSTM layers, the first change tested that targets the documented
+# validation-to-test drift problem directly rather than recalibrating
+# the threshold after training.
+AUTOENCODER_DROPOUT = 0.1
+
+# Added 2026-10-27 (Phase 12 finalisation): dropout for the autoencoder's
+# LSTM layers, the first change tested that targets the documented
+# validation-to-test drift problem directly rather than recalibrating
+# the threshold after training.
+AUTOENCODER_DROPOUT = 0.1
