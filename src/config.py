@@ -10,7 +10,7 @@ PROCESSED_DATA_DIR = PROJECT_ROOT / "data" / "processed"
 MODELS_DIR = PROJECT_ROOT / "models"
 FIGURES_DIR = PROJECT_ROOT / "reports" / "figures"
 
-RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v8.csv"  # v6 + ERA5-Land soil moisture/evaporation and ONI
+RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v9.csv"  # v8 + newly-sourced register events (master catalogue + DesInventar), same features as v8
 
 # Catchments
 # Nzoia River is deliberately excluded: it has 0 validation-period flood
@@ -46,19 +46,26 @@ FEATURE_COLUMNS = [
 ]
 LABEL_COLUMN = "flood_event"
 
-# Dataset switch. v7 (above) is the default. Setting FLOOD_DATASET=v6
-# trains on the earlier v6 file instead: no ERA5-Land/ONI features, but
-# with Nzoia River back in. Nzoia was dropped because the single 2023
-# validation year has no Nzoia floods; src/model_selection.py validates
-# on 2015-2023 in four blocks, which do include Nzoia's 2013/2015 floods.
-DATASET = os.environ.get("FLOOD_DATASET", "v8")
+# Dataset switch. v9 (above) is the default: same six catchments and
+# feature set as v8, with 22 additional flood-register events sourced
+# from the master catalogue and DesInventar (see flood-folder-assessment.md
+# and training-results.md). Setting FLOOD_DATASET=v8 trains on the prior
+# register instead, for direct before/after comparison. Setting
+# FLOOD_DATASET=v6 trains on the earlier v6 file: no ERA5-Land/ONI
+# features, but with Nzoia River back in. Nzoia was dropped because the
+# single 2023 validation year has no Nzoia floods; src/model_selection.py
+# validates on 2015-2023 in four blocks, which do include Nzoia's
+# 2013/2015 floods.
+DATASET = os.environ.get("FLOOD_DATASET", "v9")
 if DATASET == "v6":
     RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v6.csv"
     CATCHMENTS = CATCHMENTS + ["Nzoia River"]
     FEATURE_COLUMNS = [c for c in FEATURE_COLUMNS
                        if c not in ("soil_moisture_m3m3", "evaporation_mm", "oni")]
-elif DATASET != "v8":
-    raise ValueError(f"FLOOD_DATASET must be v6 or v8, not {DATASET!r}")
+elif DATASET == "v8":
+    RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v8.csv"
+elif DATASET != "v9":
+    raise ValueError(f"FLOOD_DATASET must be v6, v8, or v9, not {DATASET!r}")
 
 # Windowing and chronological split (by year, not shuffled)
 WINDOW_LENGTH = 14
