@@ -91,14 +91,12 @@ THRESHOLD_SEARCH_MIN = 80
 THRESHOLD_SEARCH_MAX = 99.9
 THRESHOLD_SEARCH_STEP = 0.5
 
-# Added 2026-10-27 (Phase 12 finalisation): dropout for the autoencoder's
-# LSTM layers, the first change tested that targets the documented
-# validation-to-test drift problem directly rather than recalibrating
-# the threshold after training.
-AUTOENCODER_DROPOUT = 0.1
-
-# Added 2026-10-27 (Phase 12 finalisation): dropout for the autoencoder's
-# LSTM layers, the first change tested that targets the documented
-# validation-to-test drift problem directly rather than recalibrating
-# the threshold after training.
-AUTOENCODER_DROPOUT = 0.1
+# Tried 2026-10-27 (Phase 12 finalisation): dropout for the autoencoder's
+# LSTM layers, targeting the documented validation-to-test drift problem
+# directly rather than recalibrating the threshold after training. Tested
+# at 0.1 and 0.2: both shrank per-catchment drift ratios as intended, but
+# neither beat the 0.217 pooled-threshold baseline overall (Mathare
+# degraded monotonically with dropout; Nairobi River only improved at the
+# higher rate). Not adopted; kept at 0 and documented as tried-and-rejected
+# in training-results.md.
+AUTOENCODER_DROPOUT = 0.0
