@@ -44,6 +44,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
+from xgboost import XGBClassifier
 from sklearn.metrics import (
     average_precision_score, f1_score, precision_recall_curve, precision_score, recall_score,
 )
@@ -102,6 +103,11 @@ PARAM_GRIDS = {
         "max_depth": [8, None],
         "min_samples_leaf": [10, 20, 50, 100],
         "max_features": ["sqrt", 0.3],
+    },
+    "XGBoost": {
+        "learning_rate": [0.01, 0.03, 0.1],
+        "max_depth": [2, 3, 5],
+        "n_estimators": [150, 400],
     },
 }
 SEQUENCE_MODELS = {"LSTM", "1D CNN"}
@@ -174,6 +180,10 @@ def fit_predict(name, params, X_train, y_train, X_eval, n_seeds=1, return_model=
         if name == "Gradient Boosting":
             model = HistGradientBoostingClassifier(random_state=RANDOM_SEED, **params)
             model.fit(X_train, y_train, sample_weight=np.where(y_train == 1, pos_weight, 1.0))
+        elif name == "XGBoost":
+            model = XGBClassifier(scale_pos_weight=pos_weight, random_state=RANDOM_SEED,
+                                  eval_metric="logloss", n_jobs=-1, **params)
+            model.fit(X_train, y_train)
         else:
             model = RandomForestClassifier(n_estimators=300, class_weight="balanced_subsample",
                                            n_jobs=-1, random_state=RANDOM_SEED, **params)

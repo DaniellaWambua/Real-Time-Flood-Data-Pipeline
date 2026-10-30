@@ -3,3 +3,4 @@ pandas
 scikit-learn
 matplotlib
 tensorflow==2.20.0
+xgboost
