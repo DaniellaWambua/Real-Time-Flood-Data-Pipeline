@@ -16,6 +16,7 @@ from src.config import (
     VAL_START_YEAR,
     WINDOW_LENGTH,
 )
+from src.features import ENGINEERED_FEATURE_COLUMNS, add_engineered_features
 
 
 @dataclass
@@ -42,9 +43,18 @@ def chronological_split(df: pd.DataFrame, catchment: str):
     return train_df, val_df, test_df
 
 
-def make_windows(df: pd.DataFrame, window_length: int = WINDOW_LENGTH):
-    """Build sliding windows; a window's label is its last day's flood_event."""
-    features = df[FEATURE_COLUMNS].to_numpy()
+def make_windows(df: pd.DataFrame, window_length: int = WINDOW_LENGTH,
+                 feature_columns: list[str] = FEATURE_COLUMNS):
+    """Build sliding windows; a window's label is its last day's flood_event.
+
+    feature_columns defaults to the plain 8 (src.config.FEATURE_COLUMNS) so
+    every existing caller (alternative_splits.py, walk_forward_validation.py)
+    keeps behaving exactly as before. The production autoencoder path
+    (build_catchment_split below) passes ENGINEERED_FEATURE_COLUMNS instead,
+    the same richer feature set src/model_selection.py already gives the
+    other models (rank/seasonal/regional features, see src/features.py).
+    """
+    features = df[feature_columns].to_numpy()
     labels = df[LABEL_COLUMN].to_numpy()
     dates = df["date"].to_numpy()
 
@@ -59,12 +69,17 @@ def make_windows(df: pd.DataFrame, window_length: int = WINDOW_LENGTH):
 
 
 def build_catchment_split(df: pd.DataFrame, catchment: str) -> CatchmentSplit:
-    """Window, split, and scale one catchment's data."""
+    """Window, split, and scale one catchment's data.
+
+    df must already have had add_engineered_features applied (see
+    build_all_splits), since the regional and trailing-year rank features
+    need the full, multi-catchment, un-split series to mean anything.
+    """
     train_df, val_df, test_df = chronological_split(df, catchment)
 
-    X_train_raw, y_train_raw, _ = make_windows(train_df)
-    X_val, y_val, dates_val = make_windows(val_df)
-    X_test, y_test, dates_test = make_windows(test_df)
+    X_train_raw, y_train_raw, _ = make_windows(train_df, feature_columns=ENGINEERED_FEATURE_COLUMNS)
+    X_val, y_val, dates_val = make_windows(val_df, feature_columns=ENGINEERED_FEATURE_COLUMNS)
+    X_test, y_test, dates_test = make_windows(test_df, feature_columns=ENGINEERED_FEATURE_COLUMNS)
 
     # Keep only normal windows for training.
     normal_mask = y_train_raw == 0
@@ -93,4 +108,9 @@ def build_catchment_split(df: pd.DataFrame, catchment: str) -> CatchmentSplit:
 
 
 def build_all_splits(df: pd.DataFrame) -> dict[str, CatchmentSplit]:
+    # Applied once, over every catchment together, before any splitting:
+    # the regional features average across all catchments on the same
+    # date, and the trailing-year ranks need the full chronological
+    # series, not a year-bounded slice.
+    df = add_engineered_features(df)
     return {catchment: build_catchment_split(df, catchment) for catchment in CATCHMENTS}
