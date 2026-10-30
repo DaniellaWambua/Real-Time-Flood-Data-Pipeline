@@ -28,8 +28,13 @@ RF_PARAMS = {"max_depth": 8, "min_samples_leaf": 20, "max_features": "sqrt"}
 
 
 def run_split(label, X, y, train_mask, val_mask, test_mask):
-    if val_mask.sum() == 0 or test_mask.sum() == 0 or y[val_mask].sum() == 0:
-        print(f"{label}: skipped, empty split or no validation positives")
+    if (val_mask.sum() == 0 or test_mask.sum() == 0 or y[val_mask].sum() == 0
+            or y[train_mask].sum() == 0):
+        # A classifier (unlike the autoencoder) needs at least one positive
+        # day to train on: Nyando's single 2010 flood day falls inside the
+        # 30-day feature warm-up and is dropped before windowing, so a
+        # train period that relies on it alone has none.
+        print(f"{label}: skipped, empty split or no positives in train/val")
         return None
 
     val_probs = fit_predict("Random Forest", RF_PARAMS, X[train_mask], y[train_mask], X[val_mask])
