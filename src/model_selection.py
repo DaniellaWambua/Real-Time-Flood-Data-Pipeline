@@ -47,6 +47,7 @@ from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassif
 from xgboost import XGBClassifier
 from sklearn.metrics import (
     average_precision_score, f1_score, precision_recall_curve, precision_score, recall_score,
+    roc_curve,
 )
 
 from src.config import CATCHMENTS, DATASET, LABEL_COLUMN, MODELS_DIR, RANDOM_SEED, TEST_START_YEAR
@@ -82,10 +83,15 @@ STAGE_TWO_CONFIGS = 3
 
 PARAM_GRIDS = {
     "LSTM": {
-        "window": [14, 30],
-        "units": [32, 64],
-        "dropout": [0.2, 0.4],
-        "pos_weight_scale": [0.25, 1.0],
+        # Architecture fixed to the already-confirmed 5-seed stage-two
+        # winner (CV AP 0.218 on v9), so this sweep isolates pos_weight_scale
+        # on its own rather than re-tuning architecture and weight jointly.
+        # The imbalanced-LSTM literature treats this weight as a continuous
+        # hyperparameter, not the two-point 0.25/1.0 switch tried before.
+        "window": [14],
+        "units": [32],
+        "dropout": [0.2],
+        "pos_weight_scale": [0.1, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0],
     },
     "1D CNN": {
         "window": [14, 30],
@@ -218,6 +224,24 @@ def best_f1_threshold(y, probs):
     return float(thresholds[best])
 
 
+def youden_threshold(y, probs):
+    """Probability cut-off maximising Youden's J (recall + specificity - 1).
+
+    A second, independent criterion reported alongside best_f1_threshold,
+    not in place of it: the imbalanced-sequence literature treats
+    threshold selection as a lever separate from training-time class
+    weighting, and notes the F1-optimal and Youden cut-offs can land on
+    genuinely different precision/recall trade-offs from the same
+    trained model. roc_curve's thresholds are returned in decreasing
+    order, so index [0] among ties is the higher cut-off, matching
+    best_f1_threshold's own tie-break.
+    """
+    fpr, tpr, thresholds = roc_curve(y, probs)
+    j = tpr - fpr
+    best = np.flatnonzero(j == j.max())[0]
+    return float(thresholds[best])
+
+
 def day_metrics(y, pred):
     return {
         "precision": precision_score(y, pred, zero_division=0),
@@ -265,17 +289,25 @@ def evaluate(name, params, oof, test_probs, meta, cv_ap, fold_aps):
     threshold = best_f1_threshold(y_cv, oof)
     cv_pred = (oof >= threshold).astype(int)
     test_pred = (test_probs >= threshold).astype(int)
+
+    # Secondary threshold, reported alongside the F1-optimal one, not
+    # instead of it (see youden_threshold's docstring).
+    threshold_youden = youden_threshold(y_cv, oof)
+    test_pred_youden = (test_probs >= threshold_youden).astype(int)
+
     catchments = meta_test["catchment"].to_numpy()
     return {
         "model": name,
         "params": params,
         "threshold": threshold,
+        "threshold_youden": threshold_youden,
         "cv_ap": cv_ap,
         "cv_fold_aps": fold_aps,
         "cv": day_metrics(y_cv, cv_pred),
         "cv_tolerant": tolerant_metrics(meta_cv, cv_pred),
         "test_ap": average_precision_score(y_test, test_probs),
         "test": day_metrics(y_test, test_pred),
+        "test_youden": day_metrics(y_test, test_pred_youden),
         "test_tolerant": tolerant_metrics(meta_test, test_pred),
         "test_per_catchment": {c: day_metrics(y_test[catchments == c], test_pred[catchments == c])
                                for c in CATCHMENTS},
@@ -415,6 +447,13 @@ def summarise(meta):
               f"{cv['f1']:>7.3f}{r['cv_tolerant']['event_recall']:>7.2f}"
               f"{r['test_ap']:>8.3f}{te['precision']:>7.3f}{te['recall']:>7.3f}{te['f1']:>7.3f}"
               f"{tt['precision']:>7.3f}{tt['event_recall']:>7.2f}")
+    print(f"\n{'':22}{'--- Youden-threshold test (secondary) ---':^34}")
+    print(f"{'model':<22}{'threshold':>11}{'prec':>7}{'rec':>7}{'F1':>7}")
+    for r in results:
+        ty = r["test_youden"]
+        print(f"{r['model']:<22}{r['threshold_youden']:>11.4f}{ty['precision']:>7.3f}"
+              f"{ty['recall']:>7.3f}{ty['f1']:>7.3f}")
+
     print(f"\nBest model (by cross-validated F1): {best_model['model']}")
     for r in results:
         print(f"\n{r['model']} test, per catchment (threshold {r['threshold']:.4f}):")
