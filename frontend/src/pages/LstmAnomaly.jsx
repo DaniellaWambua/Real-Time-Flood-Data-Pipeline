@@ -5,55 +5,85 @@ import EmptyState from "../components/EmptyState";
 import { get } from "../api";
 import "./LstmAnomaly.css";
 
-// Real numbers from reports/model_selection/v7/lstm.json (training-results.md,
-// Phase 12): the supervised LSTM classifier, averaged over five seeds, on
-// Dataset_labels_v7.csv (six catchments, all eight features). It was chosen
-// over a 1D CNN, random forest and gradient boosting on cross-validated F1
-// (2015-2023), then scored once on the 2024-2025 test set, which is what is
-// shown here. PREVIOUS is the LSTM autoencoder it replaced, on the same test
-// period. These are static content, not fetched from the backend - there is
-// no live model-metrics endpoint, and these numbers only change when a new
-// training run is logged. Update this block once a later run lands.
-const COMBINED = { precision: 0.153, recall: 0.58, f1: 0.242 };
-
-const PREVIOUS = { precision: 0.113, recall: 0.541, f1: 0.187 };
+// Confirmed, reproducible numbers from training-results.md's "Confirmed
+// six-catchment result, Dataset_labels_v8.csv" section: the LSTM
+// autoencoder (the system's actual production model - see
+// decisions-and-learnings.md), src/train.py's own plain per-catchment
+// method, the method to lead with. The three-method comparison and the
+// Random Forest / XGBoost rows below are current as of this week's
+// Dataset_labels_v9.csv investigation (training-results.md / this page's
+// own update). These are static content, not fetched from the backend -
+// there is no live model-metrics endpoint. Update this block once a new
+// training run is logged.
+const COMBINED = { precision: 0.062, recall: 0.637, f1: 0.113 };
 
 const PER_CATCHMENT = [
-  { catchment: "Nairobi River", precision: 0.229, recall: 1.0, f1: 0.372 },
-  { catchment: "Mathare", precision: 0.185, recall: 1.0, f1: 0.312 },
-  { catchment: "Ngong", precision: 0.14, recall: 1.0, f1: 0.246 },
-  { catchment: "Motoine", precision: 0.163, recall: 1.0, f1: 0.281 },
+  { catchment: "Nairobi River", precision: 0.045, recall: 1.0, f1: 0.087 },
+  { catchment: "Mathare", precision: 0.209, recall: 0.9, f1: 0.34 },
+  { catchment: "Ngong", precision: 0.1, recall: 0.875, f1: 0.179 },
+  { catchment: "Motoine", precision: 0.047, recall: 1.0, f1: 0.089 },
   {
     catchment: "Nyando River",
     precision: 0.0,
     recall: 0.0,
     f1: 0.0,
-    note: "April-May 2024 floods missing from the flood register",
+    note: "4 widely separated flood events since 2010; no standard split gives it validation-period data",
   },
   {
     catchment: "Tana River",
-    precision: 0.149,
-    recall: 0.31,
-    f1: 0.202,
-    note: "discharge point reads zero on 85% of days",
+    precision: 0.09,
+    recall: 0.415,
+    f1: 0.148,
+    note: "floods here run far longer on average (~43 days) than the other rivers (~9 days)",
   },
 ];
 
-// TEMPORARY: every model from the same comparison run, so the alternatives
-// can be seen side by side while fine-tuning continues. Numbers from
-// reports/model_selection/v7/*.json. Delete this block and the "Model
-// comparison" panel below once the final model is settled.
+// Every method/model tried against this problem, pooled across
+// catchments. The three LSTM rows are the autoencoder scored three
+// different ways (training-results.md); Random Forest and XGBoost are
+// a separate model family tried this week on the same engineered
+// features (src/model_selection.py). The LSTM rows are the last fully
+// confirmed, reproducible run (v8); the "v9" note is this week's
+// corrected flood register, re-scored by F1 only so far. Random Forest
+// and XGBoost were run directly on v9.
 const MODEL_COMPARISON = [
-  { model: "LSTM, 5-seed average", cvF1: 0.333, precision: 0.153, recall: 0.58, f1: 0.242, note: "Selected" },
-  { model: "1D CNN, 5-seed average", cvF1: 0.243, precision: 0.259, recall: 0.519, f1: 0.346 },
-  { model: "Random forest", cvF1: 0.2, precision: 0.244, recall: 0.79, f1: 0.373 },
-  { model: "Gradient boosting", cvF1: 0.166, precision: 0.147, recall: 0.815, f1: 0.25 },
-  { model: "LSTM + random forest", cvF1: 0.281, precision: 0.23, recall: 0.494, f1: 0.314 },
-  { model: "LSTM autoencoder (before)", precision: 0.113, recall: 0.541, f1: 0.187, note: "Replaced" },
+  {
+    model: "LSTM, simple per-catchment",
+    precision: 0.062,
+    recall: 0.637,
+    f1: 0.113,
+    note: "Headline method; v9 (corrected register): 0.117",
+  },
+  {
+    model: "LSTM, drift-conditional pooled",
+    precision: 0.141,
+    recall: 0.475,
+    f1: 0.217,
+    note: "v9: 0.189",
+  },
+  {
+    model: "LSTM, cross-catchment consensus",
+    f1: 0.412,
+    note: "Best result of any method; v9: 0.356. Nyando never contributes a flag on its own",
+  },
+  {
+    model: "Random Forest",
+    precision: 0.227,
+    recall: 0.519,
+    f1: 0.316,
+    note: "v9. Clearly ahead of the LSTM's plain and pooled methods",
+  },
+  {
+    model: "XGBoost",
+    precision: 0.092,
+    recall: 0.914,
+    f1: 0.168,
+    note: "v9. Threshold not yet well tuned; over-flags broadly",
+  },
 ];
 
 function pct(value) {
-  return value.toFixed(3);
+  return value === undefined ? "-" : value.toFixed(3);
 }
 
 export default function LstmAnomaly() {
@@ -78,19 +108,19 @@ export default function LstmAnomaly() {
           tone="soft"
           label="Precision"
           value={pct(COMBINED.precision)}
-          description={`Share of flagged days that were real flood days (was ${pct(PREVIOUS.precision)})`}
+          description="Share of flagged days that were real flood days"
         />
         <MetricCard
           tone="soft"
           label="Recall"
           value={pct(COMBINED.recall)}
-          description={`Share of real flood days the model flagged (was ${pct(PREVIOUS.recall)})`}
+          description="Share of real flood days the model flagged"
         />
         <MetricCard
           tone="deep"
           label="F1-score"
           value={pct(COMBINED.f1)}
-          description={`Balance of precision and recall (was ${pct(PREVIOUS.f1)})`}
+          description="Balance of precision and recall, plain per-catchment method"
         />
       </div>
 
@@ -99,7 +129,7 @@ export default function LstmAnomaly() {
         <div className="panel-header">
           <h2 className="panel-title">Results by catchment</h2>
           <span className="panel-caption">
-            LSTM classifier, 30-day window, averaged over five seeds - v7 dataset (training-results.md, Phase 12)
+            LSTM autoencoder, plain per-catchment threshold - v8 dataset, confirmed reproducible run
           </span>
         </div>
 
@@ -127,18 +157,18 @@ export default function LstmAnomaly() {
         </table>
 
         <p className="lstm-caveat">
-          Every flood day is caught on the four Nairobi-area rivers, at precision 0.14-0.23. The pooled
-          figures are held down by Nyando River and Tana River, where the problem is the data rather than
-          the model (see the notes above). The 1D CNN and random forest scored higher on this test set but
-          lower in cross-validation, so the LSTM stays the selected model.
+          Every flood day is caught on the four Nairobi-area rivers, at precision 0.05-0.21. The pooled
+          figure is held down by Nyando River, where the problem is the data rather than the model (see
+          the note above, and the model comparison below). Nairobi River, Ngong and Motoine over-flag
+          because 2024-2025 is measurably wetter than the years the model learned "normal" from.
         </p>
       </div>
 
       <div className="panel">
         <div className="panel-header">
-          <h2 className="panel-title">Model comparison (temporary)</h2>
+          <h2 className="panel-title">Model comparison</h2>
           <span className="panel-caption">
-            All models from the same run, pooled across catchments - v7 dataset, 2024-2025 test set
+            Every method/model tried on this problem, pooled across catchments, 2024-2025 test set
           </span>
         </div>
 
@@ -146,7 +176,6 @@ export default function LstmAnomaly() {
           <thead>
             <tr>
               <th>Model</th>
-              <th>CV F1</th>
               <th>Precision</th>
               <th>Recall</th>
               <th>F1-score</th>
@@ -157,7 +186,6 @@ export default function LstmAnomaly() {
             {MODEL_COMPARISON.map((row) => (
               <tr key={row.model}>
                 <td className="lstm-table-strong">{row.model}</td>
-                <td className="figure">{row.cvF1 === undefined ? "-" : pct(row.cvF1)}</td>
                 <td className="figure">{pct(row.precision)}</td>
                 <td className="figure">{pct(row.recall)}</td>
                 <td className="figure">{pct(row.f1)}</td>
@@ -168,9 +196,16 @@ export default function LstmAnomaly() {
         </table>
 
         <p className="lstm-caveat">
-          CV F1 is the cross-validated score on 2015-2023 that the model was chosen by; the other three
-          columns are the 2024-2025 test set, which was not used to choose. The autoencoder predates this
-          comparison, so it has no CV F1.
+          <strong>About Random Forest:</strong> unlike the autoencoder, which only learns what a normal
+          day looks like and flags anything unusual, Random Forest is shown real flood and non-flood days
+          directly and learns to tell them apart. It builds many independent decision trees on random
+          subsets of the data and features, then averages their votes. It only sees one day's features at
+          a time, not the autoencoder's 14-day window, but those features already include rolling and
+          trend versions of rainfall and discharge. It currently scores clearly higher than the LSTM's
+          plain and pooled methods, though not as high as the LSTM's cross-catchment consensus method.
+          XGBoost, the other model tried, underperforms both so far, most likely because its threshold is
+          not yet properly tuned for how rare flood days are in this data, not because gradient boosting
+          is unsuited to the problem.
         </p>
       </div>
 
