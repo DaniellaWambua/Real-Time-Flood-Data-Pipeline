@@ -10,20 +10,31 @@ PROCESSED_DATA_DIR = PROJECT_ROOT / "data" / "processed"
 MODELS_DIR = PROJECT_ROOT / "models"
 FIGURES_DIR = PROJECT_ROOT / "reports" / "figures"
 
-RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v9.csv"  # v8 + newly-sourced register events (master catalogue + DesInventar), same features as v8
+RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v10.csv"  # Nairobi-only catchments, register extended with Groundsource episodes (see claude/development-plan.md)
 
-# Catchments
-# Nzoia River is deliberately excluded: it has 0 validation-period flood
-# events under this split in every configuration tried, so no catchment-
-# specific threshold could ever be tuned for it, and its only non-zero
-# result anywhere in the investigation (precision 0.039, recall 0.400,
-# under the all-three ERA5 feature set) rode entirely on a pooled
-# threshold borrowed from Nyando River rather than genuine model
-# confidence (see training-results.md, Phase 9/10). Scoped out as a
-# limitation (insufficient verified flood events in the validation
-# window), not dropped from the raw dataset, so it can be reinstated if
-# more flood events are sourced for it later.
+# Catchments. v10 (above) scopes to Nairobi and its immediate catchments
+# only, matching the proposal's original delimitations: Nyando River and
+# Tana River are dropped (added in Phase 9/10 for data volume, outside the
+# proposal's scope) and Mukuru and Ruaraka are added (identified from the
+# Groundsource register as flood-hazard locations with rich data). Nzoia
+# River was never in this list; see _OLD_CATCHMENTS below for why.
 CATCHMENTS = [
+    "Nairobi River", "Mathare", "Ngong", "Motoine",
+    "Mukuru", "Ruaraka",
+]
+
+# The six catchments used by every dataset before v10 (v6, v8, v9,
+# v9_orig, v9_1). Nzoia River is deliberately excluded from this: it has
+# 0 validation-period flood events under this split in every
+# configuration tried, so no catchment-specific threshold could ever be
+# tuned for it, and its only non-zero result anywhere in the
+# investigation (precision 0.039, recall 0.400, under the all-three ERA5
+# feature set) rode entirely on a pooled threshold borrowed from Nyando
+# River rather than genuine model confidence (see training-results.md,
+# Phase 9/10). Scoped out as a limitation (insufficient verified flood
+# events in the validation window), not dropped from the raw dataset, so
+# it can be reinstated if more flood events are sourced for it later.
+_OLD_CATCHMENTS = [
     "Nairobi River", "Mathare", "Ngong", "Motoine",
     "Nyando River", "Tana River",
 ]
@@ -46,26 +57,38 @@ FEATURE_COLUMNS = [
 ]
 LABEL_COLUMN = "flood_event"
 
-# Dataset switch. v9 (above) is the default: same six catchments and
-# feature set as v8, with 22 additional flood-register events sourced
-# from the master catalogue and DesInventar (see flood-folder-assessment.md
-# and training-results.md). Setting FLOOD_DATASET=v8 trains on the prior
-# register instead, for direct before/after comparison. Setting
-# FLOOD_DATASET=v6 trains on the earlier v6 file: no ERA5-Land/ONI
-# features, but with Nzoia River back in. Nzoia was dropped because the
-# single 2023 validation year has no Nzoia floods; src/model_selection.py
-# validates on 2015-2023 in four blocks, which do include Nzoia's
-# 2013/2015 floods.
-DATASET = os.environ.get("FLOOD_DATASET", "v9")
+# Dataset switch. v10 (above) is the default: Nairobi-only catchments,
+# register extended with deduplicated Groundsource episodes on top of
+# the hand-coded one (see claude/development-plan.md). Setting
+# FLOOD_DATASET=v9 (or v9_orig, v9_1) trains on the prior six-catchment,
+# hand-coded-register version instead, for direct before/after
+# comparison; FLOOD_DATASET=v8 on the smaller pre-master-catalogue
+# register, same six catchments. FLOOD_DATASET=v6 trains on the earlier
+# v6 file: no ERA5-Land/ONI features, with Nzoia River back in (dropped
+# everywhere else because the single 2023 validation year has no Nzoia
+# floods; src/model_selection.py validates on 2015-2023 in four blocks,
+# which do include Nzoia's 2013/2015 floods).
+DATASET = os.environ.get("FLOOD_DATASET", "v10")
 if DATASET == "v6":
     RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v6.csv"
-    CATCHMENTS = CATCHMENTS + ["Nzoia River"]
+    CATCHMENTS = _OLD_CATCHMENTS + ["Nzoia River"]
     FEATURE_COLUMNS = [c for c in FEATURE_COLUMNS
                        if c not in ("soil_moisture_m3m3", "evaporation_mm", "oni")]
 elif DATASET == "v8":
     RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v8.csv"
-elif DATASET != "v9":
-    raise ValueError(f"FLOOD_DATASET must be v6, v8, or v9, not {DATASET!r}")
+    CATCHMENTS = _OLD_CATCHMENTS
+elif DATASET == "v9":
+    RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v9.csv"
+    CATCHMENTS = _OLD_CATCHMENTS
+elif DATASET == "v9_orig":
+    # Original v9 as first committed (31f9dec), before the event-2 fix.
+    RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v9_orig.csv"
+    CATCHMENTS = _OLD_CATCHMENTS
+elif DATASET == "v9_1":
+    RAW_FEATURES_LABELS_FILE = RAW_DATA_DIR / "Dataset_labels_v9_1.csv"
+    CATCHMENTS = _OLD_CATCHMENTS
+elif DATASET != "v10":
+    raise ValueError(f"FLOOD_DATASET must be v6, v8, v9, v9_orig, v9_1, or v10, not {DATASET!r}")
 
 # Windowing and chronological split (by year, not shuffled)
 WINDOW_LENGTH = 14

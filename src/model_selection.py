@@ -55,6 +55,11 @@ from src.data_loading import load_raw_data
 from src.features import ENGINEERED_FEATURE_COLUMNS, add_engineered_features
 from src.model import build_cnn_classifier, build_lstm_classifier
 
+# Seeding alone does not make GPU training reproducible: cuDNN's LSTM
+# kernels use non-deterministic reduction ops unless this is explicitly
+# enabled (see src/train.py's set_seeds() for the full explanation).
+tf.config.experimental.enable_op_determinism()
+
 # Results and models are kept per dataset (see config.DATASET), so a v6
 # run never overwrites v7's.
 RESULTS_DIR = MODELS_DIR.parent / "reports" / "model_selection" / DATASET
