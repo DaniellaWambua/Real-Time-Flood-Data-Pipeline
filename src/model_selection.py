@@ -384,8 +384,15 @@ def run_model(name, X, meta):
     if name in SEQUENCE_MODELS:
         model_files = []
         for i, net in enumerate(model):
-            path = CLASSIFIERS_DIR / f"{slug(name)}_seed{i}.keras"
-            net.save(path)
+            # Weights only, not the full architecture+config: Keras's full-model
+            # format breaks across Keras versions (a newer release can add a
+            # field to a layer's saved config, such as quantization_config, that
+            # an older Keras does not recognise and refuses to load), while a
+            # plain weights file is just named numeric arrays. model_service/
+            # app.py's _load_classifier rebuilds this same architecture in code
+            # from this model's own saved params before loading these weights.
+            path = CLASSIFIERS_DIR / f"{slug(name)}_seed{i}.weights.h5"
+            net.save_weights(path)
             model_files.append(path.name)
     else:
         path = CLASSIFIERS_DIR / f"{slug(name)}.joblib"

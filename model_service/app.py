@@ -39,6 +39,7 @@ from flask import Flask, jsonify, request
 from tensorflow import keras
 
 from src.config import CATCHMENTS, DATASET, MODELS_DIR
+from src.model import build_cnn_classifier, build_lstm_classifier
 from src.scoring import slugify
 
 app = Flask(__name__)
@@ -60,6 +61,18 @@ CLASSIFIER_SLUGS = {
 # Of the above, which ones read a window of days rather than just the
 # final day's (already rolling/rank-summarised) feature row.
 SEQUENCE_CLASSIFIERS = {"lstm_classifier", "1d_cnn"}
+
+# How to rebuild each sequence classifier's architecture from the params its
+# own metadata JSON already saved, so only its weights need loading (see the
+# comment in src/model_selection.py's run_model() for why weights-only).
+SEQUENCE_BUILDERS = {
+    "lstm_classifier": lambda window, n_features, params: build_lstm_classifier(
+        window, n_features, params["units"], params["dropout"]
+    ),
+    "1d_cnn": lambda window, n_features, params: build_cnn_classifier(
+        window, n_features, params["filters"], params["kernel_size"]
+    ),
+}
 
 # LSTM + Random Forest, averaged. Never fit or saved as its own model
 # (see src/model_selection.py's combine()): only its chosen threshold
@@ -165,7 +178,14 @@ def _load_classifier(name: str) -> dict:
         metadata = json.load(f)
 
     if name in SEQUENCE_CLASSIFIERS:
-        models = [keras.models.load_model(CLASSIFIERS_DIR / fname) for fname in metadata["model_files"]]
+        n_features = len(metadata["feature_columns"])
+        window_length = metadata["window"]
+        build = SEQUENCE_BUILDERS[name]
+        models = []
+        for fname in metadata["model_files"]:
+            net = build(window_length, n_features, metadata["params"])
+            net.load_weights(CLASSIFIERS_DIR / fname)
+            models.append(net)
         entry = {"metadata": metadata, "models": models}
     else:
         model = joblib.load(CLASSIFIERS_DIR / metadata["model_files"][0])
