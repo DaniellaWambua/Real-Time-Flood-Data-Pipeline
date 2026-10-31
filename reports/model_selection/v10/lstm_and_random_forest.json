@@ -1,0 +1,96 @@
+{
+  "model": "LSTM + Random Forest",
+  "params": {
+    "average_of": [
+      "LSTM",
+      "Random Forest"
+    ]
+  },
+  "threshold": 0.29153089619835093,
+  "threshold_youden": 0.14545693577625546,
+  "cv_ap": 0.2177281390843861,
+  "cv_fold_aps": [
+    0.2224469500331329,
+    0.17996377562253196,
+    0.3105004943574412,
+    0.1580013363244384
+  ],
+  "cv": {
+    "precision": 0.19044502617801048,
+    "recall": 0.6524663677130045,
+    "f1": 0.2948328267477204,
+    "flagged_days": 1528,
+    "flood_days": 446
+  },
+  "cv_tolerant": {
+    "precision": 0.31544502617801046,
+    "event_recall": 0.6422018348623854,
+    "events": 109,
+    "events_caught": 70
+  },
+  "test_ap": 0.6635587168010977,
+  "test": {
+    "precision": 0.4376237623762376,
+    "recall": 0.7517006802721088,
+    "f1": 0.5531914893617021,
+    "flagged_days": 505,
+    "flood_days": 294
+  },
+  "test_youden": {
+    "precision": 0.27191011235955054,
+    "recall": 0.8231292517006803,
+    "f1": 0.40878378378378377,
+    "flagged_days": 890,
+    "flood_days": 294
+  },
+  "test_tolerant": {
+    "precision": 0.6435643564356436,
+    "event_recall": 0.6086956521739131,
+    "events": 69,
+    "events_caught": 42
+  },
+  "test_per_catchment": {
+    "Nairobi River": {
+      "precision": 0.4835164835164835,
+      "recall": 0.6875,
+      "f1": 0.567741935483871,
+      "flagged_days": 91,
+      "flood_days": 64
+    },
+    "Mathare": {
+      "precision": 0.32673267326732675,
+      "recall": 0.7021276595744681,
+      "f1": 0.44594594594594594,
+      "flagged_days": 101,
+      "flood_days": 47
+    },
+    "Ngong": {
+      "precision": 0.36607142857142855,
+      "recall": 0.6612903225806451,
+      "f1": 0.47126436781609193,
+      "flagged_days": 112,
+      "flood_days": 62
+    },
+    "Motoine": {
+      "precision": 0.49230769230769234,
+      "recall": 1.0,
+      "f1": 0.6597938144329897,
+      "flagged_days": 65,
+      "flood_days": 32
+    },
+    "Mukuru": {
+      "precision": 0.5256410256410257,
+      "recall": 0.9534883720930233,
+      "f1": 0.6776859504132231,
+      "flagged_days": 78,
+      "flood_days": 43
+    },
+    "Ruaraka": {
+      "precision": 0.5172413793103449,
+      "recall": 0.6521739130434783,
+      "f1": 0.5769230769230769,
+      "flagged_days": 58,
+      "flood_days": 46
+    }
+  }
+}

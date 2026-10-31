@@ -1,0 +1,199 @@
+{
+  "model": "LSTM",
+  "params": {
+    "window": 14,
+    "units": 32,
+    "dropout": 0.2,
+    "pos_weight_scale": 1.0
+  },
+  "threshold": 0.5522414445877075,
+  "threshold_youden": 0.003102510701864958,
+  "cv_ap": 0.17593648261997408,
+  "cv_fold_aps": [
+    0.030851230640375718,
+    0.21684360152205176,
+    0.2855520711771396,
+    0.1704990271403293
+  ],
+  "cv": {
+    "precision": 0.23778501628664495,
+    "recall": 0.3273542600896861,
+    "f1": 0.27547169811320754,
+    "flagged_days": 614,
+    "flood_days": 446
+  },
+  "cv_tolerant": {
+    "precision": 0.3811074918566775,
+    "event_recall": 0.3119266055045872,
+    "events": 109,
+    "events_caught": 34
+  },
+  "test_ap": 0.5572992471204725,
+  "test": {
+    "precision": 0.625,
+    "recall": 0.5612244897959183,
+    "f1": 0.5913978494623656,
+    "flagged_days": 264,
+    "flood_days": 294
+  },
+  "test_youden": {
+    "precision": 0.15149735760422783,
+    "recall": 0.8775510204081632,
+    "f1": 0.2583875813720581,
+    "flagged_days": 1703,
+    "flood_days": 294
+  },
+  "test_tolerant": {
+    "precision": 0.7537878787878788,
+    "event_recall": 0.391304347826087,
+    "events": 69,
+    "events_caught": 27
+  },
+  "test_per_catchment": {
+    "Nairobi River": {
+      "precision": 0.6181818181818182,
+      "recall": 0.53125,
+      "f1": 0.5714285714285714,
+      "flagged_days": 55,
+      "flood_days": 64
+    },
+    "Mathare": {
+      "precision": 0.5272727272727272,
+      "recall": 0.6170212765957447,
+      "f1": 0.5686274509803921,
+      "flagged_days": 55,
+      "flood_days": 47
+    },
+    "Ngong": {
+      "precision": 0.4915254237288136,
+      "recall": 0.46774193548387094,
+      "f1": 0.4793388429752066,
+      "flagged_days": 59,
+      "flood_days": 62
+    },
+    "Motoine": {
+      "precision": 0.7058823529411765,
+      "recall": 0.75,
+      "f1": 0.7272727272727273,
+      "flagged_days": 34,
+      "flood_days": 32
+    },
+    "Mukuru": {
+      "precision": 0.717948717948718,
+      "recall": 0.6511627906976745,
+      "f1": 0.6829268292682927,
+      "flagged_days": 39,
+      "flood_days": 43
+    },
+    "Ruaraka": {
+      "precision": 0.9545454545454546,
+      "recall": 0.45652173913043476,
+      "f1": 0.6176470588235294,
+      "flagged_days": 22,
+      "flood_days": 46
+    }
+  },
+  "n_seeds": 5,
+  "all_trials": [
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.1
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.09632070329212111
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.25
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.09127093224041563
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.5
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.10826023089991203
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.75
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.1391453231327934
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.13146293949453614
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.5
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.12444901637873484
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 2.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.10986372863705764
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 0.75
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.16225813195982522
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.0
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.17593648261997408
+    },
+    {
+      "params": {
+        "window": 14,
+        "units": 32,
+        "dropout": 0.2,
+        "pos_weight_scale": 1.5
+      },
+      "n_seeds": 5,
+      "cv_ap": 0.16550450856256943
+    }
+  ]
+}

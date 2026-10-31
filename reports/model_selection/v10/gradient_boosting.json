@@ -1,0 +1,279 @@
+{
+  "model": "Gradient Boosting",
+  "params": {
+    "learning_rate": 0.01,
+    "max_depth": 2,
+    "max_iter": 400,
+    "l2_regularization": 1.0
+  },
+  "threshold": 0.7253695390519956,
+  "threshold_youden": 0.15076342356941344,
+  "cv_ap": 0.21160722021584055,
+  "cv_fold_aps": [
+    0.33704390749473734,
+    0.16225475422363606,
+    0.24896567435463912,
+    0.09816454479034963
+  ],
+  "cv": {
+    "precision": 0.21428571428571427,
+    "recall": 0.47085201793721976,
+    "f1": 0.29453015427769985,
+    "flagged_days": 980,
+    "flood_days": 446
+  },
+  "cv_tolerant": {
+    "precision": 0.3622448979591837,
+    "event_recall": 0.44954128440366975,
+    "events": 109,
+    "events_caught": 49
+  },
+  "test_ap": 0.6745293047979853,
+  "test": {
+    "precision": 0.631578947368421,
+    "recall": 0.5714285714285714,
+    "f1": 0.6,
+    "flagged_days": 266,
+    "flood_days": 294
+  },
+  "test_youden": {
+    "precision": 0.19830246913580246,
+    "recall": 0.8741496598639455,
+    "f1": 0.3232704402515723,
+    "flagged_days": 1296,
+    "flood_days": 294
+  },
+  "test_tolerant": {
+    "precision": 0.7969924812030075,
+    "event_recall": 0.34782608695652173,
+    "events": 69,
+    "events_caught": 24
+  },
+  "test_per_catchment": {
+    "Nairobi River": {
+      "precision": 0.6595744680851063,
+      "recall": 0.484375,
+      "f1": 0.5585585585585585,
+      "flagged_days": 47,
+      "flood_days": 64
+    },
+    "Mathare": {
+      "precision": 0.5869565217391305,
+      "recall": 0.574468085106383,
+      "f1": 0.5806451612903226,
+      "flagged_days": 46,
+      "flood_days": 47
+    },
+    "Ngong": {
+      "precision": 0.62,
+      "recall": 0.5,
+      "f1": 0.5535714285714286,
+      "flagged_days": 50,
+      "flood_days": 62
+    },
+    "Motoine": {
+      "precision": 0.6,
+      "recall": 0.84375,
+      "f1": 0.7012987012987013,
+      "flagged_days": 45,
+      "flood_days": 32
+    },
+    "Mukuru": {
+      "precision": 0.6744186046511628,
+      "recall": 0.6744186046511628,
+      "f1": 0.6744186046511628,
+      "flagged_days": 43,
+      "flood_days": 43
+    },
+    "Ruaraka": {
+      "precision": 0.6571428571428571,
+      "recall": 0.5,
+      "f1": 0.5679012345679012,
+      "flagged_days": 35,
+      "flood_days": 46
+    }
+  },
+  "n_seeds": 1,
+  "all_trials": [
+    {
+      "params": {
+        "learning_rate": 0.01,
+        "max_depth": 2,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.19144462212761887
+    },
+    {
+      "params": {
+        "learning_rate": 0.01,
+        "max_depth": 2,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.21160722021584055
+    },
+    {
+      "params": {
+        "learning_rate": 0.01,
+        "max_depth": 3,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.19505082488701492
+    },
+    {
+      "params": {
+        "learning_rate": 0.01,
+        "max_depth": 3,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.1967419437607511
+    },
+    {
+      "params": {
+        "learning_rate": 0.01,
+        "max_depth": 5,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.16632565178918984
+    },
+    {
+      "params": {
+        "learning_rate": 0.01,
+        "max_depth": 5,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.1682649284014295
+    },
+    {
+      "params": {
+        "learning_rate": 0.03,
+        "max_depth": 2,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.19303336013358285
+    },
+    {
+      "params": {
+        "learning_rate": 0.03,
+        "max_depth": 2,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.18901201644053542
+    },
+    {
+      "params": {
+        "learning_rate": 0.03,
+        "max_depth": 3,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.17580210698528076
+    },
+    {
+      "params": {
+        "learning_rate": 0.03,
+        "max_depth": 3,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.17227805884146538
+    },
+    {
+      "params": {
+        "learning_rate": 0.03,
+        "max_depth": 5,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.16600157637941637
+    },
+    {
+      "params": {
+        "learning_rate": 0.03,
+        "max_depth": 5,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.16442628609169804
+    },
+    {
+      "params": {
+        "learning_rate": 0.1,
+        "max_depth": 2,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.17595875838650746
+    },
+    {
+      "params": {
+        "learning_rate": 0.1,
+        "max_depth": 2,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.17595875838650746
+    },
+    {
+      "params": {
+        "learning_rate": 0.1,
+        "max_depth": 3,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.16916512186601051
+    },
+    {
+      "params": {
+        "learning_rate": 0.1,
+        "max_depth": 3,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.16916512186601051
+    },
+    {
+      "params": {
+        "learning_rate": 0.1,
+        "max_depth": 5,
+        "max_iter": 150,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.17660182746404315
+    },
+    {
+      "params": {
+        "learning_rate": 0.1,
+        "max_depth": 5,
+        "max_iter": 400,
+        "l2_regularization": 1.0
+      },
+      "n_seeds": 1,
+      "cv_ap": 0.17660182746404315
+    }
+  ]
+}
