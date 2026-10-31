@@ -1,0 +1,32 @@
+{
+  "catchment": "Mathare",
+  "threshold": 0.3692330893888438,
+  "window_length": 14,
+  "feature_columns": [
+    "rainfall_mm",
+    "river_discharge_m3s",
+    "rainfall_3day",
+    "rainfall_7day",
+    "discharge_change",
+    "soil_moisture_m3m3",
+    "evaporation_mm",
+    "oni",
+    "rainfall_30day",
+    "discharge_rank",
+    "rainfall_7day_rank",
+    "rainfall_30day_rank",
+    "soil_moisture_rank",
+    "season_sin",
+    "season_cos",
+    "regional_rainfall_7day_rank",
+    "regional_rainfall_30day_rank",
+    "regional_discharge_rank",
+    "regional_soil_moisture_rank",
+    "is_nairobi_river",
+    "is_mathare",
+    "is_ngong",
+    "is_motoine",
+    "is_mukuru",
+    "is_ruaraka"
+  ]
+}
