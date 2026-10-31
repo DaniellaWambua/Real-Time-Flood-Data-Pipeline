@@ -120,7 +120,15 @@ def train_and_evaluate(name, X_train, X_val, y_val, X_test, y_test, scaler=None)
     }
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
-    model.save(MODELS_DIR / f"lstm_autoencoder_{slugify(name)}.keras")
+    # Weights only, not the full architecture+config: a newer Keras release
+    # can add a field to a layer's saved config (e.g. quantization_config)
+    # that an older local Keras refuses to load, while a weights file is
+    # just named numeric arrays. model_service/app.py's _load_autoencoder
+    # rebuilds this same architecture from src.model.build_lstm_autoencoder
+    # (always config.py's defaults here, never overridden) before loading
+    # these weights. See src/model_selection.py's run_model() for the same
+    # fix applied to the supervised classifiers.
+    model.save_weights(MODELS_DIR / f"lstm_autoencoder_{slugify(name)}.weights.h5")
 
     if scaler is not None:
         joblib.dump(scaler, MODELS_DIR / f"scaler_{slugify(name)}.joblib")

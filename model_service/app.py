@@ -39,7 +39,7 @@ from flask import Flask, jsonify, request
 from tensorflow import keras
 
 from src.config import CATCHMENTS, DATASET, MODELS_DIR
-from src.model import build_cnn_classifier, build_lstm_classifier
+from src.model import build_cnn_classifier, build_lstm_autoencoder, build_lstm_classifier
 from src.scoring import slugify
 
 app = Flask(__name__)
@@ -101,7 +101,7 @@ def _load_autoencoder(catchment: str) -> dict:
         raise ValueError(f"{catchment!r} is not one of the configured catchments: {CATCHMENTS}")
 
     slug = slugify(catchment)
-    model_path = MODELS_DIR / f"lstm_autoencoder_{slug}.keras"
+    model_path = MODELS_DIR / f"lstm_autoencoder_{slug}.weights.h5"
     scaler_path = MODELS_DIR / f"scaler_{slug}.joblib"
     metadata_path = MODELS_DIR / f"metadata_{slug}.json"
 
@@ -117,8 +117,16 @@ def _load_autoencoder(catchment: str) -> dict:
     with open(metadata_path) as f:
         metadata = json.load(f)
 
+    # Weights only (see the comment in src/train.py's train_and_evaluate()):
+    # rebuild the same fixed architecture (always config.py's defaults, never
+    # overridden for the final saved model) rather than loading a full .keras
+    # file, so a Keras version difference between Colab and here can't break it.
+    n_features = len(metadata["feature_columns"])
+    net = build_lstm_autoencoder(metadata["window_length"], n_features)
+    net.load_weights(model_path)
+
     entry = {
-        "model": keras.models.load_model(model_path),
+        "model": net,
         "scaler": joblib.load(scaler_path),
         "metadata": metadata,
     }
