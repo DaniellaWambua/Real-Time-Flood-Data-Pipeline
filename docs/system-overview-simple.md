@@ -5,7 +5,7 @@ This is the version to actually say out loud at the defence. The detailed invest
 
 ## What it is
 
-Six rivers around Nairobi (Nairobi River, Mathare, Ngong, Motoine, Nyando River, Tana River) each get their own small neural network, called an autoencoder. An autoencoder's only job is to compress something down to a few numbers and then rebuild the original from them. This one is trained only on ordinary, non-flood days, so it becomes good at rebuilding ordinary weeks and comparatively bad at rebuilding weeks that look unlike anything it was trained on. A flood week is exactly that kind of unlike-anything-it-has-seen week.
+Six rivers around Nairobi (Nairobi River, Mathare, Ngong, Motoine, Mukuru, Ruaraka) each get their own small neural network, called an autoencoder. This set matches the proposal's own scope (Nairobi and its immediate catchments); Nyando River and Tana River, added partway through for data volume, have since been dropped in favour of Mukuru and Ruaraka, two Nairobi catchments identified from flood reports as data-rich and flood-prone. An autoencoder's only job is to compress something down to a few numbers and then rebuild the original from them. This one is trained only on ordinary, non-flood days, so it becomes good at rebuilding ordinary weeks and comparatively bad at rebuilding weeks that look unlike anything it was trained on. A flood week is exactly that kind of unlike-anything-it-has-seen week.
 
 ## What goes in
 
@@ -25,8 +25,20 @@ Running `python -m src.train` from the repository root is the entire system, sta
 
 ## The numbers
 
-*(filled in once the first post-simplification run finishes: run `python -m src.train`, with Nzoia River already removed and the final 8-feature set already in place, and send the output to Claude)*
+Test set 2024-2025, `src/train.py`'s own per-catchment threshold:
+
+| catchment | precision | recall | F1 |
+|---|---|---|---|
+| Nairobi River | 0.234 | 0.767 | 0.358 |
+| Mathare | 0.283 | 0.609 | 0.386 |
+| Ngong | 0.198 | 0.831 | 0.320 |
+| Motoine | 0.178 | 0.906 | 0.297 |
+| Mukuru | 0.373 | 0.610 | 0.463 |
+| Ruaraka | 0.378 | 0.705 | 0.492 |
+| Combined | 0.172 | 0.901 | 0.288 |
+
+In plain terms: the model catches most real floods (recall mostly 0.6-0.9), but still raises a lot of false alarms (precision mostly 0.18-0.38), so roughly five of every six flagged days across the whole system are not actually flood days.
 
 ## The one honest limitation to lead with
 
-Two of the six rivers, Nairobi River and Motoine, currently flag almost every day in the test period as a possible flood. Rainfall and discharge there in 2024-2025 run measurably higher than in the years the model learned "normal" from, which is a real shift in conditions, not a bug, and it makes the model's idea of "unusual" stale by the time it reaches the test period. That is the open problem the next piece of work, testing the model across several different historical time windows rather than just one, is meant to pin down. If asked, that is the honest answer: the model reliably catches floods, but for these two rivers it currently does so by flagging too many ordinary days alongside them.
+Motoine and Ngong still flag most days in the test period as a possible flood (recall 0.91 and 0.83) at modest precision (0.18 and 0.20), so they lean toward over-flagging rather than genuinely discriminating. Mukuru and Ruaraka, the two newest catchments, are currently the model's best performers by a clear margin, which is encouraging but still only two rivers' worth of evidence. If asked, that is the honest answer: the model reliably catches most real floods, but combined precision of 0.17 means the system still cries wolf considerably more often than it is right.

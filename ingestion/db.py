@@ -53,3 +53,21 @@ def execute(sql, params=None):
         conn.commit()
     finally:
         conn.close()
+
+
+def execute_returning(sql, params=None):
+    """Like execute, but for an INSERT ... RETURNING col; returns that one value.
+
+    Added for model-driven scoring: persist_reading needs the new hydro_data_records
+    row's own id back, to link anomaly_detection_results to the exact reading it
+    scored (see model_scoring.py), which plain execute() has no way to hand back.
+    """
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(sql, params or ())
+            row = cur.fetchone()
+        conn.commit()
+        return row[0] if row is not None else None
+    finally:
+        conn.close()

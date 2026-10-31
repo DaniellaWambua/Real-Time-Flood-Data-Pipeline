@@ -29,6 +29,14 @@ CREATE TABLE hydro_data_records (
     soil_moisture_m3m3  DOUBLE PRECISION,
     evaporation_mm       DOUBLE PRECISION,
     oni                  DOUBLE PRECISION,
+    -- Rolling features the simulated feed already publishes alongside
+    -- the raw readings above (see ingestion/config.py's FEATURE_FIELDS).
+    -- Stored here too so live model scoring (ingestion/model_scoring.py)
+    -- can read a catchment's full feature history straight back out of
+    -- this table, rather than recomputing rolling sums/diffs itself.
+    rainfall_3day       DOUBLE PRECISION,
+    rainfall_7day       DOUBLE PRECISION,
+    discharge_change    DOUBLE PRECISION,
     PRIMARY KEY (id, recorded_at)
 );
 SELECT create_hypertable('hydro_data_records', 'recorded_at');
@@ -65,7 +73,18 @@ CREATE TABLE users (
     password_hash   TEXT NOT NULL,
     role            TEXT NOT NULL,   -- actor roles per Chapter 3 use case diagram
     is_active       BOOLEAN NOT NULL DEFAULT true,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- Two-factor authentication (TOTP), beyond what the proposal asked
+    -- for. totp_secret is NULL until a user enrols; totp_enabled stays
+    -- false until they confirm their first code, so a half-finished
+    -- enrolment never locks anyone out (see backend/routes_auth.py).
+    totp_secret     TEXT,
+    totp_enabled    BOOLEAN NOT NULL DEFAULT false,
+    -- Google Sign-In (also beyond the proposal). NULL until an admin
+    -- attaches a Gmail address to this already-provisioned account;
+    -- POST /login/google only succeeds for an email that matches here,
+    -- so this never opens the door to public self-registration.
+    email           TEXT UNIQUE
 );
 
 -- System Administration screen's log panel (proposal 3.4.6). One row

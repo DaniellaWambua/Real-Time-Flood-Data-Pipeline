@@ -209,7 +209,7 @@ A new document, `system-overview-simple.md`, gives the plain-English version: wh
 
 ### Still outstanding
 
-The final six-catchment, final-feature, simple-method numbers have not been generated yet. The code changes above were verified with the pandas-only checks available (`load_raw_data()` loads cleanly, `CATCHMENTS` and `FEATURE_COLUMNS` are correct), but training itself needs TensorFlow with the Apple Silicon `tensorflow-metal` build, which only exists in Daniella's own project virtualenv on her Mac, not in any environment Claude can execute code in directly. Running `python -m src.train` once, from the repository root with that virtualenv active, is the one remaining step; the output should be logged here as the confirmed final result once available, and used to fill in the numbers section of `system-overview-simple.md`.
+The six-catchment configuration described above (Nairobi River, Mathare, Ngong, Motoine, Nyando River, Tana River) was superseded before this run was ever made; see Phase 13 for the catchment set actually trained and the confirmed numbers.
 
 ## Phase 12: supervised model comparison (LSTM, 1D CNN, random forest, gradient boosting)
 
@@ -237,6 +237,30 @@ The selected LSTM uses a 30-day window, 32 units, dropout 0.2 and full class wei
 **v6 comparison.** Re-running everything on `Dataset_labels_v6.csv` (`FLOOD_DATASET=v6`: seven catchments with Nzoia River back in, no soil moisture, evaporation or ONI) was worse for every model. LSTM cross-validated average precision fell from 0.244 to 0.069 and test F1 from 0.242 to 0.228. Nzoia's five test flood days were all caught, but at precision 0.07. v7 stays the dataset in use.
 
 Results are in `reports/model_selection/<dataset>/` and models in `models/flood_classifiers/<dataset>/`. The dashboard's LSTM page shows the v7 LSTM figures above.
+
+## Phase 13: Nairobi-only rescoping and Groundsource-augmented register (`Dataset_labels_v10.csv`)
+
+Catchment scope changes again, this time back toward the proposal's own delimitations ("the system will not extend geographic coverage beyond Nairobi and its immediate catchment areas"). Nyando River and Tana River, added in Phases 9-10 for data volume, are dropped. Two new Nairobi catchments are added instead, Mukuru and Ruaraka, chosen by clustering the Groundsource report locations and picking the two nearest, data-richest clusters not already covered by an existing catchment's buffer.
+
+The flood register is also extended. Every Groundsource report is assigned to its nearest catchment within 3km (matching the extraction buffer), grouped by its own `temporal_leakage_group` field to collapse repeat reports of the same episode into one event, then appended to the 23 hand-coded events already in use.
+
+**Results, `src/train.py`'s own per-catchment threshold, `Dataset_labels_v10.csv`, test set 2024-2025:**
+
+| catchment | threshold | precision | recall | F1 |
+|---|---|---|---|---|
+| Nairobi River | 0.156 | 0.234 | 0.767 | 0.358 |
+| Mathare | 0.338 | 0.283 | 0.609 | 0.386 |
+| Ngong | 0.140 | 0.198 | 0.831 | 0.320 |
+| Motoine | 0.157 | 0.178 | 0.906 | 0.297 |
+| Mukuru | 0.456 | 0.373 | 0.610 | 0.463 |
+| Ruaraka | 0.387 | 0.378 | 0.705 | 0.492 |
+| Combined | 0.070 | 0.172 | 0.901 | 0.288 |
+
+Against the only same-method baseline that exists (the original four-catchment run at the top of this document), all four original catchments roughly double their F1 and move off the previous degenerate pattern of recall pinned at 1.000 with precision under 0.10. Mukuru and Ruaraka, the two new catchments, score the best of all six individually, supporting the decision to add them.
+
+Two things are worth flagging rather than glossing over. First, this is not a controlled test of the Groundsource register alone: the final six-catchment, final-feature `train.py` numbers for the Phase 10 catchment set (Nyando River and Tana River, not Mukuru and Ruaraka) were never actually generated before that scope was superseded, so the comparison above spans every feature, split, and register change made since the four-catchment baseline, not one isolated change. Second, combined precision is still only 0.172, so roughly five of every six flagged days are false alarms, and Motoine and Ngong's recall sitting at 0.83-0.91 suggests both may still be over-flagging rather than genuinely discriminating, just less extremely than before.
+
+Hyperparameter tuning and class weighting are not part of this autoencoder method at all (it trains only on normal days, with no labels and no weighting to tune). That refinement belongs to Phase 12's supervised classifiers instead, next to be re-run on this same `Dataset_labels_v10.csv` via `python -m src.model_selection`, which already does both: a `pos_weight_scale` hyperparameter sweep and full class weighting, now with GPU-run reproducibility fixed (`tf.config.experimental.enable_op_determinism()` added to `src/model_selection.py`, matching `train.py`).
 
 ## Files produced
 

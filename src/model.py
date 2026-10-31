@@ -8,17 +8,22 @@ from tensorflow.keras import layers, models
 from src.config import AUTOENCODER_DROPOUT, DECODER_UNITS, ENCODER_UNITS, LEARNING_RATE
 
 
-def build_lstm_autoencoder(window_length: int, n_features: int, dropout: float = AUTOENCODER_DROPOUT) -> tf.keras.Model:
+def build_lstm_autoencoder(window_length: int, n_features: int, dropout: float = AUTOENCODER_DROPOUT,
+                           encoder_units=None, learning_rate: float = LEARNING_RATE) -> tf.keras.Model:
     """Dropout added 2026-10-27 (Phase 12 finalisation): targets the documented
     drift problem (the model fits 2010-2022 "normal" too tightly, so 2024-2025
     looks artificially anomalous even on ordinary days) directly, rather than
     recalibrating the threshold after training, as every prior scheme did."""
+    # encoder_units / learning_rate are overridable for src/tune_autoencoder.py;
+    # the decoder mirrors the encoder. Defaults reproduce the config.py model.
+    decoder_units = DECODER_UNITS if encoder_units is None else list(reversed(encoder_units))
+    encoder_units = ENCODER_UNITS if encoder_units is None else encoder_units
     inputs = layers.Input(shape=(window_length, n_features), name="window")
 
     # Encoder: stacked LSTMs, ending in one bottleneck vector.
     x = inputs
-    for i, units in enumerate(ENCODER_UNITS):
-        return_sequences = i < len(ENCODER_UNITS) - 1
+    for i, units in enumerate(encoder_units):
+        return_sequences = i < len(encoder_units) - 1
         x = layers.LSTM(units, return_sequences=return_sequences, name=f"encoder_lstm_{i}")(x)
         x = layers.Dropout(dropout, name=f"encoder_dropout_{i}")(x)
 
@@ -26,7 +31,7 @@ def build_lstm_autoencoder(window_length: int, n_features: int, dropout: float =
     x = layers.RepeatVector(window_length, name="repeat_bottleneck")(bottleneck)
 
     # Decoder: stacked LSTMs, unrolling back into a full sequence.
-    for i, units in enumerate(DECODER_UNITS):
+    for i, units in enumerate(decoder_units):
         x = layers.LSTM(units, return_sequences=True, name=f"decoder_lstm_{i}")(x)
         x = layers.Dropout(dropout, name=f"decoder_dropout_{i}")(x)
 
@@ -34,7 +39,7 @@ def build_lstm_autoencoder(window_length: int, n_features: int, dropout: float =
 
     autoencoder = models.Model(inputs, outputs, name="lstm_autoencoder")
     autoencoder.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
         loss="mse",
     )
     return autoencoder

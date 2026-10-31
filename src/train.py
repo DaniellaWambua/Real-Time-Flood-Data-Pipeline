@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 import os
 import random
 
+import joblib
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -22,6 +24,7 @@ from src.config import (
     WINDOW_LENGTH,
 )
 from src.data_loading import load_raw_data
+from src.features import ENGINEERED_FEATURE_COLUMNS
 from src.model import build_lstm_autoencoder
 from src.preprocessing import build_all_splits
 from src.scoring import choose_threshold, reconstruction_error, slugify
@@ -74,8 +77,18 @@ def plot_training_curve(history, name):
     plt.close()
 
 
-def train_and_evaluate(name, X_train, X_val, y_val, X_test, y_test):
-    """Train one autoencoder, pick a threshold, evaluate it on the test set."""
+def train_and_evaluate(name, X_train, X_val, y_val, X_test, y_test, scaler=None):
+    """Train one autoencoder, pick a threshold, evaluate it on the test set.
+
+    scaler is the StandardScaler already fit on this catchment's training
+    data (see preprocessing.build_catchment_split). Passed through so it
+    and the chosen threshold can be saved alongside the model: without
+    them, nothing downstream (the model-hosting service added for live
+    inference) could reproduce this exact scoring at serving time, since
+    both were previously computed in memory and never written to disk.
+    Left as None for the pooled "Combined" pseudo-model, which has no
+    single meaningful scaler of its own and is never served live.
+    """
     n_features = X_train.shape[-1]
     model = build_lstm_autoencoder(WINDOW_LENGTH, n_features)
 
@@ -108,6 +121,18 @@ def train_and_evaluate(name, X_train, X_val, y_val, X_test, y_test):
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
     model.save(MODELS_DIR / f"lstm_autoencoder_{slugify(name)}.keras")
+
+    if scaler is not None:
+        joblib.dump(scaler, MODELS_DIR / f"scaler_{slugify(name)}.joblib")
+        metadata = {
+            "catchment": name,
+            "threshold": threshold,
+            "window_length": WINDOW_LENGTH,
+            "feature_columns": ENGINEERED_FEATURE_COLUMNS,
+        }
+        with open(MODELS_DIR / f"metadata_{slugify(name)}.json", "w") as f:
+            json.dump(metadata, f, indent=2)
+
     return result
 
 
@@ -122,7 +147,8 @@ def main():
     # Each catchment on its own first, the same order as the Colab work.
     for name, split in splits.items():
         result = train_and_evaluate(
-            name, split.X_train, split.X_val, split.y_val, split.X_test, split.y_test
+            name, split.X_train, split.X_val, split.y_val, split.X_test, split.y_test,
+            scaler=split.scaler,
         )
         results.append(result)
 

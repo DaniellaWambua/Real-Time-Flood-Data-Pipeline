@@ -91,6 +91,18 @@
   font-size: 0.95rem;
 }
 
+.auth-divider {
+  margin: 0.4rem 0 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.google-signin-button {
+  display: flex;
+  justify-content: center;
+}
+
 .subtitle {
   color: var(--text-secondary);
   font-size: 0.9rem;

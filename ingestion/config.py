@@ -43,3 +43,10 @@ FEATURE_FIELDS = [
 # records this layer persists.
 RAINFALL_ALERT_MM = 50.0
 DISCHARGE_CHANGE_ALERT = 1.0
+
+# Model-hosting service (proposal 3.6.4's heavier, model-driven anomaly
+# detection; see model_service/app.py). A connection failure here is
+# handled as "model scoring unavailable right now", not a reason to stop
+# consuming: the rule-based alerts above keep working regardless.
+MODEL_SERVICE_URL = os.environ.get("MODEL_SERVICE_URL", "http://localhost:5002")
+MODEL_SERVICE_TIMEOUT_SECONDS = 5

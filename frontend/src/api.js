@@ -41,6 +41,27 @@ export function login(username, password) {
   });
 }
 
+// Second step of login for an account with 2FA enabled (backend/
+// routes_auth.py). Only called once login() has already returned
+// { requires_totp: true }.
+export function verifyTotp(code) {
+  return request("/login/verify-totp", {
+    method: "POST",
+    body: JSON.stringify({ code }),
+  });
+}
+
+// Google Sign-In's alternative to login(): credential is the ID token
+// Google Identity Services hands back after the user picks an account.
+// Returns the same shape login() does, including { requires_totp: true }
+// when the matched account also has 2FA on.
+export function loginWithGoogle(credential) {
+  return request("/login/google", {
+    method: "POST",
+    body: JSON.stringify({ credential }),
+  });
+}
+
 export function logout() {
   return request("/logout", { method: "POST" });
 }

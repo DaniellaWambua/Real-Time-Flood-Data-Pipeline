@@ -9,6 +9,7 @@ with the code they call rather than living only in Drive:
 | `02_train_lstm_autoencoder.ipynb` | `python -m src.train` | Yes |
 | `03_model_selection_classifiers.ipynb` | `python -m src.model_selection` | No (the script pins itself to CPU, see the notebook) |
 | `04_threshold_tuning_and_validation.ipynb` | `evaluate_pooled_threshold.py` + `walk_forward_validation.py` | No |
+| `05_tuning_and_walk_forward.ipynb` | v9 vs v9_1 baseline, `src.tune_autoencoder` search + walk-forward | Yes |
 
 Each notebook clones this repo fresh into the Colab VM, installs
 `requirements-colab.txt` (the same as `requirements.txt`, minus

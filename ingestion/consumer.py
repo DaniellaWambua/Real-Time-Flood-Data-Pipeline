@@ -10,12 +10,13 @@ For each incoming reading, this consumer:
   2. evaluates simple, rule-based threshold conditions and writes a
      preliminary alert to the alerts table when one is exceeded.
 
-This is deliberately separate from, and simpler than, the LSTM-based
-anomaly detection module (proposal 3.6.4): that is a heavier, model-driven
-step that reads sequences back out of hydro_data_records on its own
-schedule, rather than running inline on every message here. Preliminary,
-rule-based alerts give a fast first signal while that heavier scoring
-catches up.
+After persisting, this consumer also calls the separate model-hosting
+service (proposal 3.6.4) with a live feature window for that catchment.
+If the service is reachable and has enough history, its anomaly score is
+recorded in anomaly_detection_results and, if it crosses the model's own
+threshold, a model-driven alert is raised alongside the rule-based one
+above. If the service is unreachable or history is too short, that step
+is skipped silently and the rule-based alert still stands on its own.
 
 Usage (from the ingestion/ directory, with the Kafka and db containers
 running, and after db/seed.py has been run at least once):
@@ -28,6 +29,7 @@ from confluent_kafka import Consumer
 
 import config
 import db
+import model_scoring
 
 SOURCE_NAME = "simulated-dataset-feed"
 
@@ -50,12 +52,16 @@ def get_catchment_ids():
 
 
 def persist_reading(data_source_id, catchment_id, message):
+    """Insert the raw observation and return the new row's id, needed to
+    link anomaly_detection_results back to the reading that produced it."""
     features = message["features"]
-    db.execute(
+    return db.execute_returning(
         "INSERT INTO hydro_data_records "
         "(recorded_at, data_source_id, catchment_id, rainfall_mm, "
-        " river_discharge_m3s, soil_moisture_m3m3, evaporation_mm, oni) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+        " river_discharge_m3s, soil_moisture_m3m3, evaporation_mm, oni, "
+        " rainfall_3day, rainfall_7day, discharge_change) "
+        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+        "RETURNING id",
         (
             message["date"],
             data_source_id,
@@ -65,6 +71,9 @@ def persist_reading(data_source_id, catchment_id, message):
             features["soil_moisture_m3m3"],
             features["evaporation_mm"],
             features["oni"],
+            features["rainfall_3day"],
+            features["rainfall_7day"],
+            features["discharge_change"],
         ),
     )
 
@@ -112,6 +121,7 @@ def main():
     print(f"listening on '{config.TOPIC_RAW_READINGS}' (Ctrl+C to stop)...")
     processed = 0
     alerts_raised = 0
+    model_alerts_raised = 0
     try:
         while True:
             record = consumer.poll(1.0)
@@ -127,21 +137,32 @@ def main():
                 print(f"skipping unknown catchment '{message['catchment']}'.")
                 continue
 
-            persist_reading(data_source_id, catchment_id, message)
+            hydro_data_record_id = persist_reading(data_source_id, catchment_id, message)
 
             severity = evaluate_preliminary_risk(message)
             if severity is not None:
                 raise_alert(catchment_id, severity)
                 alerts_raised += 1
 
+            score = model_scoring.score_catchment(message["catchment"], message["date"])
+            if score is not None:
+                anomaly_result_id = model_scoring.record_anomaly_result(
+                    catchment_id, hydro_data_record_id, score
+                )
+                if score["is_anomalous"]:
+                    model_scoring.raise_model_driven_alert(catchment_id, anomaly_result_id)
+                    model_alerts_raised += 1
+
             processed += 1
             if processed % 100 == 0:
-                print(f"processed {processed} readings, raised {alerts_raised} preliminary alerts so far...")
+                print(f"processed {processed} readings, raised {alerts_raised} preliminary alerts "
+                      f"and {model_alerts_raised} model-driven alerts so far...")
     except KeyboardInterrupt:
         pass
     finally:
         consumer.close()
-        print(f"stopped: processed {processed} readings, raised {alerts_raised} preliminary alerts in total.")
+        print(f"stopped: processed {processed} readings, raised {alerts_raised} preliminary alerts "
+              f"and {model_alerts_raised} model-driven alerts in total.")
 
 
 if __name__ == "__main__":

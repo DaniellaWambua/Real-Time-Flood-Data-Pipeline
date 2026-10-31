@@ -4,17 +4,18 @@ import StatusChip from "../components/StatusChip";
 import { roleLabel } from "../roleLabel";
 import "./RoleSwitcher.css";
 
-// The four roles are real accounts enforced server-side (backend/
-// config.py's ROLES, checked by routes_auth.py/routes_dashboard.py's
-// role_required), not a client-side toggle: this page can't actually
-// make the dashboard show you another role's restricted data without
-// a real session for that role, since every restricted endpoint
-// re-checks the session on the server regardless of what the
-// frontend displays. So rather than faking that with a client-side
-// switch (which would either lie about what's restricted or do
-// nothing real), this is a reference showing what each role can see
-// here today, plus the one genuine way to view it: sign out and sign
-// back in as a different account.
+// The four roles are real accounts: which screens each one reaches is
+// decided in one place, roleAccess.js's ROUTE_ROLES, applied both by
+// Layout.jsx (hides the link) and App.jsx (redirects away even if the
+// URL is typed directly). Admin's own endpoints (users, logs, pipeline
+// stats) are separately enforced server-side too (backend/config.py's
+// ROLES, checked by routes_dashboard.py's role_required), since those
+// carry real account data; the other screens differ only in which
+// workflow each role is presented, not in redacting shared sensor/
+// alert data the Main Dashboard already summarises for everyone. This
+// page is a reference showing what each role can see today, plus the
+// one genuine way to view another role's screens: sign out and sign
+// back in as that account.
 const ROLES = [
   {
     role: "system_administrator",
@@ -23,15 +24,16 @@ const ROLES = [
   },
   {
     role: "disaster_management_agency",
-    description: "Overview, Data stream, Alerts and LSTM Anomaly - the same monitoring screens every non-admin role sees.",
+    description:
+      "Overview, Data stream and LSTM Anomaly - monitoring incoming CHIRPS/GloFAS/KMD readings and the model's anomaly scores directly.",
   },
   {
     role: "emergency_responder",
-    description: "Overview, Data stream, Alerts and LSTM Anomaly - the same monitoring screens every non-admin role sees.",
+    description: "Overview and Alerts - the active/historical alert list, for coordinating field-level evacuation.",
   },
   {
     role: "government_official",
-    description: "Overview, Data stream, Alerts and LSTM Anomaly - the same monitoring screens every non-admin role sees.",
+    description: "Overview and Alerts - the same alert list, for monitoring high-risk areas and allocating resources.",
   },
 ];
 

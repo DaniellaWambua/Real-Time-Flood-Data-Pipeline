@@ -26,9 +26,14 @@ import db  # noqa: E402  (backend/db.py's psycopg2 connection helper)
 
 # name -> (longitude, latitude). Longitude first, to match PostGIS's
 # ST_MakePoint(lon, lat) argument order.
-# Each point is a node on that river's own OSM waterway way, nearest to
-# the locality below, queried via the Overpass API on 2026-10-11 (see
-# db/COORDS_SOURCES.md for the exact queries and OSM way ids).
+# Nairobi River/Mathare/Ngong/Motoine are OSM waterway points, queried
+# via the Overpass API on 2026-10-11 (see db/COORDS_SOURCES.md). Mukuru
+# and Ruaraka replace Nyando River/Tana River for the v10 Nairobi-only
+# rescoping (src/config.py's CATCHMENTS): these two are the exact
+# Earth Engine/Open-Meteo points used in Historical_Data_extraction.ipynb
+# to pull their CHIRPS/GloFAS/ERA5 rows, not independently sourced OSM
+# points, so the database's catchment location matches what the model
+# was actually trained on.
 CATCHMENT_COORDS = {
     # On "Nairobi River" (OSM way), 0.84km from the CBD.
     "Nairobi River": (36.8222826, -1.2790314),
@@ -42,10 +47,12 @@ CATCHMENT_COORDS = {
     # segment there to verify against, so this is the southmost point
     # OSM has actually mapped on the channel, not an Ongata Rongai point.
     "Motoine": (36.7529515, -1.3196194),
-    # On "Nyando river" (OSM way), 0.21km from Ahero.
-    "Nyando River": (34.9208784, -0.172945),
-    # On "Tana River" (OSM way), 0.79km from central Garissa.
-    "Tana River": (39.6356341, -0.4695316),
+    # Mukuru kwa Njenga/Reuben, Embakasi: the point used for its CHIRPS/
+    # GloFAS/ERA5 extraction.
+    "Mukuru": (36.8827, -1.32564),
+    # Ruaraka, along the Nairobi River downstream: the point used for
+    # its CHIRPS/GloFAS/ERA5 extraction.
+    "Ruaraka": (36.91359, -1.27761),
 }
 
 CATCHMENT_COUNTY = {
@@ -53,8 +60,8 @@ CATCHMENT_COUNTY = {
     "Mathare": "Nairobi",
     "Ngong": "Nairobi",
     "Motoine": "Kajiado",
-    "Nyando River": "Kisumu",
-    "Tana River": "Garissa",
+    "Mukuru": "Nairobi",
+    "Ruaraka": "Nairobi",
 }
 
 DATA_SOURCES = [
