@@ -90,11 +90,11 @@
     0.3726590573787689
   ],
   "model_files": [
-    "lstm_seed0.keras",
-    "lstm_seed1.keras",
-    "lstm_seed2.keras",
-    "lstm_seed3.keras",
-    "lstm_seed4.keras"
+    "lstm_seed0.weights.h5",
+    "lstm_seed1.weights.h5",
+    "lstm_seed2.weights.h5",
+    "lstm_seed3.weights.h5",
+    "lstm_seed4.weights.h5"
   ],
   "note": "P(flood) is the mean of every model file's output; flag if >= threshold."
 }

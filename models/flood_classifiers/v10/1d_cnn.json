@@ -90,11 +90,11 @@
     0.3726590573787689
   ],
   "model_files": [
-    "1d_cnn_seed0.keras",
-    "1d_cnn_seed1.keras",
-    "1d_cnn_seed2.keras",
-    "1d_cnn_seed3.keras",
-    "1d_cnn_seed4.keras"
+    "1d_cnn_seed0.weights.h5",
+    "1d_cnn_seed1.weights.h5",
+    "1d_cnn_seed2.weights.h5",
+    "1d_cnn_seed3.weights.h5",
+    "1d_cnn_seed4.weights.h5"
   ],
   "note": "P(flood) is the mean of every model file's output; flag if >= threshold."
 }
