@@ -29,8 +29,7 @@ with rasterio.open(DEM) as src:
         print(name, "catchment cells", int(full[name].sum()), "accumulation cells", int(acc_arr[row, col]))
 
 exclusive = {
-    "motoine": full["motoine"],
-    "ngong": full["ngong"] & ~full["motoine"],
+    "ngong": full["ngong"],
     "mathare": full["mathare"],
     "nairobi": full["nairobi"] & ~full["mathare"] & ~full["ngong"],
 }

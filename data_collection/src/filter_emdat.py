@@ -30,3 +30,5 @@ for _, r in hit.iterrows():
     print()
     print(r["DisNo."], r["Start Year"], "Origin", r["Origin"])
     print(r["Location"])
+
+hit[cols + ["Location"]].to_csv("data_collection/data/01_flood_labels/processed/emdat_nairobi_events.csv", index=False)
