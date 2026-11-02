@@ -11,3 +11,9 @@ Outlets were placed using the upstream-area profile along each mapped river (pro
 
 ## D4 Labelling and splits
 Days are labelled flood, unknown or no_flood. Unknown days are excluded from training and testing negatives. Splits must keep every event_id inside one fold, and evaluation is walk-forward by year so that no future data informs earlier predictions. Labels cover 2015 to 2025 only because Groundsource is sparse before 2015.
+
+## D5 Splits
+Final test is 2024 to 2025 and is evaluated once. Development uses forward-chaining folds over 2015 to 2023 (validate 2019, 2021 to 2022, 2023). Flood days are few (194 in total, 87 in the test years), so results are reported pooled with uncertainty, and per-catchment results only for the test years. Precision is compared with each fold base rate.
+
+## D7 Balancing test
+Undersampling non-flood days to 1:1 and 5:1 (training folds only, 3 seeds) was compared with class weights on forward-chaining folds. No consistent gain for logistic regression or random forest. Average precision stays near 0.10 to 0.16 and varies far more across folds than across methods. Sub-daily rainfall intensity is the next feature to test.

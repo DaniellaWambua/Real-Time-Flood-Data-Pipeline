@@ -41,6 +41,10 @@ for c, a, b, eid in spans:
     df.loc[m, "label_status"] = "flood"
     df.loc[m, "event_id"] = eid
 
+GAP_YEARS = [2017, 2020]
+gap = df["date"].dt.year.isin(GAP_YEARS) & (df["label_status"] == "no_flood")
+df.loc[gap, "label_status"] = "unknown"
+
 df = df.sort_values(["catchment", "date"])
 df.to_csv(D + "01_flood_labels/processed/daily_labelled_2015_2025.csv", index=False)
 print(len(df), "rows")
