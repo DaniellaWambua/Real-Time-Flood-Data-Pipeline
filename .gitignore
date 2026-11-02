@@ -27,3 +27,13 @@ data/processed/*
 
 # Files delivered from chat, not project source
 Claude outputs/
+
+# data_collection raw downloads are not tracked
+data_collection/data/*/raw/*
+!data_collection/data/*/raw/.gitkeep
+
+# large data file types inside data_collection
+data_collection/**/*.tif
+data_collection/**/*.zip
+data_collection/**/*.parquet
+data_collection/**/*.nc
