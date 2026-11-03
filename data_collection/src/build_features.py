@@ -44,10 +44,17 @@ base = (w[w["date"] < "2015-01-01"].groupby(["catchment", "month"])["rain_mm"]
 w = w.merge(base, on=["catchment", "month"], how="left")
 w["rain_anom_7d"] = w["rain_sum_7d"] - 7 * w["clim_rain"]
 
+im = pd.concat([
+    pd.read_csv(D + "02_weather/processed/imerg_daily_2015_2020.csv", parse_dates=["date"]),
+    pd.read_csv(D + "02_weather/processed/imerg_daily_2021_2025.csv", parse_dates=["date"]),
+])
+w = w.merge(im, on=["catchment", "date"], how="left")
+
 cols = ["catchment", "date", "rain_mm", "rain_sum_3d", "rain_sum_7d", "rain_sum_14d",
         "rain_sum_30d", "era5_rain_mm", "temp_c", "dewpoint_depression",
         "pressure_hpa", "pressure_change_1d", "soil_1", "soil_2",
-        "api", "days_since_rain", "month_sin", "month_cos", "rain_anom_7d"]
+        "api", "days_since_rain", "month_sin", "month_cos", "rain_anom_7d",
+        "imerg_max_rate", "imerg_total_mm", "imerg_hours_ge5"]
 df = w[cols].merge(lab[["catchment", "date", "label_status", "event_id"]],
                    on=["catchment", "date"], how="inner")
 df = df.sort_values(["catchment", "date"])
@@ -56,4 +63,4 @@ df["next_status"] = df.groupby("catchment")["label_status"].shift(-1)
 df.to_csv(D + "08_model_ready/features_daily.csv", index=False)
 print(df.shape)
 print(df.isna().sum()[df.isna().sum() > 0])
-print(df.groupby("label_status")[["rain_mm", "rain_sum_3d", "rain_sum_7d", "soil_2"]].mean().round(2))
+print(df.groupby("label_status")[["rain_mm", "rain_sum_3d", "rain_sum_7d", "soil_2", "imerg_max_rate", "imerg_hours_ge5"]].mean().round(2))

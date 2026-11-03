@@ -1,16 +1,14 @@
 import pandas as pd, numpy as np
-from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
 from sklearn.metrics import average_precision_score
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 df = pd.read_csv("data_collection/data/08_model_ready/features_daily.csv", parse_dates=["date"])
 df["year"] = df["date"].dt.year
 
 FEATS = ["rain_mm", "rain_sum_3d", "rain_sum_7d", "rain_sum_14d", "rain_sum_30d",
          "era5_rain_mm", "temp_c", "dewpoint_depression", "pressure_hpa",
-         "pressure_change_1d", "soil_1", "soil_2"]
+         "pressure_change_1d", "soil_1", "soil_2", "imerg_max_rate", "imerg_total_mm", "imerg_hours_ge5"]
 FOLDS = [(range(2015, 2019), [2019]), (range(2015, 2021), [2021, 2022]), (range(2015, 2023), [2023])]
 
 def make_target(d, which):
@@ -24,7 +22,8 @@ def recall_top(y, s, q=0.05):
 
 MODELS = {
     "rule_rain_3d": None,
-    "logistic": make_pipeline(StandardScaler(), LogisticRegression(class_weight="balanced", max_iter=1000)),
+    "boosting": HistGradientBoostingClassifier(max_depth=3, learning_rate=0.05, max_iter=200,
+                                               class_weight="balanced", random_state=0),
     "forest": RandomForestClassifier(n_estimators=300, min_samples_leaf=5,
                                      class_weight="balanced_subsample", random_state=0, n_jobs=-1),
 }
@@ -47,9 +46,6 @@ for which in ["today", "tomorrow"]:
                          "recall_top5pct": round(recall_top(y[va], s), 2)})
 
 res = pd.DataFrame(rows)
-print(res.to_string(index=False))
-print()
-print(res.groupby(["target", "model"])[["avg_precision", "recall_top5pct"]].mean().round(3))
 print(res.to_string(index=False))
 print()
 print(res.groupby(["target", "model"])[["avg_precision", "recall_top5pct"]].mean().round(3))

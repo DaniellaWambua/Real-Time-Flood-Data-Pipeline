@@ -4,6 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import average_precision_score
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 df = pd.read_csv("data_collection/data/08_model_ready/features_daily.csv", parse_dates=["date"])
 df["year"] = df["date"].dt.year
@@ -11,7 +12,8 @@ df["year"] = df["date"].dt.year
 FEATS = ["rain_mm", "rain_sum_3d", "rain_sum_7d", "rain_sum_14d", "rain_sum_30d",
          "era5_rain_mm", "temp_c", "dewpoint_depression", "pressure_hpa",
          "pressure_change_1d", "soil_1", "soil_2",
-         "api", "days_since_rain", "month_sin", "month_cos", "rain_anom_7d"]
+         "api", "days_since_rain", "month_sin", "month_cos", "rain_anom_7d",
+         "imerg_max_rate", "imerg_total_mm", "imerg_hours_ge5"]
 FOLDS = [(range(2015, 2019), [2019]), (range(2015, 2021), [2021, 2022]), (range(2015, 2023), [2023])]
 
 def make_target(d, which):
@@ -33,9 +35,9 @@ def balance(X, y, ratio, seed):
 
 def build(name, ratio, seed):
     full = ratio is None
-    if name == "logistic":
-        return make_pipeline(StandardScaler(),
-                             LogisticRegression(class_weight="balanced" if full else None, max_iter=1000))
+    if name == "boosting":
+        return HistGradientBoostingClassifier(max_depth=3, learning_rate=0.05, max_iter=200,
+                                              class_weight="balanced" if full else None, random_state=seed)
     return RandomForestClassifier(n_estimators=200, min_samples_leaf=3, random_state=seed, n_jobs=-1,
                                   class_weight="balanced_subsample" if full else None)
 
@@ -49,7 +51,7 @@ for which in ["today", "tomorrow"]:
         Xva, yva = d.loc[va, FEATS], y[va]
         for ratio in [1, 5, None]:
             seeds = [0, 1, 2] if ratio else [0]
-            for name in ["logistic", "forest"]:
+            for name in ["forest", "boosting"]:
                 aps, recs = [], []
                 for seed in seeds:
                     Xb, yb = balance(Xtr, ytr, ratio, seed) if ratio else (Xtr, ytr)
