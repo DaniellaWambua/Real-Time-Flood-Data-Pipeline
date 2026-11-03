@@ -101,6 +101,17 @@ def make_units(days):
     return units.assign(**{c: "" for c in EVIDENCE})
 
 
+def units_per_report(units):
+    b = units[(units["group"] == "B") & (units["report_id"] != "")]
+    rows = [(i, k, u, c) for ids, ks, u, c in zip(b["report_id"], b["report_kind"], b["unit_id"], b["catchment"])
+            for i, k in zip(ids.split("; "), ks.split("; "))]
+    r = pd.DataFrame(rows, columns=["report_id", "report_kind", "unit_id", "catchment"])
+    out = r.groupby(["report_id", "report_kind"]).agg(
+        b_units=("unit_id", "size"), unit_ids=("unit_id", "; ".join),
+        catchments=("catchment", lambda s: "; ".join(sorted(set(s))))).reset_index()
+    return out.sort_values(["b_units", "report_id"], ascending=[False, True])
+
+
 def main():
     days = select(load_days())
     units = make_units(days)
@@ -110,6 +121,8 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     out.to_csv(OUT + "audit_days.csv", index=False)
     units.to_csv(OUT + "audit_units.csv", index=False)
+    per = units_per_report(units)
+    per.to_csv(OUT + "b_units_per_report.csv", index=False)
 
     pd.set_option("display.width", 200)
     print("days and units per group")
@@ -117,6 +130,8 @@ def main():
     for col in ["rain_stratum", "period", "catchment", "year"]:
         print(f"\ndays per group and {col}")
         print(pd.crosstab(days["group"], days[col], margins=True).to_string())
+    print(f"\n{len(per)} reports tied to group B units; reports per number of B units:")
+    print(pd.crosstab(per["b_units"], per["report_kind"], margins=True).to_string())
 
 
 if __name__ == "__main__":
