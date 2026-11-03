@@ -32,23 +32,25 @@ def period(year):
 
 
 def weak_windows():
-    """(catchment, date, reason) for days within 1 day of a 1 to 2 report cluster or an unassigned report."""
+    """Reasons and unassigned reports (id:kind) for days within 1 day of a 1 to 2 report cluster or an unassigned report."""
     rows = []
     cl = read_allowed(ALLOWED["clusters"], parse_dates=["first_date", "last_date"])
     for r in cl[cl["n_events"] <= 2].itertuples():
         cid = f"cluster GS-{r.catchment}-{r.first_date.date()} ({r.n_events} report{'s' if r.n_events > 1 else ''})"
         for d in pd.date_range(r.first_date - DAY, r.last_date + DAY):
-            rows.append((r.catchment, d, cid))
+            rows.append((r.catchment, d, cid, ""))
     rep = read_allowed(ALLOWED["reports"], parse_dates=["start_date", "end_date"])
     rep = rep[~(rep["small"] & (rep["best_frac"] >= 0.5))]
     for r in rep.itertuples():
         end = r.end_date if pd.notna(r.end_date) else r.start_date
+        kind = "boundary" if r.small else "large"
         for c in CATCHMENTS:
             if getattr(r, "frac_" + c) > 0:
                 for d in pd.date_range(r.start_date - DAY, end + DAY):
-                    rows.append((c, d, f"report {r.uuid}"))
-    w = pd.DataFrame(rows, columns=["catchment", "date", "reason"])
-    return w.groupby(["catchment", "date"])["reason"].agg(lambda s: "; ".join(sorted(set(s)))).reset_index()
+                    rows.append((c, d, f"report {r.uuid}", f"{r.uuid}:{kind}"))
+    w = pd.DataFrame(rows, columns=["catchment", "date", "reason", "reports"])
+    join = lambda s: "; ".join(sorted(set(x for x in s if x)))
+    return w.groupby(["catchment", "date"]).agg(reason=("reason", join), reports=("reports", join)).reset_index()
 
 
 def load_days():
@@ -91,6 +93,11 @@ def make_units(days):
         n_days=("date", "size"), group=("group", "first"), rain_sum_3d_max=("rain_sum_3d", "max"),
         reason=("reason", lambda s: "; ".join(dict.fromkeys(x for v in s for x in v.split("; "))))).reset_index()
     units["rain_sum_3d_max"] = units["rain_sum_3d_max"].round(1)
+    # report_id and report_kind list the unit's unassigned reports in the same order
+    pairs = days.groupby("unit_id", sort=False)["reports"].agg(
+        lambda s: list(dict.fromkeys(p for v in s.dropna() for p in v.split("; ") if p)))
+    units["report_id"] = units["unit_id"].map(pairs).map(lambda ps: "; ".join(p.split(":")[0] for p in ps))
+    units["report_kind"] = units["unit_id"].map(pairs).map(lambda ps: "; ".join(p.split(":")[1] for p in ps))
     return units.assign(**{c: "" for c in EVIDENCE})
 
 

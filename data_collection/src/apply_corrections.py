@@ -45,6 +45,21 @@ run = ((new["catchment"] != new["catchment"].shift()) | (new["date"].diff() != p
 for _, g in new.groupby(run):
     out.loc[g.index, "event_id"] = f"AUDIT-{g['catchment'].iloc[0]}-{g['date'].min().date()}"
 
+# same rules as build_daily_table.py: 2-day unknown buffer around flood days, then gap years.
+# Corrected days keep their status, and only no_flood days become unknown.
+BUFFER = 2
+GAP_YEARS = [2017, 2020]
+corrected = key.isin(pd.MultiIndex.from_frame(corr[["catchment", "date"]]))
+free = out["label_status"].eq("no_flood") & ~corrected
+flood = out[out["label_status"].eq("flood")]
+near = pd.MultiIndex.from_tuples([(c, d + pd.Timedelta(days=k)) for c, d in zip(flood["catchment"], flood["date"])
+                                  for k in range(-BUFFER, BUFFER + 1)])
+buf = free & key.isin(near)
+out.loc[buf, "label_status"] = "unknown"
+gap = free & ~buf & out["date"].dt.year.isin(GAP_YEARS)
+out.loc[gap, "label_status"] = "unknown"
+print(int(buf.sum()), "buffer days and", int(gap.sum()), "gap-year days set from no_flood to unknown")
+
 out.to_csv(OUT, index=False)
 print(len(corr), "corrections applied, written to", OUT)
 changed = pd.crosstab(orig["label_status"], out["label_status"]).rename_axis(index="original", columns="audited")
