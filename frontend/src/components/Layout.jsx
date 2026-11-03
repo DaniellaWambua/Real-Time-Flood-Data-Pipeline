@@ -2,20 +2,21 @@ import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { logout, get } from "../api";
 import { roleLabel } from "../roleLabel";
+import { canAccess } from "../roleAccess";
 import { IconGrid, IconPulse, IconBell, IconSliders, IconBrain, IconSwitch } from "./icons";
 import Footer from "./Footer";
 import "./Layout.css";
 
-// Four screens matching the proposal's wireframes (3.4.6). Admin is
-// only linked for a system_administrator, same restriction routes_
-// dashboard.py already enforces server-side on /api/users, this just
-// avoids showing a link that would 403 for anyone else.
+// Which of these show up in the sidebar is decided by roleAccess.js's
+// ROUTE_ROLES, matching the proposal's wireframes (3.4.6): a role that
+// cannot open a screen does not see it linked either, rather than
+// seeing a link that leads to a redirect or a 403.
 const NAV_ITEMS = [
   { to: "/", label: "Overview", end: true, Icon: IconGrid },
   { to: "/data-stream", label: "Data stream", Icon: IconPulse },
   { to: "/lstm-anomaly", label: "LSTM anomaly", Icon: IconBrain },
   { to: "/alerts", label: "Alerts", Icon: IconBell, showAlertCount: true },
-  { to: "/admin", label: "Administration", Icon: IconSliders, adminOnly: true },
+  { to: "/admin", label: "Administration", Icon: IconSliders },
   { to: "/role-switcher", label: "Role switcher", Icon: IconSwitch },
 ];
 
@@ -37,9 +38,7 @@ export default function Layout({ user, onLoggedOut }) {
     onLoggedOut();
   }
 
-  const items = NAV_ITEMS.filter(
-    (item) => !item.adminOnly || user.role === "system_administrator",
-  );
+  const items = NAV_ITEMS.filter((item) => canAccess(user.role, item.to));
 
   return (
     <div className="app-shell">

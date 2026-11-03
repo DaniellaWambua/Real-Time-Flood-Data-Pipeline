@@ -8,6 +8,12 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Google Identity Services, for the "Sign in with Google" button
+         (App.jsx's LoginForm). Loaded with no "integrity"/blocking
+         behaviour that would hold up the rest of the page if it can't
+         reach google.com, since this whole app is deliberately built
+         to still work with no internet connection at all. -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

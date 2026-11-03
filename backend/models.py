@@ -12,9 +12,14 @@ import db
 
 
 def get_user_by_username(username):
-    """Return the user row (dict) for a username, or None if not found."""
+    """Return the user row (dict) for a username, or None if not found.
+    Includes totp_secret/totp_enabled (db/add_2fa_columns.py) so
+    routes_auth.py can decide whether a login needs a second step, and
+    email (db/add_google_signin_columns.py) for the admin-facing user
+    list."""
     return db.query_one(
-        "SELECT id, username, password_hash, role, is_active, created_at "
+        "SELECT id, username, password_hash, role, is_active, created_at, "
+        "       totp_secret, totp_enabled, email "
         "FROM users WHERE username = %s",
         (username,),
     )
@@ -23,9 +28,24 @@ def get_user_by_username(username):
 def get_user_by_id(user_id):
     """Return the user row (dict) for a user id, or None if not found."""
     return db.query_one(
-        "SELECT id, username, password_hash, role, is_active, created_at "
+        "SELECT id, username, password_hash, role, is_active, created_at, "
+        "       totp_secret, totp_enabled, email "
         "FROM users WHERE id = %s",
         (user_id,),
+    )
+
+
+def get_user_by_email(email):
+    """Return the user row (dict) for a Google-verified email, or None.
+    Used only by routes_auth.py's POST /login/google: an email with no
+    matching row here means no admin-provisioned account exists for it,
+    which is what keeps Google Sign-In from becoming public
+    registration."""
+    return db.query_one(
+        "SELECT id, username, password_hash, role, is_active, created_at, "
+        "       totp_secret, totp_enabled, email "
+        "FROM users WHERE email = %s",
+        (email,),
     )
 
 
@@ -34,8 +54,11 @@ def verify_password(user, plain_password):
     return check_password_hash(user["password_hash"], plain_password)
 
 
-def create_user(username, plain_password, role):
-    """Insert a new user with a hashed password. Returns the new user's id."""
+def create_user(username, plain_password, role, email=None):
+    """Insert a new user with a hashed password. Returns the new user's
+    id. email is optional and lets this account also sign in via Google
+    (routes_auth.py's POST /login/google), still only after an admin has
+    set it here, never through self-registration."""
     # Explicit pbkdf2 method: Werkzeug's default ("scrypt") needs
     # hashlib.scrypt, which is missing on a Python built against LibreSSL
     # rather than OpenSSL 1.1+ (notably the Python that ships with Xcode
@@ -48,13 +71,29 @@ def create_user(username, plain_password, role):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO users (username, password_hash, role) "
-                "VALUES (%s, %s, %s) RETURNING id",
-                (username, password_hash, role),
+                "INSERT INTO users (username, password_hash, role, email) "
+                "VALUES (%s, %s, %s, %s) RETURNING id",
+                (username, password_hash, role, email),
             )
             new_id = cur.fetchone()[0]
         conn.commit()
         return new_id
+    finally:
+        conn.close()
+
+
+def set_user_email(user_id, email):
+    """Attach (or clear, with email=None) a Gmail address to an
+    already-provisioned account, so it can sign in via Google as well
+    as its password. Returns True if a matching user was found and
+    updated."""
+    conn = db.get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET email = %s WHERE id = %s", (email, user_id))
+            updated = cur.rowcount > 0
+        conn.commit()
+        return updated
     finally:
         conn.close()
 
@@ -112,6 +151,41 @@ def set_user_active(user_id, is_active):
         return updated
     finally:
         conn.close()
+
+
+def set_totp_secret(user_id, secret):
+    """Store a freshly generated TOTP secret for a user, ahead of them
+    confirming it (see enable_totp). Called by the /totp/setup route
+    each time it's hit, so re-running setup before confirming simply
+    replaces the pending secret."""
+    db.execute(
+        "UPDATE users SET totp_secret = %s WHERE id = %s",
+        (secret, user_id),
+    )
+
+
+def enable_totp(user_id):
+    """Turn on 2FA for a user once they've proven they can generate a
+    valid code from the secret set_totp_secret() stored. Returns True
+    if a matching user was found and updated."""
+    conn = db.get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE users SET totp_enabled = true WHERE id = %s", (user_id,))
+            updated = cur.rowcount > 0
+        conn.commit()
+        return updated
+    finally:
+        conn.close()
+
+
+def disable_totp(user_id):
+    """Turn off 2FA and clear the stored secret, so a later re-enrolment
+    starts from a fresh secret rather than reusing the old one."""
+    db.execute(
+        "UPDATE users SET totp_enabled = false, totp_secret = NULL WHERE id = %s",
+        (user_id,),
+    )
 
 
 def log_event(actor, action, detail=None):

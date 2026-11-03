@@ -235,7 +235,7 @@ def list_users():
     above which only require being logged in. Password hashes are never
     returned."""
     rows = db.query_all(
-        "SELECT id, username, role, is_active, created_at "
+        "SELECT id, username, role, is_active, created_at, email "
         "FROM users ORDER BY username"
     )
     return jsonify(_serialize(rows))
@@ -251,6 +251,7 @@ def create_user_route():
     username = (data.get("username") or "").strip()
     password = data.get("password") or ""
     role = data.get("role")
+    email = (data.get("email") or "").strip() or None
 
     if not username or not password or not role:
         return jsonify({"error": "username, password and role are required"}), 400
@@ -260,11 +261,15 @@ def create_user_route():
         return jsonify({"error": "password must be at least 8 characters"}), 400
     if models.get_user_by_username(username) is not None:
         return jsonify({"error": f"a user named '{username}' already exists"}), 409
+    if email is not None and models.get_user_by_email(email) is not None:
+        return jsonify({"error": f"'{email}' is already linked to another account"}), 409
 
-    user_id = models.create_user(username, password, role)
+    user_id = models.create_user(username, password, role, email=email)
     models.log_event(session.get("username"), "user_created", f"{username} ({role})")
 
-    return jsonify({"id": user_id, "username": username, "role": role, "is_active": True}), 201
+    return jsonify(
+        {"id": user_id, "username": username, "role": role, "is_active": True, "email": email}
+    ), 201
 
 
 @dashboard_bp.route("/users/<int:user_id>", methods=["PATCH"])
@@ -304,6 +309,16 @@ def update_user_route(user_id):
         models.update_password(target["username"], new_password)
         models.log_event(session.get("username"), "user_password_reset", target["username"])
 
+    if "email" in data:
+        email = (data["email"] or "").strip() or None
+        if email is not None:
+            existing = models.get_user_by_email(email)
+            if existing is not None and existing["id"] != user_id:
+                return jsonify({"error": f"'{email}' is already linked to another account"}), 409
+        models.set_user_email(user_id, email)
+        action = "user_google_email_set" if email else "user_google_email_cleared"
+        models.log_event(session.get("username"), action, target["username"])
+
     updated = models.get_user_by_id(user_id)
     return jsonify(
         {
@@ -311,6 +326,7 @@ def update_user_route(user_id):
             "username": updated["username"],
             "role": updated["role"],
             "is_active": updated["is_active"],
+            "email": updated["email"],
         }
     )
 
