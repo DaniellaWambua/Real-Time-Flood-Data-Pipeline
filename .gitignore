@@ -37,3 +37,4 @@ data_collection/**/*.tif
 data_collection/**/*.zip
 data_collection/**/*.parquet
 data_collection/**/*.nc
+docs/

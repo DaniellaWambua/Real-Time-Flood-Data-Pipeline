@@ -1,0 +1,3 @@
+target,val,threshold_mm,alarm_share_test,events,detected,event_recall,false_days,false_days_per_cy
+today,2024-2025,43.7,0.088,26,20,0.769,134,22.3
+tomorrow,2024-2025,43.9,0.081,26,16,0.615,129,21.5

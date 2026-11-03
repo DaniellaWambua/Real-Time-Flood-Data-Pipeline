@@ -1,0 +1,33 @@
+target,criterion,threshold_from,model,n_seeds,threshold,alarm_share,precision,recall,f1,event_recall,false_days_per_cy
+today,f1,all labelled days 2015-2023,rule_rain_3d,1,39.355,0.096,0.241,0.552,0.336,0.769,25.167
+today,f1,dev out-of-fold 2019-2023,boosting,3,0.574,0.067,0.194,0.31,0.239,0.654,18.667
+today,f1,dev out-of-fold 2019-2023,extra_trees,3,0.344,0.071,0.306,0.494,0.371,0.731,17.222
+today,f1,dev out-of-fold 2019-2023,forest,3,0.184,0.058,0.272,0.36,0.305,0.615,14.667
+today,f1,dev out-of-fold 2019-2023,lstm_batches,3,0.447,0.032,0.589,0.326,0.341,0.372,6.389
+today,f1,dev out-of-fold 2019-2023,lstm_log,3,0.054,0.156,0.224,0.732,0.333,0.769,43.111
+today,f1,dev out-of-fold 2019-2023,lstm_raw,3,0.796,0.024,0.589,0.318,0.403,0.41,3.5
+today,f1,dev out-of-fold 2019-2023,rule_rain_3d,1,39.355,0.096,0.241,0.552,0.336,0.769,25.167
+today,recall75,all labelled days 2015-2023,rule_rain_3d,1,21.477,0.159,0.173,0.655,0.274,0.808,45.333
+today,recall75,dev out-of-fold 2019-2023,boosting,3,0.009,0.388,0.091,0.839,0.164,0.923,121.333
+today,recall75,dev out-of-fold 2019-2023,extra_trees,3,0.068,0.268,0.134,0.854,0.232,0.885,79.833
+today,recall75,dev out-of-fold 2019-2023,forest,3,0.016,0.321,0.112,0.851,0.198,0.949,98.0
+today,recall75,dev out-of-fold 2019-2023,lstm_batches,3,0.0,0.416,0.097,0.812,0.169,0.936,131.389
+today,recall75,dev out-of-fold 2019-2023,lstm_log,3,0.002,0.319,0.125,0.854,0.216,0.885,97.556
+today,recall75,dev out-of-fold 2019-2023,lstm_raw,3,0.001,0.445,0.084,0.877,0.153,0.936,140.389
+today,recall75,dev out-of-fold 2019-2023,rule_rain_3d,1,18.897,0.167,0.165,0.655,0.264,0.808,48.0
+tomorrow,f1,all labelled days 2015-2023,rule_rain_3d,1,43.858,0.081,0.223,0.425,0.292,0.615,21.5
+tomorrow,f1,dev out-of-fold 2019-2023,boosting,3,0.437,0.074,0.211,0.368,0.268,0.577,20.0
+tomorrow,f1,dev out-of-fold 2019-2023,extra_trees,3,0.307,0.08,0.271,0.49,0.343,0.744,20.444
+tomorrow,f1,dev out-of-fold 2019-2023,forest,3,0.087,0.133,0.178,0.556,0.268,0.744,37.556
+tomorrow,f1,dev out-of-fold 2019-2023,lstm_batches,3,0.417,0.016,0.402,0.161,0.218,0.231,3.333
+tomorrow,f1,dev out-of-fold 2019-2023,lstm_log,3,0.052,0.196,0.214,0.728,0.314,0.795,56.722
+tomorrow,f1,dev out-of-fold 2019-2023,lstm_raw,3,0.662,0.021,0.802,0.291,0.367,0.346,2.944
+tomorrow,f1,dev out-of-fold 2019-2023,rule_rain_3d,1,39.355,0.088,0.209,0.437,0.283,0.615,24.0
+tomorrow,recall75,all labelled days 2015-2023,rule_rain_3d,1,15.487,0.175,0.152,0.632,0.246,0.769,51.0
+tomorrow,recall75,dev out-of-fold 2019-2023,boosting,3,0.02,0.31,0.114,0.839,0.201,0.885,94.5
+tomorrow,recall75,dev out-of-fold 2019-2023,extra_trees,3,0.047,0.297,0.123,0.866,0.215,0.936,89.611
+tomorrow,recall75,dev out-of-fold 2019-2023,forest,3,0.029,0.266,0.133,0.824,0.229,0.897,79.333
+tomorrow,recall75,dev out-of-fold 2019-2023,lstm_batches,3,0.0,0.683,0.071,0.843,0.125,0.962,222.667
+tomorrow,recall75,dev out-of-fold 2019-2023,lstm_log,3,0.001,0.417,0.089,0.874,0.161,0.936,130.556
+tomorrow,recall75,dev out-of-fold 2019-2023,lstm_raw,3,0.0,0.635,0.065,0.969,0.121,1.0,204.333
+tomorrow,recall75,dev out-of-fold 2019-2023,rule_rain_3d,1,15.487,0.175,0.152,0.632,0.246,0.769,51.0
