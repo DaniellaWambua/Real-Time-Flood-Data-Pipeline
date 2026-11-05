@@ -46,3 +46,11 @@ Dev AP is pooled over the three folds. The tomorrow target gives the same patter
 - The local LSTM weights runs (raw and log) match the saved Colab files to three decimals.
 - The batches mode does not match Colab. Local reruns of the original train_lstm.py and of lstm_common.py agree with each other (today 0.257, 0.055, 0.018) but not with the Colab file (0.234, 0.047, 0.027). The likely cause is that Colab runs `train_on_batch` differently from this machine.
 - Boosting reproduces baselines_balanced.py, and the event scoring reproduces event_eval.py exactly.
+
+## Tuning run (D10, a second look at 2024 to 2025)
+Hyperparameters were searched on the development folds after the final test (`tuning/`). The 2024 to 2025 period had already been seen, so these test numbers are not an unseen test. The D9 results above stay the primary results. Full numbers are in `tuned_comparison_results.csv`, `tuned_fixed_threshold_results.csv` and `tuned_vs_frozen.csv`.
+
+- **Selected settings.** Forest, ExtraTrees, lstm_raw and lstm_log have a setting at least as good as the frozen one on all six development numbers. Boosting and lstm_batches do not, so the best mean rank was taken. For boosting that means tomorrow event recall goes from 0.47 to 0.65 while today AP drops from 0.197 to 0.185. For lstm_batches, tomorrow AP drops from 0.093 to 0.089. No single feature beats rain_sum_3d on all six numbers, so rule_tuned is the same as the rule.
+- **Development gains mostly did not carry over to the test.** Tuning raised development AP for most models, but test AP fell for ExtraTrees (0.378 to 0.308), lstm_raw (0.446 to 0.408) and lstm_log (0.457 to 0.382) on today. It rose for forest (0.268 to 0.353), boosting (0.189 to 0.221) and lstm_batches on tomorrow. With 17 development events, the search partly fitted noise in the folds.
+- **The ranking still changes between development and test.** In tuned development, lstm_log leads on today AP and the rule is last. On the test, lstm_raw leads and boosting is last.
+- **Fixed-threshold F1 on the test stays at or below 0.39.** The threshold is the one maximising F1 on out-of-fold development scores. Recall of 0.75 at thresholds fixed beforehand costs 76 to 140 false alarm days per catchment-year for the models, and 45 to 51 for the rule. The proposal's acceptance level is still not met.

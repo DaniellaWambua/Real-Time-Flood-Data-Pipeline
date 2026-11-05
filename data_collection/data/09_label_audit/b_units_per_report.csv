@@ -1,0 +1,84 @@
+report_id,report_kind,b_units,unit_ids,catchments
+0025cdc995c34a69982b56269e5f691e,large,3,B0054; B0116; B0172,mathare; nairobi; ngong
+03c412b8733f453880257b0024b04eb3,large,3,B0041; B0102; B0160,mathare; nairobi; ngong
+059bbe35846442f5b29e22348ab7b238,large,3,B0038; B0099; B0157,mathare; nairobi; ngong
+08607df9a7cf47c3a6b51adbed90d701,large,3,B0012; B0070; B0134,mathare; nairobi; ngong
+09b1d2bfae624ef7a9d8fd7fa0d69643,large,3,B0028; B0089; B0149,mathare; nairobi; ngong
+10ead6e69bfe498cac83b7e3cae806f5,large,3,B0051; B0114; B0169,mathare; nairobi; ngong
+11db95310ef44c68a010697f26a012ca,large,3,B0009; B0065; B0129,mathare; nairobi; ngong
+16bce77c83a846a6a549ed276244565a,large,3,B0048; B0109; B0166,mathare; nairobi; ngong
+216856422bb248d791e34cac19c5c5dc,large,3,B0034; B0095; B0153,mathare; nairobi; ngong
+36542ce14ed745b3858377e34602d682,large,3,B0032; B0094; B0152,mathare; nairobi; ngong
+39fc1cce8a3545cbad506b9cccfb3028,large,3,B0014; B0072; B0136,mathare; nairobi; ngong
+3b280c5b2d8244988f5dd8a2cd3fad3b,large,3,B0024; B0086; B0147,mathare; nairobi; ngong
+42fc9f058a594185a751200aa1edcf51,large,3,B0046; B0106; B0164,mathare; nairobi; ngong
+497800da04f048c7be50b875628a4f5d,large,3,B0010; B0066; B0131,mathare; nairobi; ngong
+4d872227f3524e13b75901deb1c91ec8,large,3,B0053; B0115; B0171,mathare; nairobi; ngong
+502966cfac424c62a1e672a32c05bbc4,large,3,B0047; B0107; B0165,mathare; nairobi; ngong
+57b65c41cbea4b7593db0261a8c2e9bd,large,3,B0025; B0087; B0147,mathare; nairobi; ngong
+58c5c823a4274038ba3c06b17b73bdae,large,3,B0049; B0110; B0167,mathare; nairobi; ngong
+5f5e24eae2134e1d94158e6d0b47884a,large,3,B0019; B0081; B0143,mathare; nairobi; ngong
+632e2a36c7804f2b9ea266f3027f6194,large,3,B0015; B0073; B0137,mathare; nairobi; ngong
+6571dd9d4b184c578f45b6ce73624fd5,large,3,B0036; B0097; B0155,mathare; nairobi; ngong
+7b246c3ba5ed4e689408ee384881d66f,large,3,B0045; B0105; B0163,mathare; nairobi; ngong
+7cc59b82082a43be9deb9832bf962867,large,3,B0005; B0059; B0123,mathare; nairobi; ngong
+8e5821b438d54eccb181f95549ed3d38,large,3,B0056; B0119; B0175,mathare; nairobi; ngong
+923a0415233f4593a79993e659f07655,large,3,B0006; B0060; B0125,mathare; nairobi; ngong
+9846cef4d1a34d188f6856e8399f87b9,large,3,B0053; B0115; B0171,mathare; nairobi; ngong
+9c83a98c55924886bdcd7b410743b42b,large,3,B0013; B0071; B0135,mathare; nairobi; ngong
+9f61379b2d9b4eb291f1fe1f8daf15b2,large,3,B0024; B0086; B0147,mathare; nairobi; ngong
+a15017ba80754918a64c3c55476ed098,large,3,B0044; B0104; B0162,mathare; nairobi; ngong
+a260a0bbf66644ac835cdd425a726e3a,large,3,B0055; B0118; B0174,mathare; nairobi; ngong
+b64eb47e302f440dabbd900bb1040f12,large,3,B0024; B0086; B0147,mathare; nairobi; ngong
+b9e03579d4894157ab262bdd49df338b,large,3,B0002; B0057; B0120,mathare; nairobi; ngong
+c239cd7b22f44fab98bd3dde84207633,large,3,B0006; B0060; B0125,mathare; nairobi; ngong
+c32afc01f6a74bfe8995c4a402ff85d8,large,3,B0016; B0074; B0138,mathare; nairobi; ngong
+c45d49f5d5a24d9db6b7a23c7d9b06d3,large,3,B0026; B0088; B0148,mathare; nairobi; ngong
+c74b60e1d2804f0386730715994a0631,large,3,B0041; B0102; B0160,mathare; nairobi; ngong
+cb1e382072644112af51d4110c10356b,large,3,B0031; B0090; B0151,mathare; nairobi; ngong
+d02f8dbfd0d647efbb7e5513cdd826b5,large,3,B0040; B0101; B0159,mathare; nairobi; ngong
+d0fde2247da74bedab71545278f7f844,large,3,B0010; B0066; B0131,mathare; nairobi; ngong
+d1396351bdfc49df974ef70ae8915f0d,large,3,B0039; B0100; B0158,mathare; nairobi; ngong
+dba5637368da4711b9aad6adfc9ea58e,large,3,B0035; B0096; B0154,mathare; nairobi; ngong
+dbd3dff9d880481a840062a568a1ebb1,large,3,B0007; B0061; B0126,mathare; nairobi; ngong
+e83fba73a9674bcf882d68aa21aede74,large,3,B0037; B0098; B0156,mathare; nairobi; ngong
+ee2bebdfc13d4e7dab862adc61c7a887,large,3,B0049; B0110; B0167,mathare; nairobi; ngong
+ff12618e6ca14732a25549245183ff7f,large,3,B0050; B0111; B0168,mathare; nairobi; ngong
+0c29873d641643bd82be196b059a8b41,large,2,B0090; B0151,nairobi; ngong
+134acfb5d4394a7ca851fa53fe1255b3,large,2,B0024; B0147,mathare; ngong
+13a9a2af2ada478ebcf59cddbce4e7b8,large,2,B0040; B0159,mathare; ngong
+3f0468ad38684242b8aa72eab7872dfc,large,2,B0040; B0159,mathare; ngong
+4a41471180954b849896963ea5734f42,large,2,B0008; B0063,mathare; nairobi
+5d79206c47654914a064f01e792de214,large,2,B0004; B0058,mathare; nairobi
+6f4bcd0496fb4a97b18817bdb044e0fd,large,2,B0017; B0077,mathare; nairobi
+727957869a5844adb9247c7c8e2f0e56,large,2,B0008; B0063,mathare; nairobi
+7c426ffeac6c489cbc1d70dd4cdbf70c,large,2,B0018; B0078,mathare; nairobi
+aebdb05fa3364fff9a0d6471ee99e3e6,large,2,B0018; B0078,mathare; nairobi
+b280c551d3da43bbad8d3e04bbc8855c,large,2,B0018; B0078,mathare; nairobi
+b63cc5ac22be4eb9aa9449f52c021e2b,large,2,B0024; B0147,mathare; ngong
+cefa9c156e814338a878abf3a5e56e13,large,2,B0042; B0161,mathare; ngong
+fa4f5375a68c4a5495c6632919a312ac,large,2,B0008; B0063,mathare; nairobi
+0d308ca65ce245bc97934e96f7c8a453,boundary,1,B0092,nairobi
+1be604ee3cfe47ed8df86908d222f09f,boundary,1,B0080,nairobi
+1d36ee6fa4c44bb18fec9bdbbc9443fb,boundary,1,B0076,nairobi
+1d552a6b572b48509946fe2ac2eeac36,large,1,B0125,ngong
+1e08f6807c414c05950b55f08e409ffb,boundary,1,B0092,nairobi
+1fd85dd1a7984be6a95c77c297760662,large,1,B0029,mathare
+25751af1ec384f0fbd8fdd189a2f3f30,large,1,B0138,ngong
+2e800c73ab9646a7bb37829a39fc6fa1,large,1,B0003,mathare
+3541a64e9af4423793c9b8ae75a8f95f,boundary,1,B0059,nairobi
+3b081a20804b4b5e88fc93b9dc7fa152,boundary,1,B0096,nairobi
+3e4bbc838dff487189ff5db2581c6e3f,large,1,B0122,ngong
+667bb1f4531d440e80a6f09ce5b47cbc,large,1,B0022,mathare
+6ca4f5a6f69b4fd1a6e2977ece5888cb,large,1,B0050,mathare
+819adf6ea11243ccbc0b3c3691e06ac0,large,1,B0138,ngong
+82a971072f734ea08e9fbd5a962bd625,large,1,B0003,mathare
+8dd5a243a89a49a68147869bfa6554c2,boundary,1,B0059,nairobi
+967a527356dd445fb4d7d9396caf5d4b,boundary,1,B0059,nairobi
+b6e106d4f92d4024835b7278f367dd20,boundary,1,B0091,nairobi
+bad9ff996b3542aba2ea390fd31d236a,large,1,B0022,mathare
+bc9e8b4c761b4c75b5ac65c91ab5e914,large,1,B0123,ngong
+c488a961c29b40c18d840ac5c95be68a,boundary,1,B0075,nairobi
+c64655ca9e154282821be0a8511eb88a,large,1,B0139,ngong
+c655e74094cf4c339553121bad29964b,boundary,1,B0109,nairobi
+d6008fd2c7e540939db90dde53a88f83,large,1,B0124,ngong

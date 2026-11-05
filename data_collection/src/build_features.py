@@ -1,10 +1,14 @@
+import sys
 import pandas as pd
 import numpy as np
 
 D = "data_collection/data/"
+# Optional: build_features.py [labels_csv] [suffix], e.g. the audited table with suffix _audited
+LABELS = sys.argv[1] if len(sys.argv) > 1 else D + "01_flood_labels/processed/daily_labelled_2015_2025.csv"
+SUFFIX = sys.argv[2] if len(sys.argv) > 2 else ""
 ch = pd.read_csv(D + "02_weather/processed/chirps_daily_2004_2025.csv", parse_dates=["date"])
 er = pd.read_csv(D + "02_weather/processed/era5land_daily_2004_2025.csv", parse_dates=["date"])
-lab = pd.read_csv(D + "01_flood_labels/processed/daily_labelled_2015_2025.csv", parse_dates=["date"])
+lab = pd.read_csv(LABELS, parse_dates=["date"])
 
 w = ch.merge(er, on=["catchment", "date"]).sort_values(["catchment", "date"])
 w["rain_mm"] = w["precipitation"].clip(lower=0)
@@ -60,7 +64,7 @@ df = w[cols].merge(lab[["catchment", "date", "label_status", "event_id"]],
 df = df.sort_values(["catchment", "date"])
 df["next_status"] = df.groupby("catchment")["label_status"].shift(-1)
 
-df.to_csv(D + "08_model_ready/features_daily.csv", index=False)
+df.to_csv(D + f"08_model_ready/features_daily{SUFFIX}.csv", index=False)
 print(df.shape)
 print(df.isna().sum()[df.isna().sum() > 0])
 print(df.groupby("label_status")[["rain_mm", "rain_sum_3d", "rain_sum_7d", "soil_2", "imerg_max_rate", "imerg_hours_ge5"]].mean().round(2))
