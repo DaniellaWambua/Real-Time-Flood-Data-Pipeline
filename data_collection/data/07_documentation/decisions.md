@@ -45,3 +45,19 @@ D11 amendment, catchment edges and dry flood units. Central Nairobi lies where t
 Flood units with a 3-day CHIRPS total of 0 mm and no independent dated report are treated as unconfirmed and set to unknown. This applies to A0043 (Ngong, 27 April 2021), A0046 (Ngong, 7 to 8 December 2022) and A0053 (Ngong, 10 to 13 May 2024). Other flood units with no evidence found keep their label and are listed for a sensitivity run in which they are set to unknown.
 
 The first 25 corrections change 14 no_flood days and 4 unknown days to flood, and 7 flood days to unknown. The 2-day buffer then sets 58 further no_flood days to unknown. Of the 40 catchment-days with dated evidence of flooding, 22 were already labelled flood.
+
+## D12, 3 November 2026, label audit comparison
+
+The frozen D8 models (rule_rain_3d, forest, boosting, extra_trees and lstm_raw, seeds 0 to 2) are refitted on the development folds with the original labels and with the audited labels of D11. Each model scores every day of the validation years and is judged against both label sets. This separates the effect of cleaner training labels from the effect of cleaner evaluation labels. No model, setting or threshold is chosen in this comparison. The metrics are those of D8, plus precision, recall and F1 at the same alarm shares, and event POD, FAR and CSI, where FAR counts runs of consecutive alarm days with no event within 1 day.
+
+The same refit on 2015 to 2023, scored on 2024 to 2025, is reported as a label sensitivity check of D9. That period has already been seen in D9 and D10, so it is not an unseen test. Because lstm_raw varies strongly with the seed, seeds 3 to 7 are added as a robustness check, and the mean score over all 8 seeds is reported as a seed ensemble. The results are in 08_model_ready/audit_summary.md.
+
+## D13, 3 November 2026, retraining on audited labels
+
+Every comparison model is retrained on the original labels and on the audited labels of D11, and every run is judged against both label sets, for the today and tomorrow targets. Three sets of runs are made. (a) All seven models with the frozen D8 settings, seeds 0 to 2, with no seed for the rule. (b) The same models with the D10 settings in tuning/selected.csv. The tuned rule keeps rain_sum_3d, so it is the same run as the frozen rule. (c) The three LSTM variants with seeds 0 to 7, under both the frozen and the tuned settings, and an 8-seed ensemble that averages the score per day.
+
+Before the other runs were made, the frozen settings trained and judged on the original labels were checked against comparison_results.csv. All 154 development numbers (11 metrics for each of the seven models and both targets) matched to three decimals.
+
+The metrics are those of audit_evaluate.py (D12): pooled and mean-of-folds average precision, maximum F1, and precision, recall and F1 at 3, 5 and 10 percent alarm shares. They also include event POD, FAR and CSI, false alarm days per catchment-year, and 95 percent block bootstrap intervals over catchment-months, paired across runs, for the difference in average precision against the rule. For the 8-seed LSTM runs, the seed spread is reported with the number of seeds for which audited training beats original training and the tuned setting beats the frozen one.
+
+Any choice of model, setting or threshold is to be made on the development folds only. The refit on 2015 to 2023, scored on 2024 to 2025, is reported as a secondary check, because that period was seen in D9, D10 and D12 and is not an unseen test. This entry records what was run and makes no choice. The results are in 08_model_ready/retrain_summary.md.
