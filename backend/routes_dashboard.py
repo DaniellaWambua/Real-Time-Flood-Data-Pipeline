@@ -35,7 +35,7 @@ def list_catchments():
     rows = db.query_all(
         "SELECT id, name, county, "
         "ST_X(geom) AS longitude, ST_Y(geom) AS latitude "
-        "FROM catchment_areas ORDER BY name"
+        "FROM catchment_areas WHERE is_active ORDER BY name"
     )
     return jsonify(_serialize(rows))
 
@@ -53,10 +53,11 @@ def recent_readings():
         "FROM hydro_data_records hdr "
         "JOIN catchment_areas ca ON ca.id = hdr.catchment_id "
         "JOIN data_sources ds ON ds.id = hdr.data_source_id "
+        "WHERE ca.is_active "
     )
     params = []
     if catchment:
-        sql += "WHERE ca.name = %s "
+        sql += "AND ca.name = %s "
         params.append(catchment)
     sql += "ORDER BY hdr.recorded_at DESC LIMIT %s"
     params.append(limit)
@@ -81,7 +82,7 @@ def list_alerts():
         "ca.name AS catchment, a.anomaly_detection_result_id "
         "FROM alerts a "
         "JOIN catchment_areas ca ON ca.id = a.catchment_id "
-        "WHERE 1 = 1 "
+        "WHERE ca.is_active "
     )
     params = []
     if severity:
@@ -118,7 +119,7 @@ def alerts_summary():
         "SELECT a.status, a.severity, COUNT(*) AS count "
         "FROM alerts a "
         "JOIN catchment_areas ca ON ca.id = a.catchment_id "
-        "WHERE 1 = 1 "
+        "WHERE ca.is_active "
     )
     params = []
     if catchment:
@@ -166,7 +167,7 @@ def alerts_trend():
         "SELECT date_trunc('day', a.created_at) AS day, COUNT(*) AS count "
         "FROM alerts a "
         "JOIN catchment_areas ca ON ca.id = a.catchment_id "
-        "WHERE 1 = 1 "
+        "WHERE ca.is_active "
     )
     params = []
     if catchment:
@@ -215,10 +216,11 @@ def recent_anomalies():
         "ar.hydro_data_record_id "
         "FROM anomaly_detection_results ar "
         "JOIN catchment_areas ca ON ca.id = ar.catchment_id "
+        "WHERE ca.is_active "
     )
     params = []
     if catchment:
-        sql += "WHERE ca.name = %s "
+        sql += "AND ca.name = %s "
         params.append(catchment)
     sql += "ORDER BY ar.detected_at DESC LIMIT %s"
     params.append(limit)
@@ -341,7 +343,7 @@ def admin_stats():
     return jsonify(
         {
             "users": db.query_one("SELECT COUNT(*) AS count FROM users")["count"],
-            "catchments": db.query_one("SELECT COUNT(*) AS count FROM catchment_areas")["count"],
+            "catchments": db.query_one("SELECT COUNT(*) AS count FROM catchment_areas WHERE is_active")["count"],
             "data_sources": db.query_one("SELECT COUNT(*) AS count FROM data_sources")["count"],
             "readings": db.query_one("SELECT COUNT(*) AS count FROM hydro_data_records")["count"],
             "anomalies": db.query_one(
