@@ -11,11 +11,15 @@ CREATE TABLE data_sources (
 
 CREATE TABLE catchment_areas (
     id              SERIAL PRIMARY KEY,
-    name            TEXT NOT NULL UNIQUE,       -- matches src/config.py CATCHMENTS entries
+    name            TEXT NOT NULL UNIQUE,
     county          TEXT,
-    geom            GEOMETRY(Point, 4326) NOT NULL,  -- catchment reference point, 3km-buffered estimate
+    code            TEXT UNIQUE,                     -- the model's name for the catchment
+    geom            GEOMETRY(Point, 4326) NOT NULL,  -- map marker point
+    boundary        GEOMETRY(Polygon, 4326),         -- delineated catchment shape
+    is_active       BOOLEAN NOT NULL DEFAULT true,   -- inactive catchments are kept, not deleted
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
 CREATE INDEX idx_catchment_areas_geom ON catchment_areas USING GIST (geom);
 
 -- Hypertable: one row per timestamped observation per source per catchment.
@@ -37,6 +41,15 @@ CREATE TABLE hydro_data_records (
     rainfall_3day       DOUBLE PRECISION,
     rainfall_7day       DOUBLE PRECISION,
     discharge_change    DOUBLE PRECISION,
+    imerg_max_rate      DOUBLE PRECISION,
+    imerg_total_mm      DOUBLE PRECISION,
+    imerg_hours_ge5     DOUBLE PRECISION,
+    era5_rain_mm        DOUBLE PRECISION,
+    soil_1              DOUBLE PRECISION,
+    soil_2              DOUBLE PRECISION,
+    temp_c              DOUBLE PRECISION,
+    dewpoint_depression DOUBLE PRECISION,
+    pressure_hpa        DOUBLE PRECISION,
     PRIMARY KEY (id, recorded_at)
 );
 SELECT create_hypertable('hydro_data_records', 'recorded_at');
