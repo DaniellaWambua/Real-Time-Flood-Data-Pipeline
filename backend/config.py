@@ -9,6 +9,7 @@ DB_USER = os.environ.get("DB_USER", "flood_pipeline")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "flood_pipeline_dev")
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-before-deploying")
+INTERNAL_API_TOKEN = os.environ.get("INTERNAL_API_TOKEN", "dev-internal-token-change-before-deploying")
 
 # Not 5000: macOS's AirPlay Receiver (System Settings, General, AirDrop
 # and Handoff) also listens on 127.0.0.1:5000 and answers with its own
