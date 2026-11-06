@@ -45,12 +45,13 @@ function pct(value) {
 export default function LstmAnomaly() {
   const [anomalies, setAnomalies] = useState(null);
   const [error, setError] = useState(null);
+  const [flaggedOnly, setFlaggedOnly] = useState(false);
 
   useEffect(() => {
-    get("/api/anomalies/recent", { limit: 50 })
+    get("/api/anomalies/recent", flaggedOnly ? { flagged: "true", limit: 500 } : { limit: 50 })
       .then(setAnomalies)
       .catch((err) => setError(err.message));
-  }, []);
+  }, [flaggedOnly]);
 
   return (
     <section>
@@ -125,7 +126,15 @@ export default function LstmAnomaly() {
 
       <div className="panel">
         <div className="panel-header">
-          <h2 className="panel-title">Recent anomaly scores</h2>
+          <h2 className="panel-title">
+            {flaggedOnly ? `Flagged days (${anomalies ? anomalies.length : "…"})` : "Recent anomaly scores"}
+          </h2>
+          <button type="button" onClick={() => {
+              setAnomalies(null);
+              setFlaggedOnly((v) => !v);
+            }}>
+            {flaggedOnly ? "Show all recent days" : "Show flagged days only"}
+          </button>
           <span className="panel-caption">
             Live LSTM inference output, where it exists (proposal 3.6.4)
           </span>
@@ -155,7 +164,7 @@ export default function LstmAnomaly() {
               {anomalies.map((row) => (
                 <tr key={row.id}>
                   <td className="lstm-table-strong">{row.catchment}</td>
-                  <td className="figure">{new Date(row.detected_at).toLocaleString()}</td>
+                  <td className="figure">{new Date(row.detected_at).toLocaleDateString("en-GB", { timeZone: "UTC" })}</td>
                   <td className="figure">{row.anomaly_score.toFixed(3)}</td>
                   <td className="figure">{row.threshold_used.toFixed(3)}</td>
                   <td>{row.is_anomalous ? "Anomalous" : "Normal"}</td>

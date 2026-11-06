@@ -35,6 +35,11 @@ def load_models():
         _cfg, _models = cfg, models
     return _cfg, _models
 
+def current_model_name():
+    """The name scores are saved under, e.g. 'lstm_raw v1', read from config.json without loading the models."""
+    cfg = json.loads((MODEL_DIR / "config.json").read_text())
+    return f"lstm_raw {cfg['version']}"
+
 
 def build_window(catchment_id, day):
     """The 14-day input ending on day, in the model's feature order, or (None, reason)."""
