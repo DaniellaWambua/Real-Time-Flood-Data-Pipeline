@@ -131,6 +131,7 @@ shapely==2.2.0
 six==1.17.0
 soupsieve==3.0.4
 stack-data==0.6.3
+tensorflow==2.19.1
 terminado==0.18.1
 tifffile==2026.3.3
 tinycss2==1.5.1
