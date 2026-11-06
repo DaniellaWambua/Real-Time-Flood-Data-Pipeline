@@ -12,6 +12,7 @@ from flask import Blueprint, jsonify, request, session
 
 import config
 import db
+import flood_detection
 import models
 from decorators import login_required, role_required
 
@@ -216,12 +217,14 @@ def recent_anomalies():
         "ar.hydro_data_record_id "
         "FROM anomaly_detection_results ar "
         "JOIN catchment_areas ca ON ca.id = ar.catchment_id "
-        "WHERE ca.is_active "
+        "WHERE ca.is_active AND ar.model_name = %s "
     )
-    params = []
+    params = [flood_detection.current_model_name()]
     if catchment:
         sql += "AND ca.name = %s "
         params.append(catchment)
+    if request.args.get("flagged") == "true":
+        sql += "AND ar.is_anomalous "
     sql += "ORDER BY ar.detected_at DESC LIMIT %s"
     params.append(limit)
 
