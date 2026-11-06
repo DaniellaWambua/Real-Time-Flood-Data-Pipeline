@@ -21,19 +21,15 @@ DB_NAME = os.environ.get("DB_NAME", "flood_pipeline")
 DB_USER = os.environ.get("DB_USER", "flood_pipeline")
 DB_PASSWORD = os.environ.get("DB_PASSWORD", "flood_pipeline_dev")
 
-# The dataset used to simulate a live feed until the real CHIRPS/GloFAS/KMD
-# sources are wired in (see producer.py's read_rows()).
-SIMULATION_DATA_FILE = PROJECT_ROOT / "data" / "raw" / "Dataset_labels_v7.csv"
+# Historical daily readings replayed through Kafka until the live Earth Engine feed is wired in
+SIMULATION_DATA_FILE = PROJECT_ROOT / "data_collection" / "data" / "08_model_ready" / "features_daily_audited.csv"
+REPLAY_SOURCE = "historical-replay"
+# catchment code in the features file -> catchment name in the database
+CATCHMENT_NAMES = {"nairobi": "Nairobi River", "mathare": "Mathare", "ngong": "Ngong"}
 
 FEATURE_FIELDS = [
-    "rainfall_mm",
-    "river_discharge_m3s",
-    "soil_moisture_m3m3",
-    "evaporation_mm",
-    "oni",
-    "rainfall_3day",
-    "rainfall_7day",
-    "discharge_change",
+    "rain_mm", "imerg_max_rate", "imerg_total_mm", "imerg_hours_ge5", "era5_rain_mm",
+    "soil_1", "soil_2", "temp_c", "dewpoint_depression", "pressure_hpa",
 ]
 
 # Preliminary, rule-based risk thresholds evaluated by the stream processor

@@ -1,15 +1,15 @@
 """
-Kafka producer simulating the data ingestion layer (proposal 3.5.2/3.6.3).
+Kafka producer for the data ingestion layer.
 
-Reads the historical labelled dataset and republishes each row, in
-chronological order, as a JSON message on the hydro-raw-readings topic, at
-a configurable interval, to simulate a live multi-source feed (CHIRPS,
-GloFAS, KMD) arriving in real time. This lets the rest of the pipeline be
-built and tested end to end before a true live source is wired in: once
-one is available, only read_rows() below needs to change.
+Replay mode publishes the historical daily readings for the three catchments
+(CHIRPS, IMERG and ERA5-Land values), one message per catchment per day in date
+order, on the hydro-raw-readings topic. Live mode, fetching the same values from
+Google Earth Engine, will replace read_rows(). Flood labels are not sent, since a
+live feed has none.
 
 Usage (from the ingestion/ directory, with the Kafka container running):
-    python producer.py [--interval SECONDS] [--catchment NAME]
+    python producer.py [--start YYYY-MM-DD] [--end YYYY-MM-DD] [--catchment NAME]
+                       [--interval SECONDS] [--dry-run]
 """
 
 import argparse
@@ -22,29 +22,25 @@ from confluent_kafka import Producer
 import config
 
 
-def read_rows(catchment=None):
-    """Yield dataset rows in chronological order, across catchments.
-
-    This is the one function to replace with a real call to CHIRPS,
-    GloFAS, or KMD when a live source is wired in; everything downstream
-    of it (the message format, the topic, the consumer) stays the same.
-    """
+def read_rows(catchment=None, start=None, end=None):
+    """Yield the replay file's rows in date order, optionally one catchment and a date range."""
     with open(config.SIMULATION_DATA_FILE, newline="") as f:
         rows = list(csv.DictReader(f))
     rows.sort(key=lambda r: (r["date"], r["catchment"]))
     for row in rows:
-        if catchment and row["catchment"] != catchment:
+        if catchment and config.CATCHMENT_NAMES[row["catchment"]] != catchment:
+            continue
+        if (start and row["date"] < start) or (end and row["date"] > end):
             continue
         yield row
 
 
 def to_message(row):
     return {
-        "record_id": int(row["record_id"]),
         "date": row["date"],
-        "catchment": row["catchment"],
-        "features": {field: float(row[field]) for field in config.FEATURE_FIELDS},
-        "flood_event": int(row["flood_event"]),
+        "catchment": config.CATCHMENT_NAMES[row["catchment"]],
+        "source": config.REPLAY_SOURCE,
+        "readings": {field: float(row[field]) for field in config.FEATURE_FIELDS},
     }
 
 
@@ -54,23 +50,25 @@ def delivery_report(err, msg):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Simulate the hydrometeorological ingestion feed from the historical dataset."
-    )
-    parser.add_argument(
-        "--interval", type=float, default=0.5,
-        help="Seconds to wait between messages (default 0.5).",
-    )
-    parser.add_argument(
-        "--catchment", default=None,
-        help="Restrict the feed to a single catchment (default: all six).",
-    )
+    parser = argparse.ArgumentParser(description="Replay the historical daily readings through Kafka.")
+    parser.add_argument("--start", help="First date to send, YYYY-MM-DD (default: start of the file).")
+    parser.add_argument("--end", help="Last date to send, YYYY-MM-DD (default: end of the file).")
+    parser.add_argument("--catchment", help="Send one catchment only, by its database name.")
+    parser.add_argument("--interval", type=float, default=0.5, help="Seconds between messages (default 0.5).")
+    parser.add_argument("--dry-run", action="store_true", help="Print the first messages instead of sending.")
     args = parser.parse_args()
 
-    producer = Producer({"bootstrap.servers": config.KAFKA_BROKER})
+    rows = read_rows(args.catchment, args.start, args.end)
+    if args.dry_run:
+        messages = [to_message(r) for r in rows]
+        for m in messages[:3]:
+            print(json.dumps(m, indent=2))
+        print(f"dry run: {len(messages)} messages would be sent to '{config.TOPIC_RAW_READINGS}'.")
+        return
 
+    producer = Producer({"bootstrap.servers": config.KAFKA_BROKER})
     count = 0
-    for row in read_rows(args.catchment):
+    for row in rows:
         message = to_message(row)
         producer.produce(
             config.TOPIC_RAW_READINGS,
