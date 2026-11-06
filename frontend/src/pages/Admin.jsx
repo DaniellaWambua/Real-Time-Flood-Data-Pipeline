@@ -192,6 +192,7 @@ function NewUserForm({ onCreated }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState(ROLES[0]);
+  const [email, setEmail] = useState("");
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -199,12 +200,13 @@ function NewUserForm({ onCreated }) {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
-    post("/api/users", { username, password, role })
+    post("/api/users", { username, password, role, email: email || undefined })
       .then((user) => {
         onCreated(user);
         setUsername("");
         setPassword("");
         setRole(ROLES[0]);
+        setEmail("");
       })
       .catch((err) => setError(err.message))
       .finally(() => setSubmitting(false));
@@ -246,6 +248,16 @@ function NewUserForm({ onCreated }) {
         </select>
       </label>
 
+      <label className="admin-new-user-field">
+        Gmail address (optional)
+        <input
+          type="email"
+          placeholder="For Google sign-in, leave blank to skip"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+      </label>
+
       <button type="submit" disabled={submitting} className="admin-new-user-submit">
         {submitting ? "Adding..." : "Add user"}
       </button>
@@ -257,6 +269,8 @@ function NewUserForm({ onCreated }) {
 function UserRow({ user, currentUserId, onChange }) {
   const [resetting, setResetting] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState(user.email ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -281,6 +295,7 @@ function UserRow({ user, currentUserId, onChange }) {
         <td className="admin-table-strong">
           {user.username}
           {isSelf && <span className="admin-you-badge">You</span>}
+          <div className="admin-table-subtext">{user.email || "no Google email set"}</div>
         </td>
         <td>
           <select
@@ -314,6 +329,16 @@ function UserRow({ user, currentUserId, onChange }) {
           <button type="button" disabled={busy} onClick={() => setResetting((v) => !v)}>
             Reset password
           </button>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => {
+              setNewEmail(user.email ?? "");
+              setEditingEmail((v) => !v);
+            }}
+          >
+            {user.email ? "Change Google email" : "Set Google email"}
+          </button>
         </td>
       </tr>
 
@@ -339,6 +364,34 @@ function UserRow({ user, currentUserId, onChange }) {
                 Set password
               </button>
               <button type="button" onClick={() => setResetting(false)}>
+                Cancel
+              </button>
+            </form>
+          </td>
+        </tr>
+      )}
+
+      {editingEmail && (
+        <tr>
+          <td colSpan={5}>
+            <form
+              className="admin-reset-password"
+              onSubmit={(event) => {
+                event.preventDefault();
+                applyPatch({ email: newEmail });
+                setEditingEmail(false);
+              }}
+            >
+              <input
+                type="email"
+                placeholder="Gmail address, or leave blank to remove Google sign-in"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+              />
+              <button type="submit" disabled={busy}>
+                Save
+              </button>
+              <button type="button" onClick={() => setEditingEmail(false)}>
                 Cancel
               </button>
             </form>

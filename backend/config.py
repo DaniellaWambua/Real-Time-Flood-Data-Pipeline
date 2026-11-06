@@ -30,3 +30,12 @@ ROLES = [
 FRONTEND_ORIGINS = os.environ.get(
     "FRONTEND_ORIGINS", "http://localhost:5173,http://localhost:3000"
 ).split(",")
+
+# Google Sign-In (routes_auth.py's POST /login/google): the OAuth 2.0
+# Client ID from Google Cloud Console (APIs & Services, Credentials),
+# needed to verify that an incoming ID token was actually issued for
+# this app, not some other one. Must match the frontend's
+# VITE_GOOGLE_CLIENT_ID exactly, since that is the client id Google
+# Identity Services stamps into the token's audience claim. Login with
+# Google is disabled (the endpoint returns an error) while this is unset.
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")

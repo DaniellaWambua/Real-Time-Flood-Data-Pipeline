@@ -275,8 +275,8 @@ def test_create_user_success_logs_event():
         )
     assert resp.status_code == 201
     body = resp.get_json()
-    assert body == {"id": 42, "username": "newbie", "role": "emergency_responder", "is_active": True}
-    mock_create.assert_called_once_with("newbie", "longenough", "emergency_responder")
+    assert body == {"id": 42, "username": "newbie", "role": "emergency_responder", "is_active": True, "email": None}
+    mock_create.assert_called_once_with("newbie", "longenough", "emergency_responder", email=None)
     mock_log.assert_called_once_with("root-admin", "user_created", "newbie (emergency_responder)")
 
 
@@ -316,8 +316,8 @@ def test_update_user_rejects_invalid_role():
 def test_update_user_changes_role_and_logs_event():
     client = _client()
     _login(client, role="system_administrator", user_id=1, username="root-admin")
-    before = {"id": 2, "username": "someone", "role": "emergency_responder", "is_active": True}
-    after = {"id": 2, "username": "someone", "role": "government_official", "is_active": True}
+    before = {"id": 2, "username": "someone", "role": "emergency_responder", "is_active": True, "email": None}
+    after = {"id": 2, "username": "someone", "role": "government_official", "is_active": True, "email": None}
     with (
         patch("routes_dashboard.models.get_user_by_id", side_effect=[before, after]),
         patch("routes_dashboard.models.update_user_role") as mock_update_role,
@@ -326,7 +326,7 @@ def test_update_user_changes_role_and_logs_event():
         resp = client.patch("/api/users/2", json={"role": "government_official"})
     assert resp.status_code == 200
     body = resp.get_json()
-    assert body == {"id": 2, "username": "someone", "role": "government_official", "is_active": True}
+    assert body == {"id": 2, "username": "someone", "role": "government_official", "is_active": True, "email": None}
     mock_update_role.assert_called_once_with(2, "government_official")
     mock_log.assert_called_once_with("root-admin", "user_role_changed", "someone -> government_official")
 
@@ -334,7 +334,7 @@ def test_update_user_changes_role_and_logs_event():
 def test_update_user_resets_password_and_logs_event():
     client = _client()
     _login(client, role="system_administrator", user_id=1, username="root-admin")
-    target = {"id": 2, "username": "someone", "role": "emergency_responder", "is_active": True}
+    target = {"id": 2, "username": "someone", "role": "emergency_responder", "is_active": True, "email": None}
     with (
         patch("routes_dashboard.models.get_user_by_id", return_value=target),
         patch("routes_dashboard.models.update_password") as mock_update_password,
