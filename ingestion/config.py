@@ -32,10 +32,6 @@ FEATURE_FIELDS = [
     "soil_1", "soil_2", "temp_c", "dewpoint_depression", "pressure_hpa",
 ]
 
-# Preliminary, rule-based risk thresholds evaluated by the stream processor
-# (proposal 3.5.6: "evaluate threshold conditions, and trigger preliminary
-# alerts"). Deliberately simple and independent of the LSTM model, which
-# runs its own, separate anomaly scoring (proposal 3.6.4) on top of the
-# records this layer persists.
-RAINFALL_ALERT_MM = 50.0
-DISCHARGE_CHANGE_ALERT = 1.0
+# The backend's flood detection endpoint, called after each reading is saved
+DETECTION_URL = os.environ.get("DETECTION_URL", "http://localhost:5001/internal/detect")
+INTERNAL_API_TOKEN = os.environ.get("INTERNAL_API_TOKEN", "dev-internal-token-change-before-deploying")

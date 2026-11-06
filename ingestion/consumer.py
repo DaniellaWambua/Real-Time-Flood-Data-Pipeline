@@ -1,117 +1,111 @@
-"""
-Kafka consumer implementing the stream processing layer (proposal
-3.5.6/3.6.3): "align incoming data ... to a common time interval,
-normalise numerical values, evaluate threshold conditions, and trigger
-preliminary alerts where defined risk levels are exceeded."
-
-For each incoming reading, this consumer:
-  1. persists the raw observation to hydro_data_records (the storage
-     layer, already in place on feat/database-schema),
-  2. evaluates simple, rule-based threshold conditions and writes a
-     preliminary alert to the alerts table when one is exceeded.
-
-This is deliberately separate from, and simpler than, the LSTM-based
-anomaly detection module (proposal 3.6.4): that is a heavier, model-driven
-step that reads sequences back out of hydro_data_records on its own
-schedule, rather than running inline on every message here. Preliminary,
-rule-based alerts give a fast first signal while that heavier scoring
-catches up.
-
-Usage (from the ingestion/ directory, with the Kafka and db containers
-running, and after db/seed.py has been run at least once):
-    python consumer.py
-"""
-
 import json
+import urllib.error
+import urllib.request
 
 from confluent_kafka import Consumer
 
 import config
 import db
+from validation import check_reading
 
-SOURCE_NAME = "simulated-dataset-feed"
-
-
-def get_source_id():
-    row = db.query_one("SELECT id FROM data_sources WHERE name = %s", (SOURCE_NAME,))
-    if row is None:
-        raise RuntimeError(
-            f"data source '{SOURCE_NAME}' not found. Run db/seed.py first."
-        )
-    return row["id"]
+DB_COLUMN = {"rain_mm": "rainfall_mm"}  # message field -> hydro_data_records column
 
 
 def get_catchment_ids():
-    """Return {catchment name: id} for every seeded catchment."""
-    rows = db.query_all("SELECT id, name FROM catchment_areas")
-    if not rows:
-        raise RuntimeError("no catchment_areas found. Run db/seed.py first.")
-    return {row["name"]: row["id"] for row in rows}
+    """{catchment name: id} for the active catchments only."""
+    return {r["name"]: r["id"] for r in db.query_all("SELECT id, name FROM catchment_areas WHERE is_active")}
 
 
-def persist_reading(data_source_id, catchment_id, message):
-    features = message["features"]
-    db.execute(
-        "INSERT INTO hydro_data_records "
-        "(recorded_at, data_source_id, catchment_id, rainfall_mm, "
-        " river_discharge_m3s, soil_moisture_m3m3, evaporation_mm, oni) "
-        "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-        (
-            message["date"],
-            data_source_id,
-            catchment_id,
-            features["rainfall_mm"],
-            features["river_discharge_m3s"],
-            features["soil_moisture_m3m3"],
-            features["evaporation_mm"],
-            features["oni"],
-        ),
-    )
+def get_source_id(name):
+    """The data source's id, adding it the first time a new source appears."""
+    row = db.query_one("SELECT id FROM data_sources WHERE name = %s", (name,))
+    if row is None:
+        db.execute("INSERT INTO data_sources (name, source_type, fetch_interval) VALUES (%s, 'daily-feed', '1 day')",
+                   (name,))
+        row = db.query_one("SELECT id FROM data_sources WHERE name = %s", (name,))
+    db.execute("UPDATE data_sources SET connection_status = 'connected' WHERE id = %s", (row["id"],))
+    return row["id"]
 
 
-def evaluate_preliminary_risk(message):
-    """Rule-based check, independent of the LSTM model. Returns a
-    severity string ('high'/'medium') or None if nothing is exceeded."""
-    features = message["features"]
-    rainfall_exceeded = features["rainfall_mm"] > config.RAINFALL_ALERT_MM
-    discharge_exceeded = features["discharge_change"] > config.DISCHARGE_CHANGE_ALERT
-
-    if rainfall_exceeded and discharge_exceeded:
-        return "high"
-    if rainfall_exceeded or discharge_exceeded:
-        return "medium"
-    return None
+def is_duplicate(source_id, catchment_id, day):
+    return db.query_one(
+        "SELECT 1 FROM hydro_data_records WHERE data_source_id = %s AND catchment_id = %s AND recorded_at = %s",
+        (source_id, catchment_id, day)) is not None
 
 
-def raise_alert(catchment_id, severity):
-    db.execute(
-        "INSERT INTO alerts (catchment_id, severity, status) VALUES (%s, %s, %s)",
-        (catchment_id, severity, "active"),
-    )
+def save_reading(source_id, catchment_id, message):
+    cols = [DB_COLUMN.get(f, f) for f in config.FEATURE_FIELDS]
+    values = [message["readings"][f] for f in config.FEATURE_FIELDS]
+    return db.execute_returning(
+        f"INSERT INTO hydro_data_records (recorded_at, data_source_id, catchment_id, {', '.join(cols)}) "
+        f"VALUES (%s, %s, %s, {', '.join(['%s'] * len(cols))}) RETURNING id",
+        (message["date"], source_id, catchment_id, *values))
 
 
-def mark_source_connected(data_source_id):
-    db.execute(
-        "UPDATE data_sources SET connection_status = 'connected' WHERE id = %s",
-        (data_source_id,),
-    )
+def reject(message, reason):
+    detail = f"{message.get('catchment')} {message.get('date')}: {reason}"
+    print(f"rejected {detail}")
+    db.execute("INSERT INTO system_logs (actor, action, detail) VALUES ('consumer', 'reading_rejected', %s)",
+               (detail,))
+
+
+def request_detection(catchment_id, day, record_id):
+    """Ask the backend to score this catchment-day, and return its reply."""
+    body = json.dumps({"catchment_id": catchment_id, "date": day, "hydro_data_record_id": record_id}).encode()
+    req = urllib.request.Request(config.DETECTION_URL, data=body, method="POST", headers={
+        "Content-Type": "application/json", "X-Internal-Token": config.INTERNAL_API_TOKEN})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            return json.loads(resp.read())
+    except urllib.error.HTTPError as e:  # e.g. 422 when fewer than 14 days are stored so far
+        return json.loads(e.read() or b"{}")
+    except urllib.error.URLError as e:
+        return {"scored": False, "reason": f"backend not reachable ({e.reason})"}
+
+
+def handle(message, catchment_ids, source_ids, counts):
+    """Check, save and score one reading."""
+    if "readings" not in message:  # old message format from before the final features
+        counts["skipped"] += 1
+        return
+    catchment_id = catchment_ids.get(message.get("catchment"))
+    reason = check_reading(message, config.FEATURE_FIELDS)
+    if reason is None and catchment_id is None:
+        reason = "unknown or inactive catchment"
+    if reason is None and not message.get("source"):
+        reason = "no source named"
+    if reason is None:
+        source = message["source"]
+        if source not in source_ids:
+            source_ids[source] = get_source_id(source)
+        if is_duplicate(source_ids[source], catchment_id, message["date"]):
+            reason = "already stored for this source, catchment and date"
+    if reason:
+        reject(message, reason)
+        counts["rejected"] += 1
+        return
+    record_id = save_reading(source_ids[message["source"]], catchment_id, message)
+    counts["saved"] += 1
+    result = request_detection(catchment_id, message["date"], record_id)
+    if result.get("scored"):
+        counts["scored"] += 1
+        counts["flagged"] += int(result["flagged"])
+    elif "not reachable" in result.get("reason", ""):
+        print(result["reason"])
 
 
 def main():
-    data_source_id = get_source_id()
     catchment_ids = get_catchment_ids()
-    mark_source_connected(data_source_id)
-
+    source_ids = {}
+    counts = {"saved": 0, "rejected": 0, "skipped": 0, "scored": 0, "flagged": 0}
     consumer = Consumer({
         "bootstrap.servers": config.KAFKA_BROKER,
         "group.id": config.CONSUMER_GROUP,
         "auto.offset.reset": "earliest",
+        "enable.auto.commit": False,  # commit only after a reading is handled
     })
     consumer.subscribe([config.TOPIC_RAW_READINGS])
-
     print(f"listening on '{config.TOPIC_RAW_READINGS}' (Ctrl+C to stop)...")
-    processed = 0
-    alerts_raised = 0
     try:
         while True:
             record = consumer.poll(1.0)
@@ -120,28 +114,15 @@ def main():
             if record.error():
                 print(f"consumer error: {record.error()}")
                 continue
-
-            message = json.loads(record.value().decode("utf-8"))
-            catchment_id = catchment_ids.get(message["catchment"])
-            if catchment_id is None:
-                print(f"skipping unknown catchment '{message['catchment']}'.")
-                continue
-
-            persist_reading(data_source_id, catchment_id, message)
-
-            severity = evaluate_preliminary_risk(message)
-            if severity is not None:
-                raise_alert(catchment_id, severity)
-                alerts_raised += 1
-
-            processed += 1
-            if processed % 100 == 0:
-                print(f"processed {processed} readings, raised {alerts_raised} preliminary alerts so far...")
+            handle(json.loads(record.value()), catchment_ids, source_ids, counts)
+            consumer.commit(message=record, asynchronous=False)
+            if counts["saved"] and counts["saved"] % 100 == 0:
+                print(counts)
     except KeyboardInterrupt:
         pass
     finally:
         consumer.close()
-        print(f"stopped: processed {processed} readings, raised {alerts_raised} preliminary alerts in total.")
+        print("stopped:", counts)
 
 
 if __name__ == "__main__":

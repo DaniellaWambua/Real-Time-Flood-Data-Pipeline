@@ -53,3 +53,15 @@ def execute(sql, params=None):
         conn.commit()
     finally:
         conn.close()
+
+def execute_returning(sql, params=None):
+    """Run an INSERT ... RETURNING statement, commit, and return the first value."""
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(sql, params or ())
+            value = cur.fetchone()[0]
+        conn.commit()
+        return value
+    finally:
+        conn.close()
