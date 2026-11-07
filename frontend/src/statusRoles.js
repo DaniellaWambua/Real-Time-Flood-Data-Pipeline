@@ -27,5 +27,6 @@ export function connectionRole(status) {
 // workflow state - active (blue) or resolved (good) - rather than
 // re-coloring by severity too.
 export function alertStatusRole(alert) {
-  return alert.status === "resolved" ? "good" : "active";
+  if (alert.status === "resolved") return "good";
+  return alert.status === "acknowledged" ? "muted" : "active";
 }

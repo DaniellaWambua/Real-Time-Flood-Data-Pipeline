@@ -104,14 +104,15 @@ def test_alerts_summary_counts_across_status_and_severity():
     assert body == {
         "total": 10,
         "active": 5,
+        "acknowledged": 0,
         "resolved": 5,
         "low": 2,
         "medium": 5,
         "high": 3,
         "by_severity": {
-            "low": {"active": 2, "resolved": 0},
-            "medium": {"active": 0, "resolved": 5},
-            "high": {"active": 3, "resolved": 0},
+            "low": {"active": 2, "acknowledged": 0, "resolved": 0},
+            "medium": {"active": 0, "acknowledged": 0, "resolved": 5},
+            "high": {"active": 3, "acknowledged": 0, "resolved": 0},
         },
     }
 
@@ -123,7 +124,8 @@ def test_alerts_summary_catchment_filter_reaches_sql():
         resp = client.get("/api/alerts/summary?catchment=Mathare")
     assert resp.status_code == 200
     args = mocked.call_args.args[1]
-    assert args == ("Mathare",)
+    # the current model's name comes first, then the catchment
+    assert args[0].startswith("lstm_raw") and args[1:] == ("Mathare",)
 
 
 def test_alerts_trend_requires_login():
@@ -156,7 +158,8 @@ def test_alerts_trend_catchment_filter_reaches_sql():
         resp = client.get("/api/alerts/trend?catchment=Mathare")
     assert resp.status_code == 200
     args = mocked.call_args.args[1]
-    assert args == ("Mathare",)
+    # the current model's name comes first, then the catchment
+    assert args[0].startswith("lstm_raw") and args[1:] == ("Mathare",)
 
 
 def test_anomalies_recent_requires_login_only():

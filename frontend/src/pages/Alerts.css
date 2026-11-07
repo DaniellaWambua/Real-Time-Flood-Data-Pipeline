@@ -69,7 +69,7 @@
 
 .alert-hero-legend {
   display: grid;
-  grid-template-columns: repeat(4, minmax(110px, 1fr));
+  grid-template-columns: repeat(5, minmax(110px, 1fr));
   gap: 0.6rem 1.5rem;
   font-size: 0.88rem;
   color: var(--text-primary);
@@ -246,4 +246,14 @@
   .alert-bulk-actions {
     margin-left: 0;
   }
+}
+
+.alert-readonly-note {
+  margin: 0 0 0 auto;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.alert-table-by {
+  color: var(--text-muted);
 }

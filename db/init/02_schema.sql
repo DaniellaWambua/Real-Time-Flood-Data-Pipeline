@@ -74,9 +74,14 @@ CREATE TABLE alerts (
     anomaly_detection_result_id BIGINT,
     catchment_id            INTEGER NOT NULL REFERENCES catchment_areas(id),
     severity                TEXT NOT NULL,     -- e.g. 'low', 'medium', 'high'
-    status                  TEXT NOT NULL DEFAULT 'active',  -- 'active', 'resolved'
+    status                  TEXT NOT NULL DEFAULT 'active',  -- 'active', 'acknowledged', 'resolved'
     created_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at               TIMESTAMPTZ NOT NULL DEFAULT now()
+    updated_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- Who moved the alert on and when (Emergency Responders only)
+    acknowledged_at         TIMESTAMPTZ,
+    acknowledged_by         TEXT,
+    resolved_at             TIMESTAMPTZ,
+    resolved_by             TEXT
 );
 CREATE INDEX idx_alerts_catchment_status ON alerts (catchment_id, status);
 

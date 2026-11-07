@@ -41,6 +41,12 @@ def current_model_name():
     return f"lstm_raw {cfg['version']}"
 
 
+def severity_for(score, threshold):
+    """low, medium or high by how far the score lies above the threshold, in thirds of the way to 1."""
+    margin = (score - threshold) / (1 - threshold)
+    return "low" if margin < 1 / 3 else "medium" if margin < 2 / 3 else "high"
+
+
 def build_window(catchment_id, day):
     """The 14-day input ending on day, in the model's feature order, or (None, reason)."""
     cfg, _ = load_models()
@@ -96,8 +102,17 @@ def detect(catchment_id, day, hydro_data_record_id=None):
                 (day, catchment_id, hydro_data_record_id, model_name, score, cfg["threshold"], flagged),
             )
             result_id = cur.fetchone()[0]
+            alert_id, severity = None, None
+            if flagged:  # a flagged day raises an alert in the same transaction
+                severity = severity_for(score, cfg["threshold"])
+                cur.execute(
+                    "INSERT INTO alerts (anomaly_detection_result_id, catchment_id, severity) "
+                    "VALUES (%s, %s, %s) RETURNING id",
+                    (result_id, catchment_id, severity),
+                )
+                alert_id = cur.fetchone()[0]
         conn.commit()
     finally:
         conn.close()
     return {"scored": True, "id": result_id, "score": score, "threshold": cfg["threshold"],
-            "flagged": flagged, "model": model_name}
+            "flagged": flagged, "model": model_name, "alert_id": alert_id, "severity": severity}
