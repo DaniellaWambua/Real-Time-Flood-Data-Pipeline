@@ -46,11 +46,10 @@ function roundedTopBarPath(x, width, yTop, yBottom) {
  * skill's rule that a single series names itself in the title.
  *
  * `variant="bars"` draws each reading as its own rounded bar instead
- * of a connected line, for rainfall: a count of discrete events reads
- * better as bars than as a continuous line implying interpolation
- * between readings. The other three readings (river discharge, soil
- * moisture, evaporation) are genuinely continuous quantities and keep
- * the line (now with a light area fill under it).
+ * of a connected line, for the rainfall readings: a daily total is a
+ * discrete quantity, and a line drawn between two of them implies a
+ * reading that was never taken. Continuous readings (soil water,
+ * temperature, pressure) keep the line, with a light area fill.
  *
  * Every chart marks its own peak reading with a dashed guide line and
  * value label, not just the latest point, so a spike earlier in the

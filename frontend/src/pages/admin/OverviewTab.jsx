@@ -164,6 +164,7 @@ function SourcesPanel() {
               <span className="pipeline-health-tile-name">{source.name}</span>
             </div>
             <StatusChip role={connectionRole(source.connection_status)} label={source.connection_status} />
+            {source.datasets && <p className="pipeline-health-tile-datasets">Carries {source.datasets}</p>}
             <dl className="pipeline-health-tile-stats">
               <div>
                 <dt>Last ingested</dt>
@@ -184,6 +185,7 @@ function SourcesPanel() {
         <thead>
           <tr>
             <th>Source</th>
+            <th>Datasets</th>
             <th>Type</th>
             <th>Status</th>
             <th>Last ingested</th>
@@ -196,6 +198,7 @@ function SourcesPanel() {
           {sources.map((source) => (
             <tr key={source.id}>
               <td className="admin-table-strong">{source.name}</td>
+              <td>{source.datasets ?? "—"}</td>
               <td>{source.source_type}</td>
               <td>
                 <StatusChip

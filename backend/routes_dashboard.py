@@ -43,17 +43,26 @@ def list_catchments():
 @dashboard_bp.route("/readings/recent", methods=["GET"])
 @login_required
 def recent_readings():
+    """The Data stream screen: the ten measured readings the model reads, newest
+    first, for one catchment.
+
+    Only rows carrying those readings are returned (era5_rain_mm is the marker,
+    the same test flood_detection.build_window uses). A catchment's table also
+    holds older rows from the retired rule-based design, which have river
+    discharge and evaporation but none of the model's own inputs; showing the two
+    together would mix two different feeds on one time axis."""
     catchment = request.args.get("catchment")
     limit = min(request.args.get("limit", default=50, type=int) or 50, 500)
 
     sql = (
         "SELECT hdr.id, hdr.recorded_at, ca.name AS catchment, ds.name AS source, "
-        "hdr.rainfall_mm, hdr.river_discharge_m3s, hdr.soil_moisture_m3m3, "
-        "hdr.evaporation_mm, hdr.oni "
+        "hdr.rainfall_mm, hdr.era5_rain_mm, hdr.imerg_total_mm, hdr.imerg_max_rate, "
+        "hdr.imerg_hours_ge5, hdr.soil_1, hdr.soil_2, hdr.temp_c, "
+        "hdr.dewpoint_depression, hdr.pressure_hpa "
         "FROM hydro_data_records hdr "
         "JOIN catchment_areas ca ON ca.id = hdr.catchment_id "
         "JOIN data_sources ds ON ds.id = hdr.data_source_id "
-        "WHERE ca.is_active "
+        "WHERE ca.is_active AND hdr.era5_rain_mm IS NOT NULL "
     )
     params = []
     if catchment:
@@ -205,10 +214,11 @@ def list_sources():
     ingestion last actually happened), not a real-time freshness check
     against wall-clock time."""
     rows = db.query_all(
-        "SELECT ds.id, ds.name, ds.source_type, ds.connection_status, ds.created_at, "
+        "SELECT ds.id, ds.name, ds.source_type, ds.connection_status, ds.datasets, ds.created_at, "
         "MAX(hdr.recorded_at) AS last_ingested_at, COUNT(hdr.id) AS record_count "
         "FROM data_sources ds "
         "LEFT JOIN hydro_data_records hdr ON hdr.data_source_id = ds.id "
+        "WHERE ds.is_active "
         "GROUP BY ds.id "
         "ORDER BY ds.name"
     )
@@ -255,22 +265,25 @@ def admin_stats():
     of hardcoded sub-selects, so nothing here is ever assembled from request
     input, and the page makes a single call.
 
-    Scoped the same way every other screen is: active catchments only, and the
-    current model's scores and the alerts raised from them, so these cards agree
-    with the Alerts and LSTM screens rather than counting rows left behind by the
-    replaced rule-based design."""
+    Scoped the same way every other screen is: active catchments and the active
+    feed only, and the current model's scores and the alerts raised from them, so
+    these cards agree with the Data stream, Alerts and LSTM screens rather than
+    counting rows left behind by the replaced rule-based design."""
     counts = db.query_one(
         "SELECT (SELECT COUNT(*) FROM users) AS users, "
         "(SELECT COUNT(*) FROM users WHERE is_active AND password_hash IS NULL) AS users_pending, "
         "(SELECT COUNT(*) FROM users WHERE NOT is_active) AS users_inactive, "
         "(SELECT COUNT(*) FROM catchment_areas WHERE is_active) AS catchments, "
         "(SELECT COUNT(*) FROM catchment_areas WHERE NOT is_active) AS catchments_inactive, "
-        "(SELECT COUNT(*) FROM data_sources) AS data_sources, "
-        "(SELECT COUNT(*) FROM data_sources WHERE connection_status = 'connected') AS sources_connected, "
+        "(SELECT COUNT(*) FROM data_sources WHERE is_active) AS data_sources, "
+        "(SELECT COUNT(*) FROM data_sources WHERE is_active AND connection_status = 'connected') "
+        "AS sources_connected, "
         "(SELECT COUNT(*) FROM hydro_data_records h JOIN catchment_areas ca ON ca.id = h.catchment_id "
-        "WHERE ca.is_active) AS readings, "
+        "JOIN data_sources ds ON ds.id = h.data_source_id WHERE ca.is_active AND ds.is_active) AS readings, "
         "(SELECT MAX(h.recorded_at)::date FROM hydro_data_records h "
-        "JOIN catchment_areas ca ON ca.id = h.catchment_id WHERE ca.is_active) AS readings_last_day, "
+        "JOIN catchment_areas ca ON ca.id = h.catchment_id "
+        "JOIN data_sources ds ON ds.id = h.data_source_id "
+        "WHERE ca.is_active AND ds.is_active) AS readings_last_day, "
         "(SELECT COUNT(*) FROM anomaly_detection_results ar JOIN catchment_areas ca ON ca.id = ar.catchment_id "
         "WHERE ca.is_active AND ar.model_name = %(model)s) AS anomalies, "
         "(SELECT COUNT(*) FROM anomaly_detection_results ar JOIN catchment_areas ca ON ca.id = ar.catchment_id "

@@ -25,7 +25,7 @@ const ROLES = [
   {
     role: "disaster_management_agency",
     description:
-      "Overview, Data stream and LSTM Anomaly - monitoring incoming CHIRPS/GloFAS/KMD readings and the model's anomaly scores directly.",
+      "Overview, Data stream and LSTM Anomaly - monitoring the incoming CHIRPS, IMERG and ERA5-Land readings and the model's anomaly scores directly.",
   },
   {
     role: "emergency_responder",

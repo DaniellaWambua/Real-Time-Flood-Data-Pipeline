@@ -256,3 +256,12 @@
 .users-panel {
   border-radius: 24px;
 }
+
+/* What a feed carries, under its status. One feed brings CHIRPS, IMERG and
+   ERA5-Land in together as a single daily reading per catchment, so the
+   datasets are named here rather than listed as sources of their own. */
+.pipeline-health-tile-datasets {
+  margin: 0.35rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}

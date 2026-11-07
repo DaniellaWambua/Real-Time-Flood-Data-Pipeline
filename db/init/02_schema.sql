@@ -2,10 +2,15 @@
 
 CREATE TABLE data_sources (
     id              SERIAL PRIMARY KEY,
-    name            TEXT NOT NULL UNIQUE,       -- e.g. 'CHIRPS', 'GloFAS', 'KMD'
-    source_type     TEXT NOT NULL,              -- e.g. 'satellite_rainfall', 'hydrological_model', 'advisory'
+    name            TEXT NOT NULL UNIQUE,       -- the name the producer puts on each message
+    source_type     TEXT NOT NULL,              -- e.g. 'daily-feed'
     fetch_interval  INTERVAL NOT NULL,
     connection_status TEXT NOT NULL DEFAULT 'disconnected',
+    -- The datasets that arrive through this feed, for the screens to name.
+    -- One feed carries all of them: they are combined into one daily reading
+    -- per catchment before publishing, not ingested on separate paths.
+    datasets        TEXT,
+    is_active       BOOLEAN NOT NULL DEFAULT true,  -- retired sources are kept, not deleted
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

@@ -8,6 +8,7 @@ import PageHeader from "../components/PageHeader";
 import { IconBell, IconBrain, IconChevronRight, IconDatabase, IconMap } from "../components/icons";
 import { severityRole } from "../statusRoles";
 import EmptyState from "../components/EmptyState";
+import { formatReading } from "../readings";
 import { get } from "../api";
 import "./Dashboard.css";
 
@@ -47,10 +48,6 @@ function riskRoleFor(catchmentName, activeAlerts) {
   return severityRole(role);
 }
 
-function formatValue(value, unit) {
-  return value === null || value === undefined ? "—" : `${value} ${unit}`;
-}
-
 function CatchmentDetails({ catchment, role, alerts, latestReading, anomalies, onClose }) {
   return (
     <div className="catchment-details">
@@ -83,13 +80,13 @@ function CatchmentDetails({ catchment, role, alerts, latestReading, anomalies, o
       {latestReading ? (
         <dl className="reading-grid">
           <dt>Rainfall</dt>
-          <dd>{formatValue(latestReading.rainfall_mm, "mm")}</dd>
-          <dt>River discharge</dt>
-          <dd>{formatValue(latestReading.river_discharge_m3s, "m3/s")}</dd>
-          <dt>Soil moisture</dt>
-          <dd>{formatValue(latestReading.soil_moisture_m3m3, "m3/m3")}</dd>
-          <dt>Evaporation</dt>
-          <dd>{formatValue(latestReading.evaporation_mm, "mm")}</dd>
+          <dd>{formatReading(latestReading.rainfall_mm, "rainfall_mm")}</dd>
+          <dt>Soil water, 0 to 7 cm</dt>
+          <dd>{formatReading(latestReading.soil_1, "soil_1")}</dd>
+          <dt>Soil water, 7 to 28 cm</dt>
+          <dd>{formatReading(latestReading.soil_2, "soil_2")}</dd>
+          <dt>Temperature</dt>
+          <dd>{formatReading(latestReading.temp_c, "temp_c")}</dd>
         </dl>
       ) : (
         <EmptyState>No readings recorded for this catchment yet.</EmptyState>
@@ -259,9 +256,9 @@ export default function Dashboard() {
           segments={[{ amount: connectedSources.length, color: "var(--status-good)" }]}
           segmentsTotal={sources.length}
           description={
-            disconnectedNames.length === 0
-              ? "All data sources connected"
-              : `${disconnectedNames.join(", ")} ${disconnectedNames.length === 1 ? "is" : "are"} disconnected`
+            disconnectedNames.length > 0
+              ? `${disconnectedNames.join(", ")} ${disconnectedNames.length === 1 ? "is" : "are"} disconnected`
+              : (connectedSources.find((s) => s.datasets)?.datasets ?? "All data sources connected")
           }
         />
         <MetricCard
