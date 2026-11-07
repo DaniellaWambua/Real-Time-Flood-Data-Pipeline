@@ -10,7 +10,6 @@ import datetime
 
 from flask import Blueprint, jsonify, request, session
 
-import config
 import db
 import flood_detection
 import models
@@ -244,110 +243,6 @@ def recent_anomalies():
 
     rows = db.query_all(sql, tuple(params))
     return jsonify(_serialize(rows))
-
-
-@dashboard_bp.route("/users", methods=["GET"])
-@role_required("system_administrator")
-def list_users():
-    """System Administration screen's user management panel. Restricted
-    to system_administrator (config.ROLES), unlike the other endpoints
-    above which only require being logged in. Password hashes are never
-    returned."""
-    rows = db.query_all(
-        "SELECT id, username, role, is_active, created_at, email "
-        "FROM users ORDER BY username"
-    )
-    return jsonify(_serialize(rows))
-
-
-@dashboard_bp.route("/users", methods=["POST"])
-@role_required("system_administrator")
-def create_user_route():
-    """Create a user from the System Administration screen itself,
-    rather than only from the create_user.py CLI script (which still
-    works, nothing here replaces it)."""
-    data = request.get_json(silent=True) or {}
-    username = (data.get("username") or "").strip()
-    password = data.get("password") or ""
-    role = data.get("role")
-    email = (data.get("email") or "").strip() or None
-
-    if not username or not password or not role:
-        return jsonify({"error": "username, password and role are required"}), 400
-    if role not in config.ROLES:
-        return jsonify({"error": f"role must be one of {', '.join(config.ROLES)}"}), 400
-    if len(password) < 8:
-        return jsonify({"error": "password must be at least 8 characters"}), 400
-    if models.get_user_by_username(username) is not None:
-        return jsonify({"error": f"a user named '{username}' already exists"}), 409
-    if email is not None and models.get_user_by_email(email) is not None:
-        return jsonify({"error": f"'{email}' is already linked to another account"}), 409
-
-    user_id = models.create_user(username, password, role, email=email)
-    models.log_event(session.get("username"), "user_created", f"{username} ({role})")
-
-    return jsonify(
-        {"id": user_id, "username": username, "role": role, "is_active": True, "email": email}
-    ), 201
-
-
-@dashboard_bp.route("/users/<int:user_id>", methods=["PATCH"])
-@role_required("system_administrator")
-def update_user_route(user_id):
-    """Edit a user from the System Administration screen: role, active
-    status and/or password, whichever fields are present in the body.
-    create_user.py/change_password.py remain the CLI equivalents; this
-    is the same operations through the web UI instead."""
-    data = request.get_json(silent=True) or {}
-    target = models.get_user_by_id(user_id)
-    if target is None:
-        return jsonify({"error": "no such user"}), 404
-
-    if "is_active" in data and not data["is_active"] and user_id == session.get("user_id"):
-        return jsonify({"error": "you cannot deactivate your own account"}), 400
-
-    if "role" in data:
-        role = data["role"]
-        if role not in config.ROLES:
-            return jsonify({"error": f"role must be one of {', '.join(config.ROLES)}"}), 400
-        models.update_user_role(user_id, role)
-        models.log_event(
-            session.get("username"), "user_role_changed", f"{target['username']} -> {role}"
-        )
-
-    if "is_active" in data:
-        is_active = bool(data["is_active"])
-        models.set_user_active(user_id, is_active)
-        action = "user_reactivated" if is_active else "user_deactivated"
-        models.log_event(session.get("username"), action, target["username"])
-
-    if "password" in data:
-        new_password = data["password"]
-        if len(new_password) < 8:
-            return jsonify({"error": "password must be at least 8 characters"}), 400
-        models.update_password(target["username"], new_password)
-        models.log_event(session.get("username"), "user_password_reset", target["username"])
-
-    if "email" in data:
-        email = (data["email"] or "").strip() or None
-        if email is not None:
-            existing = models.get_user_by_email(email)
-            if existing is not None and existing["id"] != user_id:
-                return jsonify({"error": f"'{email}' is already linked to another account"}), 409
-        models.set_user_email(user_id, email)
-        action = "user_google_email_set" if email else "user_google_email_cleared"
-        models.log_event(session.get("username"), action, target["username"])
-
-    updated = models.get_user_by_id(user_id)
-    return jsonify(
-        {
-            "id": updated["id"],
-            "username": updated["username"],
-            "role": updated["role"],
-            "is_active": updated["is_active"],
-            "email": updated["email"],
-        }
-    )
 
 
 @dashboard_bp.route("/admin/stats", methods=["GET"])

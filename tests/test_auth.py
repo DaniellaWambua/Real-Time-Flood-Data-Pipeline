@@ -1,7 +1,7 @@
 """
 Sanity checks for the auth routes (backend/routes_auth.py), run the
 same way as tests/test_dashboard_api.py: plain Python, no pytest, no
-live Postgres. models.get_user_by_username/verify_password/log_event
+live Postgres. models.get_user_by_login/verify_password/log_event
 are mocked with canned values, so this checks login's branching (bad
 credentials, a deactivated account, success) and that each branch logs
 the right system_logs event, not real password hashing or SQL.
@@ -43,7 +43,7 @@ def test_login_requires_username_and_password():
 def test_login_unknown_username_logs_failure():
     client = _client()
     with (
-        patch("routes_auth.models.get_user_by_username", return_value=None),
+        patch("routes_auth.models.get_user_by_login", return_value=None),
         patch("routes_auth.models.log_event") as mock_log,
     ):
         resp = client.post("/login", json={"username": "nobody", "password": "whatever"})
@@ -54,7 +54,7 @@ def test_login_unknown_username_logs_failure():
 def test_login_wrong_password_logs_failure():
     client = _client()
     with (
-        patch("routes_auth.models.get_user_by_username", return_value=ACTIVE_USER),
+        patch("routes_auth.models.get_user_by_login", return_value=ACTIVE_USER),
         patch("routes_auth.models.verify_password", return_value=False),
         patch("routes_auth.models.log_event") as mock_log,
     ):
@@ -66,7 +66,7 @@ def test_login_wrong_password_logs_failure():
 def test_login_deactivated_account_rejected():
     client = _client()
     with (
-        patch("routes_auth.models.get_user_by_username", return_value=DEACTIVATED_USER),
+        patch("routes_auth.models.get_user_by_login", return_value=DEACTIVATED_USER),
         patch("routes_auth.models.verify_password", return_value=True),
         patch("routes_auth.models.log_event") as mock_log,
     ):
@@ -75,22 +75,62 @@ def test_login_deactivated_account_rejected():
     mock_log.assert_called_once_with("root-admin", "login_failure", "account is deactivated")
 
 
-def test_login_success_sets_session_and_logs():
+def test_a_correct_password_alone_never_signs_in():
+    """Without 2FA set up, the password step leads to 2FA setup, not a session."""
     client = _client()
     with (
-        patch("routes_auth.models.get_user_by_username", return_value=ACTIVE_USER),
+        patch("routes_auth.models.get_user_by_login", return_value=ACTIVE_USER),
         patch("routes_auth.models.verify_password", return_value=True),
         patch("routes_auth.models.log_event") as mock_log,
     ):
         resp = client.post("/login", json={"username": "root-admin", "password": "correct"})
-    assert resp.status_code == 200
-    body = resp.get_json()
-    assert body == {"id": 1, "username": "root-admin", "role": "system_administrator"}
-    mock_log.assert_called_once_with("root-admin", "login_success", None)
-
+    assert resp.status_code == 200 and resp.get_json() == {"requires_totp_setup": True}
+    mock_log.assert_called_once_with("root-admin", "login_password_ok_awaiting_2fa_setup", None)
     with client.session_transaction() as sess:
-        assert sess["user_id"] == 1
-        assert sess["role"] == "system_administrator"
+        assert "user_id" not in sess and sess["setup_user_id"] == 1
+
+
+def test_an_account_with_2fa_is_asked_for_its_code():
+    client = _client()
+    with (
+        patch("routes_auth.models.get_user_by_login", return_value={**ACTIVE_USER, "totp_enabled": True}),
+        patch("routes_auth.models.verify_password", return_value=True),
+        patch("routes_auth.models.log_event"),
+    ):
+        resp = client.post("/login", json={"username": "root-admin", "password": "correct"})
+    assert resp.get_json() == {"requires_totp": True}
+    with client.session_transaction() as sess:
+        assert "user_id" not in sess and sess["pending_user_id"] == 1
+
+
+def test_finishing_2fa_setup_signs_in():
+    client = _client()
+    with client.session_transaction() as sess:
+        sess["setup_user_id"] = 1
+    with (
+        patch("routes_auth.models.get_user_by_id", return_value={**ACTIVE_USER, "totp_secret": "BASE32SECRET3232"}),
+        patch("routes_auth.pyotp.TOTP.verify", return_value=True),
+        patch("routes_auth.models.enable_totp") as mock_enable,
+        patch("routes_auth.models.log_event") as mock_log,
+    ):
+        resp = client.post("/totp/enable", json={"code": "123456"})
+    assert resp.status_code == 200 and resp.get_json()["username"] == "root-admin"
+    mock_enable.assert_called_once_with(1)
+    assert [c.args[1] for c in mock_log.call_args_list] == ["totp_enabled", "login_success"]
+    with client.session_transaction() as sess:
+        assert sess["user_id"] == 1 and "setup_user_id" not in sess
+
+
+def test_setup_state_cannot_reach_the_data():
+    client = _client()
+    with client.session_transaction() as sess:
+        sess["setup_user_id"] = 1
+    assert client.get("/me").status_code == 401
+    assert client.get("/api/catchments").status_code == 401
+
+
+def test_2fa_can_no_longer_be_turned_off_by_the_user():
+    assert _client().post("/totp/disable", json={"password": "x"}).status_code == 404
 
 
 def test_logout_clears_session():

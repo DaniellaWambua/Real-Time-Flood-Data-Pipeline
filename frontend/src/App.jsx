@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import "./App.css";
-import { login, loginWithGoogle, me, verifyTotp } from "./api";
+import { login, loginWithGoogle, me } from "./api";
 import { canAccess } from "./roleAccess";
 import Layout from "./components/Layout";
 import Footer from "./components/Footer";
@@ -12,6 +12,8 @@ import LstmAnomaly from "./pages/LstmAnomaly";
 import RoleSwitcher from "./pages/RoleSwitcher";
 import Alerts from "./pages/Alerts";
 import Admin from "./pages/Admin";
+import SetPassword from "./pages/SetPassword";
+import SecondFactor from "./components/SecondFactor";
 
 // Set by index.html's Google Identity Services script tag. Read once
 // here rather than hardcoded, so a build with no client id configured
@@ -22,20 +24,17 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 function LoginForm({ onLoggedIn }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
-  const [awaitingTotp, setAwaitingTotp] = useState(false);
+  // "credentials", then "verify" (enter the 2FA code) or "setup" (set up 2FA first)
+  const [step, setStep] = useState("credentials");
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const googleButtonRef = useRef(null);
 
-  // Handles the result of either login step (password+2FA or Google)
-  // the same way, since both can come back needing a TOTP code.
+  // Password and Google sign-in both lead to the second step: a code, or setting up 2FA
   function handleLoginResult(result) {
-    if (result.requires_totp) {
-      setAwaitingTotp(true);
-    } else {
-      onLoggedIn(result);
-    }
+    if (result.requires_totp) setStep("verify");
+    else if (result.requires_totp_setup) setStep("setup");
+    else onLoggedIn(result);
   }
 
   async function handleGoogleCredential(response) {
@@ -59,7 +58,7 @@ function LoginForm({ onLoggedIn }) {
   // leave the button area empty if it never turns up, rather than
   // showing a button that would fail on every click.
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID || awaitingTotp) {
+    if (!GOOGLE_CLIENT_ID || step !== "credentials") {
       return;
     }
     let cancelled = false;
@@ -90,7 +89,7 @@ function LoginForm({ onLoggedIn }) {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [awaitingTotp]);
+  }, [step]);
 
   async function handlePasswordSubmit(event) {
     event.preventDefault();
@@ -103,20 +102,6 @@ function LoginForm({ onLoggedIn }) {
       // handleLoginResult asks for the authenticator code instead of
       // calling onLoggedIn straight away.
       handleLoginResult(result);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  async function handleTotpSubmit(event) {
-    event.preventDefault();
-    setSubmitting(true);
-    setError(null);
-    try {
-      const user = await verifyTotp(code);
-      onLoggedIn(user);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -138,16 +123,17 @@ function LoginForm({ onLoggedIn }) {
         </div>
       </header>
       <main className="auth-main">
-        {!awaitingTotp ? (
+        {step === "credentials" ? (
           <form className="login-form panel" onSubmit={handlePasswordSubmit}>
             <h1>Sign in</h1>
-            <p className="subtitle">Use an account created via backend/create_user.py.</p>
+            <p className="subtitle">Use the account your administrator invited you to.</p>
 
             <label>
-              Username
+              Username or email
               <input
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
+                autoComplete="username"
                 autoFocus
                 required
               />
@@ -181,30 +167,7 @@ function LoginForm({ onLoggedIn }) {
             )}
           </form>
         ) : (
-          <form className="login-form panel" onSubmit={handleTotpSubmit}>
-            <h1>Enter your code</h1>
-            <p className="subtitle">
-              Open your authenticator app and enter the 6-digit code for this account.
-            </p>
-
-            <label>
-              Authentication code
-              <input
-                value={code}
-                onChange={(event) => setCode(event.target.value)}
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                autoFocus
-                required
-              />
-            </label>
-
-            {error && <p className="error">{error}</p>}
-
-            <button type="submit" disabled={submitting}>
-              {submitting ? "Verifying..." : "Verify"}
-            </button>
-          </form>
+          <SecondFactor mode={step} onDone={onLoggedIn} />
         )}
       </main>
       <Footer />
@@ -212,9 +175,13 @@ function LoginForm({ onLoggedIn }) {
   );
 }
 
+// An invite or password-reset email links to /account/<code>, shown before any sign-in
+const ACCOUNT_LINK = window.location.pathname.match(/^\/account\/([^/]+)$/);
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [accountCode, setAccountCode] = useState(ACCOUNT_LINK ? ACCOUNT_LINK[1] : null);
 
   // On load, ask the backend if there's already a valid session cookie
   // (e.g. the page was refreshed), rather than always starting logged out.
@@ -224,6 +191,24 @@ export default function App() {
       .catch(() => setUser(null))
       .finally(() => setCheckingSession(false));
   }, []);
+
+  function leaveAccountPage() {
+    window.history.replaceState(null, "", "/");
+    setAccountCode(null);
+  }
+
+  if (accountCode) {
+    return (
+      <SetPassword
+        code={accountCode}
+        onSignedIn={(signedIn) => {
+          leaveAccountPage();
+          setUser(signedIn);
+        }}
+        onDone={leaveAccountPage}
+      />
+    );
+  }
 
   if (checkingSession) {
     return <p className="subtitle centered">Checking session...</p>;
