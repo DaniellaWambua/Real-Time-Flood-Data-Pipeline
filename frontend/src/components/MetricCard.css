@@ -1,4 +1,6 @@
 .metric-card {
+  position: relative;
+  overflow: hidden;
   background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -126,4 +128,38 @@
 .metric-card--deep .metric-card-badge {
   border-color: rgba(255, 255, 255, 0.4);
   color: rgba(255, 255, 255, 0.85);
+}
+
+/* Decorative watermark of what the card counts, bottom-right and well
+   behind the number (MetricCard.jsx's `glyph`). Sized and faded so it
+   reads as texture on the filled cards rather than as an icon to look
+   at; the label is what names the number. */
+.metric-card-glyph {
+  position: absolute;
+  right: -12px;
+  bottom: -16px;
+  line-height: 0;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.metric-card-glyph svg {
+  width: 86px;
+  height: 86px;
+}
+
+.metric-card--deep .metric-card-glyph {
+  opacity: 0.18;
+  color: #ffffff;
+}
+
+.metric-card--soft .metric-card-glyph {
+  opacity: 0.22;
+  color: var(--accent-strong);
+}
+
+/* A card still waiting for its numbers: it holds the row's height and tone so
+   the page does not reorder itself when the counts arrive. */
+.metric-card--loading {
+  opacity: 0.45;
 }

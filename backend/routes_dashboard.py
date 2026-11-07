@@ -248,37 +248,37 @@ def recent_anomalies():
 @dashboard_bp.route("/admin/stats", methods=["GET"])
 @role_required("system_administrator")
 def admin_stats():
-    """System Administration screen's database overview panel: row
-    counts across the main tables, a quick operational sanity check.
-    Table names are hardcoded, one query each, rather than building SQL
-    from a list, so nothing here is ever assembled from request input."""
-    return jsonify(
-        {
-            "users": db.query_one("SELECT COUNT(*) AS count FROM users")["count"],
-            "catchments": db.query_one("SELECT COUNT(*) AS count FROM catchment_areas WHERE is_active")["count"],
-            "data_sources": db.query_one("SELECT COUNT(*) AS count FROM data_sources")["count"],
-            "readings": db.query_one("SELECT COUNT(*) AS count FROM hydro_data_records")["count"],
-            "anomalies": db.query_one(
-                "SELECT COUNT(*) AS count FROM anomaly_detection_results"
-            )["count"],
-            "alerts": db.query_one("SELECT COUNT(*) AS count FROM alerts")["count"],
-        }
+    """System Administration screen's stat cards: row counts across the main
+    tables, each with the one breakdown its card shows (how many users are still
+    invited, how many alerts are still open, and so on), so a card says what
+    state the system is in rather than only how many rows there are. One query
+    of hardcoded sub-selects, so nothing here is ever assembled from request
+    input, and the page makes a single call.
+
+    Scoped the same way every other screen is: active catchments only, and the
+    current model's scores and the alerts raised from them, so these cards agree
+    with the Alerts and LSTM screens rather than counting rows left behind by the
+    replaced rule-based design."""
+    counts = db.query_one(
+        "SELECT (SELECT COUNT(*) FROM users) AS users, "
+        "(SELECT COUNT(*) FROM users WHERE is_active AND password_hash IS NULL) AS users_pending, "
+        "(SELECT COUNT(*) FROM users WHERE NOT is_active) AS users_inactive, "
+        "(SELECT COUNT(*) FROM catchment_areas WHERE is_active) AS catchments, "
+        "(SELECT COUNT(*) FROM catchment_areas WHERE NOT is_active) AS catchments_inactive, "
+        "(SELECT COUNT(*) FROM data_sources) AS data_sources, "
+        "(SELECT COUNT(*) FROM data_sources WHERE connection_status = 'connected') AS sources_connected, "
+        "(SELECT COUNT(*) FROM hydro_data_records h JOIN catchment_areas ca ON ca.id = h.catchment_id "
+        "WHERE ca.is_active) AS readings, "
+        "(SELECT MAX(h.recorded_at)::date FROM hydro_data_records h "
+        "JOIN catchment_areas ca ON ca.id = h.catchment_id WHERE ca.is_active) AS readings_last_day, "
+        "(SELECT COUNT(*) FROM anomaly_detection_results ar JOIN catchment_areas ca ON ca.id = ar.catchment_id "
+        "WHERE ca.is_active AND ar.model_name = %(model)s) AS anomalies, "
+        "(SELECT COUNT(*) FROM anomaly_detection_results ar JOIN catchment_areas ca ON ca.id = ar.catchment_id "
+        "WHERE ca.is_active AND ar.model_name = %(model)s AND ar.is_anomalous) AS anomalies_flagged, "
+        "(SELECT COUNT(*) " + ALERT_FROM.replace("%s", "%(model)s") + ") AS alerts, "
+        "(SELECT COUNT(*) " + ALERT_FROM.replace("%s", "%(model)s") + "AND a.status = 'active') AS alerts_open, "
+        "(SELECT COUNT(*) " + ALERT_FROM.replace("%s", "%(model)s") + "AND a.status = 'acknowledged') "
+        "AS alerts_acknowledged",
+        {"model": flood_detection.current_model_name()},
     )
-
-
-@dashboard_bp.route("/logs", methods=["GET"])
-@role_required("system_administrator")
-def list_logs():
-    """System Administration screen's log panel (proposal 3.4.6 names
-    this directly; nothing backed it before). Capped rather than paged,
-    same reasoning as the alert management screen's own detail table:
-    a fixed recent window is what an admin actually scans, not the
-    whole history."""
-    limit = min(request.args.get("limit", default=20, type=int) or 20, 200)
-    rows = db.query_all(
-        "SELECT id, occurred_at, actor, action, detail "
-        "FROM system_logs ORDER BY occurred_at DESC LIMIT %s",
-        (limit,),
-    )
-    return jsonify(_serialize(rows))
-
+    return jsonify(_serialize([counts])[0])

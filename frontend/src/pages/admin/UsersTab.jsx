@@ -5,6 +5,7 @@ import Dialog from "../../components/Dialog";
 import EmptyState from "../../components/EmptyState";
 import { ROLE_OPTIONS, roleLabel } from "../../roleLabel";
 import { get, patch, post } from "../../api";
+import { downloadCsv } from "../../csv";
 import InviteUserDialog from "./InviteUserDialog";
 import EditUserDialog from "./EditUserDialog";
 import "./UsersTab.css";
@@ -24,26 +25,13 @@ function formatDate(iso) {
   return iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "Never";
 }
 
-// Quoted cells; a leading = + - @ is prefixed so spreadsheet apps never run a value as a formula
-function csvCell(value) {
-  let text = value == null ? "" : String(value);
-  if (/^[=+\-@]/.test(text)) text = `'${text}`;
-  return `"${text.replace(/"/g, '""')}"`;
-}
-
 function exportCsv(rows) {
-  const header = ["Name", "Username", "Email", "Organisation", "Role", "Status", "Last sign-in", "Created"];
-  const lines = rows.map((u) =>
-    [displayName(u), u.username, u.email, u.organisation, roleLabel(u.role), STATUS[u.status]?.label,
-      u.last_sign_in ?? "", u.created_at].map(csvCell).join(","),
+  downloadCsv(
+    "users",
+    ["Name", "Username", "Email", "Organisation", "Role", "Status", "Last sign-in", "Created"],
+    rows.map((u) => [displayName(u), u.username, u.email, u.organisation, roleLabel(u.role), STATUS[u.status]?.label,
+      u.last_sign_in ?? "", u.created_at]),
   );
-  const blob = new Blob([[header.map(csvCell).join(","), ...lines].join("\r\n")], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `users-${new Date().toISOString().slice(0, 10)}.csv`;
-  link.click();
-  URL.revokeObjectURL(url);
 }
 
 function RowMenu({ user, isSelf, onAction }) {

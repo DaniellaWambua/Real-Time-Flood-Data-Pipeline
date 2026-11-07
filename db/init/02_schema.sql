@@ -130,6 +130,9 @@ CREATE TABLE system_logs (
     occurred_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
     actor           TEXT,
     action          TEXT NOT NULL,
-    detail          TEXT
+    detail          TEXT,
+    -- Activity log area: 'sign_in', 'accounts', 'alerts' or 'pipeline' (models.log_category)
+    category        TEXT NOT NULL DEFAULT 'accounts'
 );
 CREATE INDEX idx_system_logs_occurred_at ON system_logs (occurred_at DESC);
+CREATE INDEX idx_system_logs_category ON system_logs (category, id DESC);

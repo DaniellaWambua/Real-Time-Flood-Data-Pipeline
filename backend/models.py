@@ -340,11 +340,25 @@ def disable_totp(user_id):
     )
 
 
+LOG_CATEGORIES = ("sign_in", "accounts", "alerts", "pipeline")
+
+
+def log_category(action):
+    """Which Activity log area an event belongs to: sign-ins and security, user accounts,
+    alerts or the data pipeline. db/add_log_categories.py applies the same rules to old rows."""
+    if action.startswith(("login_", "totp_")) or action == "password_reset_completed":
+        return "sign_in"
+    if action.startswith("alert_"):
+        return "alerts"
+    if action.startswith("reading_"):
+        return "pipeline"
+    return "accounts"
+
+
 def log_event(actor, action, detail=None):
-    """Append one row to system_logs (the System Administration screen's
-    log panel, proposal 3.4.6). actor is a username, or None for a
-    login attempt that never resolved to a real account."""
+    """Append one row to system_logs, filed under its area. actor is a username, or None
+    for a sign-in attempt that never matched a real account."""
     db.execute(
-        "INSERT INTO system_logs (actor, action, detail) VALUES (%s, %s, %s)",
-        (actor, action, detail),
+        "INSERT INTO system_logs (actor, action, detail, category) VALUES (%s, %s, %s, %s)",
+        (actor, action, detail, log_category(action)),
     )

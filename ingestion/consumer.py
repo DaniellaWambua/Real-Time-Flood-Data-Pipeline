@@ -45,8 +45,8 @@ def save_reading(source_id, catchment_id, message):
 def reject(message, reason):
     detail = f"{message.get('catchment')} {message.get('date')}: {reason}"
     print(f"rejected {detail}")
-    db.execute("INSERT INTO system_logs (actor, action, detail) VALUES ('consumer', 'reading_rejected', %s)",
-               (detail,))
+    db.execute("INSERT INTO system_logs (actor, action, detail, category) "
+               "VALUES ('consumer', 'reading_rejected', %s, 'pipeline')", (detail,))
 
 
 def request_detection(catchment_id, day, record_id):

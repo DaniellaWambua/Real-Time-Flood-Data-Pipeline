@@ -151,26 +151,20 @@
 .alert-filter-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 1.25rem;
+  align-items: center;
+  gap: 0.6rem;
   margin-bottom: 1.1rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--gridline);
 }
 
-.alert-filter-row label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  color: var(--text-muted);
-}
-
-.alert-filter-row select {
-  min-width: 170px;
+/* The filters are pill-selects now (shared.css), which carry their own
+   label inside the control, so nothing here stacks a label above a box. */
+.alert-filter-clear {
+  border: none;
+  background: none;
+  padding: 0.3rem 0.4rem;
+  color: var(--accent-strong);
 }
 
 .alert-bulk-actions {
