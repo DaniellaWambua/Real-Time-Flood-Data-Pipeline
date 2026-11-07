@@ -138,6 +138,16 @@ export default function Alerts() {
     });
   }
 
+  // Both filters back to "All" in one step, and one URL update rather than two.
+  function clearFilters() {
+    setVisibleLimit(PAGE_SIZE);
+    setFilters((current) => {
+      const next = { ...current, catchment: "", status: "" };
+      setSearchParams(next.severity ? { severity: next.severity } : {});
+      return next;
+    });
+  }
+
   function toggleSelected(id) {
     setSelectedIds((current) => {
       const next = new Set(current);
@@ -273,10 +283,13 @@ export default function Alerts() {
         </div>
 
         <div className="alert-filter-row">
-          <label>
-            Catchment
+          {/* Label inside the pill, arrow next to the value, and a filter that
+              is set reads differently from one left on "All" - replacing the
+              two wide boxes with the label stacked above them. */}
+          <label className={`pill-select${filters.catchment ? " pill-select--set" : ""}`}>
+            <span className="pill-select-key">Catchment</span>
             <select value={filters.catchment} onChange={(e) => updateFilter("catchment", e.target.value)}>
-              <option value="">All catchments</option>
+              <option value="">All</option>
               {catchments.map((c) => (
                 <option key={c.id} value={c.name}>
                   {c.name}
@@ -285,10 +298,10 @@ export default function Alerts() {
             </select>
           </label>
 
-          <label>
-            Status
+          <label className={`pill-select${filters.status ? " pill-select--set" : ""}`}>
+            <span className="pill-select-key">Status</span>
             <select value={filters.status} onChange={(e) => updateFilter("status", e.target.value)}>
-              <option value="">All statuses</option>
+              <option value="">All</option>
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {s}
@@ -296,6 +309,16 @@ export default function Alerts() {
               ))}
             </select>
           </label>
+
+          {(filters.catchment || filters.status) && (
+            <button
+              type="button"
+              className="alert-filter-clear"
+              onClick={clearFilters}
+            >
+              Clear filters
+            </button>
+          )}
 
           {canAct ? (
             <div className="alert-bulk-actions">

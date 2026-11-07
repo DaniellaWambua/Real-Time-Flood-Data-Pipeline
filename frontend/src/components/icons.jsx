@@ -88,3 +88,72 @@ export function IconSwitch(props) {
     </Svg>
   );
 }
+
+/* Watermark icons for the Administration stat cards (MetricCard's `glyph`).
+   These are drawn here as plain geometry rather than taken from Font Awesome:
+   they sit large and faint behind a number, where a simple outline reads
+   better than a filled glyph, and nothing else in the app uses them. */
+function Outline({ children, ...props }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      {children}
+    </svg>
+  );
+}
+
+export function IconUsers(props) {
+  return (
+    <Outline {...props}>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5" />
+      <path d="M16 4.6a3.5 3.5 0 0 1 0 6.8" />
+      <path d="M18 14.9c1.9.8 3.1 2.6 3.5 5.1" />
+    </Outline>
+  );
+}
+
+export function IconMap(props) {
+  return (
+    <Outline {...props}>
+      <path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z" />
+      <path d="M9 4v14M15 6v14" />
+    </Outline>
+  );
+}
+
+export function IconDatabase(props) {
+  return (
+    <Outline {...props}>
+      <ellipse cx="12" cy="6" rx="7" ry="3" />
+      <path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6" />
+      <path d="M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3" />
+    </Outline>
+  );
+}
+
+export function IconDrop(props) {
+  return (
+    <Outline {...props}>
+      <path d="M12 3c-3 4-6 7-6 11a6 6 0 0 0 12 0c0-4-3-7-6-11z" />
+    </Outline>
+  );
+}
+
+export function IconTarget(props) {
+  return (
+    <Outline {...props}>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4.5" />
+      <circle cx="12" cy="12" r="1" />
+    </Outline>
+  );
+}

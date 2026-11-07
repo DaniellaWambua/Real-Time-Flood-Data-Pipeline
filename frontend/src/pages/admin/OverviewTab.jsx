@@ -2,23 +2,94 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import StatusChip from "../../components/StatusChip";
 import MetricCard from "../../components/MetricCard";
+import { IconBell, IconBrain, IconDatabase, IconDrop, IconMap, IconUsers } from "../../components/icons";
 import { connectionRole } from "../../statusRoles";
 import { get } from "../../api";
 
-// GET /api/admin/stats, in the reference layout's card order.
+// GET /api/admin/stats. Each card carries the one breakdown that says what
+// state it is in, not just how many rows there are, and the row alternates the
+// two filled tones the Overview screen uses (Pale Ice Blue and Forest Green) so
+// Administration reads as the same system rather than a second palette.
+function formatDay(iso) {
+  return iso ? new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { timeZone: "UTC" }) : "no data yet";
+}
+
+function plural(count, word) {
+  return `${count} ${word}${count === 1 ? "" : "s"}`;
+}
+
 function StatsRow({ stats }) {
+  const cards = [
+    {
+      label: "Users",
+      value: stats.users,
+      glyph: IconUsers,
+      description: `${stats.users - stats.users_pending - stats.users_inactive} active, ${plural(stats.users_pending, "invite")} pending`,
+    },
+    {
+      label: "Catchments",
+      value: stats.catchments,
+      glyph: IconMap,
+      description: `monitored, ${stats.catchments_inactive} kept as history`,
+    },
+    {
+      label: "Data sources",
+      value: stats.data_sources,
+      glyph: IconDatabase,
+      description:
+        stats.sources_connected === stats.data_sources
+          ? "all connected"
+          : `${stats.sources_connected} connected, ${stats.data_sources - stats.sources_connected} down`,
+    },
+    {
+      label: "Readings",
+      value: stats.readings.toLocaleString(),
+      glyph: IconDrop,
+      description: `latest ${formatDay(stats.readings_last_day)}`,
+    },
+    {
+      label: "Alerts",
+      value: stats.alerts.toLocaleString(),
+      glyph: IconBell,
+      description: `${stats.alerts_open} open, ${stats.alerts_acknowledged} acknowledged`,
+    },
+    {
+      label: "Anomaly results",
+      value: stats.anomalies.toLocaleString(),
+      glyph: IconBrain,
+      description: `${stats.anomalies_flagged} flagged by the model`,
+    },
+  ];
+
   return (
     <div className="metric-card-row admin-metric-row">
-      <MetricCard label="Users" value={stats.users} />
-      <MetricCard label="Catchments" value={stats.catchments} />
-      <MetricCard label="Data sources" value={stats.data_sources} />
-      <MetricCard label="Readings" value={stats.readings.toLocaleString()} />
-      <MetricCard label="Alerts" value={stats.alerts.toLocaleString()} />
-      <MetricCard
-        label="Anomaly results"
-        value={stats.anomalies}
-        badge={{ role: "good", glyph: "●", label: "Scoring" }}
-      />
+      {cards.map((card, index) => (
+        <MetricCard
+          key={card.label}
+          tone={index % 2 === 0 ? "soft" : "deep"}
+          label={card.label}
+          value={card.value}
+          description={card.description}
+          glyph={card.glyph}
+        />
+      ))}
+    </div>
+  );
+}
+
+function StatsRowSkeleton() {
+  return (
+    <div className="metric-card-row admin-metric-row" aria-hidden="true">
+      {Array.from({ length: 6 }, (_, index) => (
+        <div
+          key={index}
+          className={`metric-card metric-card--${index % 2 === 0 ? "soft" : "deep"} metric-card--loading`}
+        >
+          <div className="metric-card-label">&nbsp;</div>
+          <div className="metric-card-value">&nbsp;</div>
+          <p className="metric-card-description">&nbsp;</p>
+        </div>
+      ))}
     </div>
   );
 }
@@ -38,7 +109,10 @@ function StatsPanel() {
   }, []);
 
   if (error) return <p className="error">{error}</p>;
-  if (!stats) return null;
+  // Hold the row's place while the counts load. Returning nothing here let the
+  // Data sources panel render first and the cards drop in above it a moment
+  // later, which read as the page reordering itself.
+  if (!stats) return <StatsRowSkeleton />;
 
   return <StatsRow stats={stats} />;
 }

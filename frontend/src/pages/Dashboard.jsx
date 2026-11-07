@@ -5,7 +5,7 @@ import RiskDistribution from "../components/RiskDistribution";
 import MetricCard from "../components/MetricCard";
 import StatusChip from "../components/StatusChip";
 import PageHeader from "../components/PageHeader";
-import { IconChevronRight } from "../components/icons";
+import { IconBell, IconBrain, IconChevronRight, IconDatabase, IconMap } from "../components/icons";
 import { severityRole } from "../statusRoles";
 import EmptyState from "../components/EmptyState";
 import { get } from "../api";
@@ -227,6 +227,7 @@ export default function Dashboard() {
       <div className="metric-card-row">
         <MetricCard
           tone="soft"
+          glyph={IconMap}
           label="Catchments at elevated risk"
           value={elevated.length}
           valueSuffix={`of ${catchments.length}`}
@@ -239,6 +240,7 @@ export default function Dashboard() {
         />
         <MetricCard
           tone="deep"
+          glyph={IconBell}
           label="Active alerts"
           value={alertsSummary.active.toLocaleString()}
           segments={[
@@ -250,6 +252,7 @@ export default function Dashboard() {
         />
         <MetricCard
           tone="soft"
+          glyph={IconDatabase}
           label="Data sources connected"
           value={connectedSources.length}
           valueSuffix={`of ${sources.length}`}
@@ -263,6 +266,7 @@ export default function Dashboard() {
         />
         <MetricCard
           tone="deep"
+          glyph={IconBrain}
           label="LSTM anomaly results"
           value={anomalies.length}
           badge={{ role: "good", glyph: "●", label: "Scoring" }}

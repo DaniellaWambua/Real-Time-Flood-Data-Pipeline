@@ -1,9 +1,717 @@
+/* The LSTM screen: a model status strip, then one panel with three tabs
+   (Overview, Recent scores, Day lookup). Colours all come from theme.css -
+   the calendar's four score bands are steps of the same accent hue, with the
+   critical red reserved for a flagged day, the way severity is coloured
+   everywhere else in the dashboard. */
 
-.lstm-panel-stack {
+.lstm-panel {
+  border-radius: 24px;
+}
+
+.lstm-tabs {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--gridline);
+  margin-bottom: 1.1rem;
+}
+
+.lstm-tabs button {
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--text-muted);
+  padding: 0.55rem 0.9rem;
+}
+
+.lstm-tabs button.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent-strong);
+}
+
+.lstm-tabs button:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+.lstm-tab {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 0.6rem;
 }
+
+.lstm-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+}
+
+.lstm-section-head:first-child {
+  margin-top: 0;
+}
+
+/* The three score cards under the status strip, in the same two filled tones
+   the Overview and Administration screens use. Three across, since each one
+   carries a sentence of context under its number. */
+.lstm-metric-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lstm-metric-row .metric-card {
+  border-radius: 24px;
+}
+
+@media (max-width: 760px) {
+  .lstm-metric-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Chips and the score meter, shared by the day-lookup panel. */
+.lstm-day-chip {
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+
+.lstm-day-chip--quiet {
+  background: color-mix(in srgb, var(--status-good) 16%, white);
+  color: color-mix(in srgb, var(--status-good) 80%, black);
+}
+
+.lstm-day-chip--flag {
+  background: color-mix(in srgb, var(--status-critical) 14%, white);
+  color: color-mix(in srgb, var(--status-critical) 80%, black);
+}
+
+.lstm-meter {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--gridline);
+  margin: 0.45rem 0 0.25rem;
+}
+
+.lstm-meter-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--accent-strong);
+}
+
+.lstm-meter-fill--flag {
+  background: var(--status-critical);
+}
+
+.lstm-meter-line {
+  position: absolute;
+  top: -4px;
+  width: 2px;
+  height: 16px;
+  background: var(--status-critical);
+}
+
+.lstm-meter-legend {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* --- Overview: the four measurement figures ---
+   Each one is drawn as the shape it is (a share, a rate, a nought-to-one
+   score, a split) rather than four identical boxes of text. Same two
+   colours as everywhere else: Forest Green for the number, Powder Denim
+   Blue for whatever is filled. */
+
+.lstm-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.75rem;
+}
+
+.lstm-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  padding: 0.9rem 1rem;
+}
+
+/* Same two fills as the cards above and the Administration row: Pale Ice Blue
+   and Forest Green, alternating. Everything drawn inside a card (the ring, the
+   month marks, the scales) switches to white on the deep fill so each one keeps
+   the same contrast against whatever it sits on. */
+.lstm-stat--soft {
+  background: var(--accent-soft);
+}
+
+.lstm-stat--deep {
+  background: var(--brand-deep);
+}
+
+.lstm-stat--deep .lstm-stat-label,
+.lstm-stat--deep .lstm-stat-of {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.lstm-stat--deep .lstm-stat-value,
+.lstm-stat--deep .lstm-stat-ring-text {
+  color: #ffffff;
+  fill: #ffffff;
+}
+
+.lstm-stat--deep .lstm-stat-ring-track,
+.lstm-stat--deep .lstm-stat-month,
+.lstm-stat--deep .lstm-stat-scale-track,
+.lstm-stat--deep .lstm-stat-swatch {
+  stroke: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.lstm-stat--deep .lstm-stat-ring-fill,
+.lstm-stat--deep .lstm-stat-month--on,
+.lstm-stat--deep .lstm-stat-scale-fill,
+.lstm-stat--deep .lstm-stat-swatch--on {
+  stroke: #ffffff;
+  background: #ffffff;
+}
+
+.lstm-stat--deep .lstm-stat-month--part {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.lstm-stat--deep .lstm-stat-scale-ticks,
+.lstm-stat--deep .lstm-stat-split-key {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.lstm-stat--ring {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.lstm-stat-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.lstm-stat-value {
+  font-size: 1.6rem;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  color: var(--brand-deep);
+  line-height: 1.2;
+}
+
+.lstm-stat-of {
+  margin-left: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: var(--font-body);
+  color: var(--text-muted);
+}
+
+.lstm-stat-note {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.lstm-stat--deep .lstm-stat-note {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Ring */
+.lstm-stat-ring {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+}
+
+.lstm-stat-ring-track,
+.lstm-stat-ring-fill {
+  fill: none;
+  stroke-width: 7;
+}
+
+.lstm-stat-ring-track {
+  stroke: var(--gridline);
+}
+
+.lstm-stat-ring-fill {
+  stroke: var(--accent-strong);
+  stroke-linecap: round;
+}
+
+.lstm-stat-ring-text {
+  transform: rotate(90deg);
+  transform-origin: 32px 32px;
+  text-anchor: middle;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  fill: var(--brand-deep);
+}
+
+/* Twelve months */
+.lstm-stat-months {
+  display: flex;
+  gap: 3px;
+  margin: 0.15rem 0 0.1rem;
+}
+
+.lstm-stat-month {
+  flex: 1;
+  height: 16px;
+  border-radius: 4px;
+  background: var(--gridline);
+}
+
+.lstm-stat-month--on {
+  background: var(--accent-strong);
+}
+
+.lstm-stat-month--part {
+  background: var(--accent);
+}
+
+/* Nought-to-one scale */
+.lstm-stat-scale-track {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--gridline);
+  overflow: hidden;
+}
+
+.lstm-stat-scale-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--accent-strong);
+}
+
+.lstm-stat-scale-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+/* Measured against unknown */
+.lstm-stat-split-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 0.3rem;
+}
+
+.lstm-stat-swatch {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: var(--gridline);
+  margin-right: 0.3rem;
+}
+
+.lstm-stat-swatch--on {
+  background: var(--accent-strong);
+}
+
+.lstm-feature-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.lstm-feature-list li {
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+
+/* --- Overview: when it flagged ---
+   One bar per month, one block per year. The wet-season months carry a faint
+   tint behind them so the seasonal pattern is visible without a second colour
+   for the bars themselves. */
+
+.lstm-when {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.lstm-when-year {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.lstm-when-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 92px;
+}
+
+.lstm-when-month {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 2px;
+  border-radius: 6px 6px 0 0;
+}
+
+.lstm-when-month--wet {
+  background: color-mix(in srgb, var(--accent-soft) 55%, white);
+}
+
+.lstm-when-count {
+  font-size: 0.66rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  line-height: 1;
+}
+
+.lstm-when-bar {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: var(--accent-strong);
+}
+
+.lstm-when-initial {
+  font-size: 0.64rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.lstm-when-year-label {
+  margin-top: 0.3rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.lstm-when-key {
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.lstm-when-swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  margin-right: 0.35rem;
+  vertical-align: -1px;
+  background: color-mix(in srgb, var(--accent-soft) 55%, white);
+  border: 1px solid var(--gridline);
+}
+
+/* --- Query bar, shared by the scores and lookup tabs --- */
+
+.lstm-querybar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem;
+  background: var(--surface-page);
+  border: 1px solid var(--gridline);
+  border-radius: var(--radius-md);
+}
+
+.lstm-seg {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  background: var(--surface-1);
+  border: 1px solid var(--gridline);
+  border-radius: 10px;
+  padding: 3px;
+}
+
+.lstm-seg button {
+  border: none;
+  background: none;
+  border-radius: 7px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+.lstm-seg button.active {
+  background: var(--brand-deep);
+  color: #ffffff;
+}
+
+.lstm-seg button.active:hover {
+  color: #ffffff;
+}
+
+.lstm-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.lstm-querybar-count {
+  margin-left: auto;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+/* --- Scores table --- */
+
+.lstm-source-note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.lstm-scroll {
+  overflow-x: auto;
+}
+
+.lstm-bar {
+  display: inline-block;
+  position: relative;
+  width: 64px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--gridline);
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.lstm-bar > span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--accent-strong);
+}
+
+.lstm-dash {
+  color: var(--text-muted);
+}
+
+.lstm-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.84rem;
+  color: var(--text-muted);
+}
+
+/* --- Day lookup --- */
+
+.lstm-lookup {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.lstm-cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.lstm-cal-step {
+  padding: 0.15rem 0.6rem;
+  line-height: 1.3;
+}
+
+.lstm-cal {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.lstm-cal-dow {
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.lstm-cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: 0.82rem;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+}
+
+.lstm-cal-day--out {
+  background: none;
+  border: none;
+}
+
+.lstm-cal-day--none {
+  background: var(--surface-page);
+  color: var(--text-muted);
+}
+
+.lstm-cal-day--low {
+  background: color-mix(in srgb, var(--accent-soft) 45%, white);
+}
+
+.lstm-cal-day--mid {
+  background: var(--accent-soft);
+}
+
+.lstm-cal-day--high {
+  background: var(--accent);
+}
+
+.lstm-cal-day--flag {
+  background: var(--status-critical);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.lstm-cal-day--sel {
+  border-color: var(--brand-deep);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand-deep) 25%, transparent);
+  font-weight: 700;
+}
+
+.lstm-cal-day:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.lstm-cal-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.7rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.lstm-cal-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 4px;
+  margin-right: 0.3rem;
+  vertical-align: -2px;
+  border: 1px solid var(--gridline);
+}
+
+.lstm-day-panel {
+  border: 1px solid var(--gridline);
+  border-radius: var(--radius-md);
+  padding: 0.95rem 1.1rem;
+}
+
+.lstm-day-panel--empty {
+  color: var(--text-muted);
+}
+
+.lstm-day-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.lstm-day-catchment {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.lstm-day-date {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.lstm-day-score {
+  font-size: 2.1rem;
+  font-weight: 900;
+  font-family: var(--font-mono);
+  color: var(--brand-deep);
+  line-height: 1.15;
+  margin-top: 0.35rem;
+}
+
+.lstm-day-alert {
+  margin: 0.6rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.lstm-inputs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.lstm-inputs > div {
+  background: var(--surface-page);
+  border-radius: 10px;
+  padding: 0.5rem 0.65rem;
+}
+
+.lstm-inputs-key {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.lstm-inputs-value {
+  font-weight: 700;
+}
+
+/* --- Shared table and caveat --- */
+
 .lstm-table {
   width: 100%;
   border-collapse: collapse;
@@ -18,6 +726,7 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   border-bottom: 1px solid var(--gridline);
+  white-space: nowrap;
 }
 
 .lstm-table td {
@@ -33,14 +742,19 @@
   font-weight: 700;
 }
 
-.lstm-table-note {
-  color: var(--text-muted);
-  font-size: 0.8rem;
-}
-
 .lstm-caveat {
-  margin: 1rem 0 0;
+  margin: 0.4rem 0 0;
   font-size: 0.85rem;
   color: var(--text-secondary);
   line-height: 1.5;
+}
+
+@media (max-width: 860px) {
+  .lstm-lookup {
+    grid-template-columns: 1fr;
+  }
+
+  .lstm-querybar-count {
+    margin-left: 0;
+  }
 }

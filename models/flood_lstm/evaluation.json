@@ -1,0 +1,88 @@
+{
+  "model": "lstm_raw v1",
+  "threshold": 0.555,
+  "method": "Scored by the deployed model over the held-out replay period, then compared against the audited labels in features_daily_audited.csv. Precision, recall and F1 count only days whose label is known; days labelled 'unknown' are left out of the counts and reported separately as flagged_on_unlabelled_days.",
+  "test_period": [
+    "2024-01-01",
+    "2025-12-31"
+  ],
+  "train_years": [
+    2015,
+    2023
+  ],
+  "days_scored": 2193,
+  "days_with_label": 2027,
+  "flood_days": 96,
+  "true_positives": 38,
+  "false_positives": 20,
+  "false_negatives": 58,
+  "true_negatives": 1911,
+  "flagged_total": 118,
+  "flagged_on_unlabelled_days": 60,
+  "precision": 0.655,
+  "recall": 0.396,
+  "f1": 0.494,
+  "average_precision": 0.544,
+  "events_total": 38,
+  "events_detected": 16,
+  "event_recall": 0.421,
+  "false_alarms_per_catchment_year": 3.33,
+  "flagged_by_catchment": {
+    "Nairobi River": 46,
+    "Ngong": 43,
+    "Mathare": 29
+  },
+  "computed_on": "2026-11-07",
+  "computed_by": ".scratch/v1_eval.py against the live anomaly_detection_results table",
+  "operating_points": {
+    "note": "Same scores, different flag lines, measured on the same held-out days. The deployed line is 0.555, chosen on the development years for the best F1; the rest are for the write-up, not used by the system.",
+    "points": [
+      {
+        "threshold": 0.555,
+        "precision": 0.655,
+        "recall": 0.396,
+        "f1": 0.494,
+        "events_detected": 16,
+        "flagged_days": 118,
+        "alarm_share": 0.054,
+        "deployed": true
+      },
+      {
+        "threshold": 0.4,
+        "precision": 0.544,
+        "recall": 0.448,
+        "f1": 0.491,
+        "events_detected": 17,
+        "flagged_days": 148,
+        "alarm_share": 0.067
+      },
+      {
+        "threshold": 0.35,
+        "precision": 0.522,
+        "recall": 0.49,
+        "f1": 0.505,
+        "events_detected": 20,
+        "flagged_days": 160,
+        "alarm_share": 0.073
+      },
+      {
+        "threshold": 0.3,
+        "precision": 0.526,
+        "recall": 0.521,
+        "f1": 0.524,
+        "events_detected": 20,
+        "flagged_days": 166,
+        "alarm_share": 0.076
+      },
+      {
+        "threshold": 0.25,
+        "precision": 0.491,
+        "recall": 0.542,
+        "f1": 0.515,
+        "events_detected": 21,
+        "flagged_days": 179,
+        "alarm_share": 0.082
+      }
+    ]
+  }
+}

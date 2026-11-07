@@ -12,9 +12,11 @@ from flask_cors import CORS
 
 import config
 from routes_auth import auth_bp
+from routes_anomalies import anomalies_bp
 from routes_dashboard import dashboard_bp
 from routes_detection import detection_bp
 from routes_users import users_bp
+from routes_logs import logs_bp
 
 
 def create_app():
@@ -27,8 +29,10 @@ def create_app():
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
+    app.register_blueprint(anomalies_bp)
     app.register_blueprint(detection_bp)
     app.register_blueprint(users_bp)
+    app.register_blueprint(logs_bp)
 
     @app.route("/health")
     def health():

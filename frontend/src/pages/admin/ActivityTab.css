@@ -1,0 +1,107 @@
+.activity-panel {
+  border-radius: 24px;
+}
+
+.activity-areas {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.activity-areas button {
+  border-radius: 999px;
+  padding: 0.45rem 0.95rem;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.activity-areas button.active {
+  background: var(--accent-soft);
+  border-color: var(--accent-strong);
+}
+
+.activity-filters {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 1.1rem 0 1rem;
+}
+
+.activity-search {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.activity-export {
+  margin-left: auto;
+}
+
+.activity-loading {
+  color: var(--text-muted);
+}
+
+.activity-content {
+  overflow-x: auto;
+}
+
+.activity-time {
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.activity-day {
+  margin: 1.1rem 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.activity-feed > div:first-child .activity-day {
+  margin-top: 0;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.activity-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-item-text {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.activity-item-text .status-chip {
+  font-weight: 700;
+}
+
+.activity-item-meta {
+  margin: 0.15rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.activity-item-time {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.activity-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.9rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}

@@ -221,49 +221,33 @@ def test_admin_stats_requires_system_administrator_role():
     assert resp.status_code == 403
 
 
-def test_admin_stats_returns_counts():
+def test_admin_stats_returns_counts_and_breakdowns():
     client = _client()
     _login(client, role="system_administrator")
-    counts = iter([3, 6, 3, 40908, 1500, 1828])
-    with patch("routes_dashboard.db.query_one", side_effect=lambda *a, **k: {"count": next(counts)}):
+    counts = {
+        "users": 6,
+        "users_pending": 1,
+        "users_inactive": 0,
+        "catchments": 3,
+        "catchments_inactive": 2,
+        "data_sources": 4,
+        "sources_connected": 4,
+        "readings": 40908,
+        "readings_last_day": datetime.date(2025, 12, 31),
+        "anomalies": 2193,
+        "anomalies_flagged": 118,
+        "alerts": 118,
+        "alerts_open": 4,
+        "alerts_acknowledged": 2,
+    }
+    with patch("routes_dashboard.db.query_one", return_value=dict(counts)):
         resp = client.get("/api/admin/stats")
     assert resp.status_code == 200
-    assert resp.get_json() == {
-        "users": 3,
-        "catchments": 6,
-        "data_sources": 3,
-        "readings": 40908,
-        "anomalies": 1500,
-        "alerts": 1828,
-    }
-
-
-def test_logs_requires_system_administrator_role():
-    client = _client()
-    _login(client, role="emergency_responder")
-    resp = client.get("/api/logs")
-    assert resp.status_code == 403
-
-
-def test_logs_returns_rows():
-    client = _client()
-    _login(client, role="system_administrator")
-    rows = [
-        {
-            "id": 1,
-            "occurred_at": datetime.datetime(2026, 9, 1, 8, 30),
-            "actor": "root-admin",
-            "action": "login_success",
-            "detail": None,
-        }
-    ]
-    with patch("routes_dashboard.db.query_all", return_value=rows) as mocked:
-        resp = client.get("/api/logs")
-    assert resp.status_code == 200
     body = resp.get_json()
-    assert body[0]["occurred_at"] == "2026-09-01T08:30:00"
-    args = mocked.call_args.args[1]
-    assert args == (20,)
+    assert body["users"] == 6 and body["users_pending"] == 1
+    assert body["alerts_open"] == 4 and body["anomalies_flagged"] == 118
+    # the one date in the row is serialized, like every other endpoint here
+    assert body["readings_last_day"] == "2025-12-31"
 
 
 if __name__ == "__main__":

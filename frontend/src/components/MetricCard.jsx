@@ -14,6 +14,11 @@ import "./MetricCard.css";
  * `badge` is `{ role, glyph, label }` and takes the bar's place when
  * there's no meaningful proportion to show.
  *
+ * `glyph` is an optional icon component drawn large and faint in the
+ * card's bottom corner, the way a stat card in a music or media app
+ * carries a watermark of what it counts. It is decorative only: the
+ * label already says what the number is.
+ *
  * `tone` is the optional filled-card treatment from Daniella's
  * palette spec - "soft" (Pale Ice Blue fill, plain dark text) or
  * "deep" (Forest Green fill, white text), alternated across the
@@ -32,10 +37,16 @@ export default function MetricCard({
   badge,
   description,
   tone,
+  glyph: Glyph,
 }) {
   const toneClass = tone ? ` metric-card--${tone}` : "";
   return (
     <div className={`metric-card${toneClass}`}>
+      {Glyph && (
+        <span className="metric-card-glyph" aria-hidden="true">
+          <Glyph />
+        </span>
+      )}
       <div className="metric-card-label">{label}</div>
       <div className="metric-card-value">
         {value}

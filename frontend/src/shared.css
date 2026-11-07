@@ -211,3 +211,66 @@ h4 {
 .panel-link:hover {
   text-decoration: underline;
 }
+
+/* Filter pill: the field's label sits inside the control and the arrow
+   follows the value, instead of a wide box with the label stacked above it
+   and the arrow pushed to the far edge. Used by the Alerts filter bar and the
+   LSTM screen's query bars, so it lives here rather than in either page.
+   Wraps a <select> or an <input type="date">, which keep their native menu
+   and date picker - only the chrome around them changes. */
+.pill-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.6rem 0.3rem 0.75rem;
+  border: 1px solid var(--gridline);
+  border-radius: 10px;
+  background: var(--surface-1);
+  font-size: 0.84rem;
+  white-space: nowrap;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.pill-select-key {
+  color: var(--text-muted);
+}
+
+.pill-select select,
+.pill-select input {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pill-select select {
+  appearance: none;
+  padding-right: 1.05rem;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23526679' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: 11px;
+}
+
+.pill-select select:hover,
+.pill-select input:hover {
+  border: none;
+}
+
+.pill-select select:focus,
+.pill-select input:focus {
+  box-shadow: none;
+}
+
+.pill-select:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* A filter that is actually set reads differently from one left on "All". */
+.pill-select--set {
+  border-color: var(--accent-strong);
+  background: color-mix(in srgb, var(--accent-soft) 45%, white);
+}

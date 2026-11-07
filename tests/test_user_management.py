@@ -70,7 +70,7 @@ def test_log_event_inserts_a_row():
 
     sql, params = mock_execute.call_args.args
     assert "INSERT INTO system_logs" in sql
-    assert params == ("root-admin", "user_created", "newbie (emergency_responder)")
+    assert params == ("root-admin", "user_created", "newbie (emergency_responder)", "accounts")
 
 
 def test_log_event_allows_a_null_actor():
