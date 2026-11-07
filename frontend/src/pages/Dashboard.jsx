@@ -265,8 +265,8 @@ export default function Dashboard() {
           tone="deep"
           label="LSTM anomaly results"
           value={anomalies.length}
-          badge={{ role: "muted", glyph: "○", label: "Not scoring" }}
-          description="Risk on this screen comes from rule-based alerts"
+          badge={{ role: "good", glyph: "●", label: "Scoring" }}
+          description="Risk on this screen comes from the model's flagged days"
         />
       </div>
 

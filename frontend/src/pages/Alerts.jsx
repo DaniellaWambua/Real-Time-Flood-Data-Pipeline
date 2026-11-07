@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useOutletContext, useSearchParams } from "react-router-dom";
 import StatusChip from "../components/StatusChip";
 import PageHeader from "../components/PageHeader";
 import { severityRole, alertStatusRole } from "../statusRoles";
 import EmptyState from "../components/EmptyState";
-import { get } from "../api";
+import { get, patch } from "../api";
 import "./Alerts.css";
 
 // Descending, for the filter tabs (matches the reference mockup -
 // the queue is meant to be worked from high severity down).
 const TAB_SEVERITIES = ["high", "medium", "low"];
 const SEVERITY_LABEL = { low: "Low", medium: "Medium", high: "High" };
-const STATUSES = ["active", "resolved"];
+const STATUSES = ["active", "acknowledged", "resolved"];
 
 // GET /api/alerts has no offset/page param, just a row limit (capped
 // at 500 server-side) - "Load more" below works by asking the same
@@ -22,14 +22,15 @@ const MAX_LIMIT = 500;
 const EMPTY_SUMMARY = {
   total: 0,
   active: 0,
+  acknowledged: 0,
   resolved: 0,
   low: 0,
   medium: 0,
   high: 0,
   by_severity: {
-    low: { active: 0, resolved: 0 },
-    medium: { active: 0, resolved: 0 },
-    high: { active: 0, resolved: 0 },
+    low: { active: 0, acknowledged: 0, resolved: 0 },
+    medium: { active: 0, acknowledged: 0, resolved: 0 },
+    high: { active: 0, acknowledged: 0, resolved: 0 },
   },
 };
 
@@ -37,28 +38,28 @@ function formatTimestamp(iso) {
   return new Date(iso).toLocaleString();
 }
 
-// The hero's hint line changes once something has actually been
-// resolved; nothing in the real data has been yet, so only the first
-// branch is seen today, but the second keeps the message honest once
-// it stops being true.
-function heroHint(resolved, total) {
-  if (resolved === 0) {
-    return "No alert has been acknowledged or resolved yet. Work the queue from high severity down.";
-  }
-  return `${resolved} of ${total} alerts resolved so far. Keep working the queue from high severity down.`;
+// A flood day is stored as midnight UTC, so show the date only, read in UTC
+function formatDay(iso) {
+  return new Date(iso).toLocaleDateString("en-GB", { timeZone: "UTC" });
 }
 
-// Browsing itself stays read-only by design: GET /api/alerts has no
-// matching PATCH, so there is nothing for Acknowledge/Resolve to
-// actually persist yet. Per Daniella's confirmed "visual-only" choice
-// (the same one behind Admin's Reconnect button), the checkboxes and
-// selection state below are real - they are just local UI state - but
-// the Acknowledge/Resolve controls themselves are deliberately inert:
-// they render exactly like the reference layout (including the bulk
-// buttons disabling themselves when nothing is selected, which is
-// genuine behavior, not a fake limitation) without claiming to write
-// anything back to the server.
+function heroHint(acknowledged, resolved, total) {
+  if (acknowledged === 0 && resolved === 0) {
+    return "No alert has been acknowledged or resolved yet. Work the queue from high severity down.";
+  }
+  return `${acknowledged} acknowledged and ${resolved} of ${total} resolved so far. Keep working the queue from high severity down.`;
+}
+
+// Which alerts an action can be applied to, matching the backend's rules
+const ACTION_FROM = { acknowledge: ["active"], resolve: ["active", "acknowledged"] };
+
+// Only Emergency Responders can acknowledge or resolve (PATCH /api/alerts/<id>);
+// other roles see the same queue read-only.
 export default function Alerts() {
+  const { user } = useOutletContext();
+  const canAct = user.role === "emergency_responder";
+  const [refresh, setRefresh] = useState(0);
+  const [busy, setBusy] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [catchments, setCatchments] = useState([]);
   const [filters, setFilters] = useState({
@@ -86,7 +87,7 @@ export default function Alerts() {
         setError(null);
       })
       .catch((err) => setError(err.message));
-  }, [filters, visibleLimit]);
+  }, [filters, visibleLimit, refresh]);
 
   // The hero numbers read the whole matching set counted in SQL
   // (GET /api/alerts/summary), not the rows /api/alerts hands back -
@@ -99,7 +100,26 @@ export default function Alerts() {
     get("/api/alerts/summary", { catchment: filters.catchment })
       .then(setSummary)
       .catch(() => setSummary(EMPTY_SUMMARY));
-  }, [filters.catchment]);
+  }, [filters.catchment, refresh]);
+
+  // Send one action for each eligible alert, then reload the list and the counts
+  async function act(action, ids) {
+    const eligible = (alerts ?? []).filter((a) => ids.includes(a.id) && ACTION_FROM[action].includes(a.status));
+    if (eligible.length === 0) return;
+    setBusy(true);
+    try {
+      await Promise.all(eligible.map((a) => patch(`/api/alerts/${a.id}`, { action })));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+      setRefresh((n) => n + 1);
+    }
+  }
+
+  function eligibleCount(action) {
+    return (alerts ?? []).filter((a) => selectedIds.has(a.id) && ACTION_FROM[action].includes(a.status)).length;
+  }
 
   // Changing a filter re-seeds the URL (not just local state), so the
   // cross-page links this page is a destination for - Dashboard's
@@ -150,7 +170,7 @@ export default function Alerts() {
           <span className="alert-hero-label">Active alerts</span>
           <span className="alert-hero-value">{summary.active.toLocaleString()}</span>
           <p className="alert-hero-resolved">
-            {summary.resolved} of {summary.total.toLocaleString()} resolved
+            {summary.acknowledged} acknowledged, {summary.resolved} of {summary.total.toLocaleString()} resolved
           </p>
         </div>
 
@@ -209,6 +229,15 @@ export default function Alerts() {
             </span>
             <span className="alert-hero-legend-item">
               <span className="alert-hero-legend-key">
+                <span className="alert-hero-legend-glyph" style={{ color: "var(--text-muted)" }} aria-hidden="true">
+                  ●
+                </span>
+                Acknowledged
+              </span>
+              <strong className="figure">{summary.acknowledged}</strong>
+            </span>
+            <span className="alert-hero-legend-item">
+              <span className="alert-hero-legend-key">
                 <span className="alert-hero-legend-glyph" style={{ color: "var(--status-good)" }} aria-hidden="true">
                   ✓
                 </span>
@@ -218,7 +247,7 @@ export default function Alerts() {
             </span>
           </div>
 
-          <p className="alert-hero-hint">{heroHint(summary.resolved, summary.total)}</p>
+          <p className="alert-hero-hint">{heroHint(summary.acknowledged, summary.resolved, summary.total)}</p>
         </div>
       </div>
 
@@ -268,22 +297,26 @@ export default function Alerts() {
             </select>
           </label>
 
-          <div className="alert-bulk-actions">
-            <button
-              type="button"
-              disabled={selectedIds.size === 0}
-              title="Not available yet - there's no backend endpoint to acknowledge alerts in bulk"
-            >
-              Acknowledge selected
-            </button>
-            <button
-              type="button"
-              disabled={selectedIds.size === 0}
-              title="Not available yet - there's no backend endpoint to resolve alerts in bulk"
-            >
-              Resolve selected
-            </button>
-          </div>
+          {canAct ? (
+            <div className="alert-bulk-actions">
+              <button
+                type="button"
+                disabled={busy || eligibleCount("acknowledge") === 0}
+                onClick={() => act("acknowledge", [...selectedIds])}
+              >
+                Acknowledge selected
+              </button>
+              <button
+                type="button"
+                disabled={busy || eligibleCount("resolve") === 0}
+                onClick={() => act("resolve", [...selectedIds])}
+              >
+                Resolve selected
+              </button>
+            </div>
+          ) : (
+            <p className="alert-readonly-note">Only Emergency Responders can acknowledge or resolve alerts.</p>
+          )}
         </div>
 
         {error && <p className="error">{error}</p>}
@@ -294,50 +327,73 @@ export default function Alerts() {
           <table className="alert-table">
             <thead>
               <tr>
-                <th className="alert-table-checkbox-cell">
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={toggleSelectAll}
-                    aria-label="Select all alerts"
-                  />
-                </th>
+                {canAct && (
+                  <th className="alert-table-checkbox-cell">
+                    <input
+                      type="checkbox"
+                      checked={allSelected}
+                      onChange={toggleSelectAll}
+                      aria-label="Select all alerts"
+                    />
+                  </th>
+                )}
                 <th>Severity</th>
                 <th>Catchment</th>
+                <th>Flood day</th>
+                <th>Score / threshold</th>
                 <th>Status</th>
-                <th>Raised</th>
                 <th>Updated</th>
-                <th aria-hidden="true" />
+                {canAct && <th aria-hidden="true" />}
               </tr>
             </thead>
             <tbody>
               {alerts.map((alert) => (
                 <tr key={alert.id}>
-                  <td className="alert-table-checkbox-cell">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(alert.id)}
-                      onChange={() => toggleSelected(alert.id)}
-                      aria-label={`Select alert ${alert.id}`}
-                    />
-                  </td>
+                  {canAct && (
+                    <td className="alert-table-checkbox-cell">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(alert.id)}
+                        onChange={() => toggleSelected(alert.id)}
+                        aria-label={`Select alert ${alert.id}`}
+                      />
+                    </td>
+                  )}
                   <td>
                     <StatusChip role={severityRole(alert.severity)} label={alert.severity} />
                   </td>
                   <td>{alert.catchment}</td>
+                  <td className="figure">{formatDay(alert.flood_day)}</td>
+                  <td className="figure">
+                    {alert.anomaly_score.toFixed(3)} / {alert.threshold_used.toFixed(3)}
+                  </td>
                   <td>
                     <StatusChip role={alertStatusRole(alert)} label={alert.status} />
                   </td>
-                  <td className="figure">{formatTimestamp(alert.created_at)}</td>
-                  <td className="figure">{formatTimestamp(alert.updated_at)}</td>
-                  <td className="alert-table-row-actions">
-                    <button type="button" title="Not available yet - there's no backend endpoint to acknowledge an alert">
-                      Acknowledge
-                    </button>
-                    <button type="button" title="Not available yet - there's no backend endpoint to resolve an alert">
-                      Resolve
-                    </button>
+                  <td className="figure">
+                    {formatTimestamp(alert.updated_at)}
+                    {(alert.resolved_by || alert.acknowledged_by) && (
+                      <span className="alert-table-by"> by {alert.resolved_by || alert.acknowledged_by}</span>
+                    )}
                   </td>
+                  {canAct && (
+                    <td className="alert-table-row-actions">
+                      <button
+                        type="button"
+                        disabled={busy || alert.status !== "active"}
+                        onClick={() => act("acknowledge", [alert.id])}
+                      >
+                        Acknowledge
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy || alert.status === "resolved"}
+                        onClick={() => act("resolve", [alert.id])}
+                      >
+                        Resolve
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

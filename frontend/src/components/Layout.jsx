@@ -29,7 +29,7 @@ export default function Layout({ user, onLoggedOut }) {
   // than once per navigation.
   useEffect(() => {
     get("/api/alerts/summary")
-      .then((summary) => setAlertCount(summary.total))
+      .then((summary) => setAlertCount(summary.active))
       .catch(() => setAlertCount(null));
   }, []);
 
