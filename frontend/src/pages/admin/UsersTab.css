@@ -1,0 +1,223 @@
+.users-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.users-subtitle {
+  margin: 0.25rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.users-header-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.users-toolbar {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 1.1rem 0 0.9rem;
+}
+
+.users-search {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.users-notice {
+  margin: 0 0 0.9rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+}
+
+.users-notice--success {
+  background: color-mix(in srgb, var(--status-good) 12%, transparent);
+}
+
+.users-notice--error {
+  background: color-mix(in srgb, var(--status-critical) 12%, transparent);
+}
+
+.users-table-scroll {
+  overflow-x: auto;
+}
+
+.users-table td {
+  vertical-align: middle;
+}
+
+.users-person {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.users-actions-cell {
+  text-align: right;
+  width: 3rem;
+}
+
+.users-count {
+  margin: 0.8rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.row-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.row-menu-trigger {
+  border: none;
+  background: transparent;
+  font-size: 1.3rem;
+  line-height: 1;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.row-menu-trigger:hover {
+  background: var(--accent-soft);
+}
+
+.row-menu-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  min-width: 220px;
+  margin: 0;
+  padding: 0.35rem;
+  list-style: none;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  text-align: left;
+}
+
+.row-menu-list button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+}
+
+.row-menu-list button:hover {
+  background: var(--accent-soft);
+}
+
+.row-menu-danger {
+  color: var(--status-critical);
+}
+
+.btn-danger {
+  background: var(--status-critical);
+  border-color: var(--status-critical);
+  color: #ffffff;
+}
+
+.invite-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.invite-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.invite-field input,
+.invite-field select {
+  font-weight: 400;
+}
+
+.invite-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem;
+}
+
+@media (max-width: 560px) {
+  .invite-field-row,
+  .invite-roles {
+    grid-template-columns: 1fr;
+  }
+}
+
+.invite-hint {
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.invite-roles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.invite-roles legend {
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.invite-role-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.invite-role-card input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.invite-role-card.selected {
+  border-color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+
+.invite-role-card:focus-within {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.invite-role-name {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.invite-role-description {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.invite-sent-text {
+  margin: 0;
+  line-height: 1.5;
+}

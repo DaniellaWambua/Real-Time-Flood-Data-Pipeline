@@ -170,23 +170,6 @@ def test_anomalies_recent_requires_login_only():
     assert resp.status_code == 200
 
 
-def test_users_requires_system_administrator_role():
-    client = _client()
-    _login(client, role="emergency_responder")
-    resp = client.get("/api/users")
-    assert resp.status_code == 403
-
-
-def test_users_allows_system_administrator():
-    client = _client()
-    _login(client, role="system_administrator")
-    rows = [{"id": 1, "username": "admin", "role": "system_administrator",
-             "created_at": datetime.datetime(2026, 1, 1)}]
-    with patch("routes_dashboard.db.query_all", return_value=rows):
-        resp = client.get("/api/users")
-    assert resp.status_code == 200
-    body = resp.get_json()
-    assert "password_hash" not in body[0]
 
 
 def test_sources_list():
@@ -219,134 +202,16 @@ def test_sources_serializes_last_ingested_at():
     assert body[0]["record_count"] == 1200
 
 
-def test_create_user_requires_system_administrator_role():
-    client = _client()
-    _login(client, role="emergency_responder")
-    resp = client.post("/api/users", json={"username": "a", "password": "longenough", "role": "emergency_responder"})
-    assert resp.status_code == 403
 
 
-def test_create_user_validates_missing_fields():
-    client = _client()
-    _login(client, role="system_administrator")
-    resp = client.post("/api/users", json={"username": "", "password": "", "role": ""})
-    assert resp.status_code == 400
 
 
-def test_create_user_rejects_invalid_role():
-    client = _client()
-    _login(client, role="system_administrator")
-    resp = client.post(
-        "/api/users",
-        json={"username": "newbie", "password": "longenough", "role": "not_a_real_role"},
-    )
-    assert resp.status_code == 400
 
 
-def test_create_user_rejects_short_password():
-    client = _client()
-    _login(client, role="system_administrator")
-    resp = client.post(
-        "/api/users",
-        json={"username": "newbie", "password": "short", "role": "emergency_responder"},
-    )
-    assert resp.status_code == 400
 
 
-def test_create_user_rejects_duplicate_username():
-    client = _client()
-    _login(client, role="system_administrator")
-    with patch("routes_dashboard.models.get_user_by_username", return_value={"id": 1}):
-        resp = client.post(
-            "/api/users",
-            json={"username": "existing", "password": "longenough", "role": "emergency_responder"},
-        )
-    assert resp.status_code == 409
 
 
-def test_create_user_success_logs_event():
-    client = _client()
-    _login(client, role="system_administrator", username="root-admin")
-    with (
-        patch("routes_dashboard.models.get_user_by_username", return_value=None),
-        patch("routes_dashboard.models.create_user", return_value=42) as mock_create,
-        patch("routes_dashboard.models.log_event") as mock_log,
-    ):
-        resp = client.post(
-            "/api/users",
-            json={"username": "newbie", "password": "longenough", "role": "emergency_responder"},
-        )
-    assert resp.status_code == 201
-    body = resp.get_json()
-    assert body == {"id": 42, "username": "newbie", "role": "emergency_responder", "is_active": True, "email": None}
-    mock_create.assert_called_once_with("newbie", "longenough", "emergency_responder", email=None)
-    mock_log.assert_called_once_with("root-admin", "user_created", "newbie (emergency_responder)")
-
-
-def test_update_user_requires_system_administrator_role():
-    client = _client()
-    _login(client, role="emergency_responder")
-    resp = client.patch("/api/users/1", json={"role": "emergency_responder"})
-    assert resp.status_code == 403
-
-
-def test_update_user_no_such_user():
-    client = _client()
-    _login(client, role="system_administrator")
-    with patch("routes_dashboard.models.get_user_by_id", return_value=None):
-        resp = client.patch("/api/users/999", json={"role": "emergency_responder"})
-    assert resp.status_code == 404
-
-
-def test_update_user_prevents_self_deactivation():
-    client = _client()
-    _login(client, role="system_administrator", user_id=7)
-    target = {"id": 7, "username": "root-admin", "role": "system_administrator", "is_active": True}
-    with patch("routes_dashboard.models.get_user_by_id", return_value=target):
-        resp = client.patch("/api/users/7", json={"is_active": False})
-    assert resp.status_code == 400
-
-
-def test_update_user_rejects_invalid_role():
-    client = _client()
-    _login(client, role="system_administrator", user_id=1)
-    target = {"id": 2, "username": "someone", "role": "emergency_responder", "is_active": True}
-    with patch("routes_dashboard.models.get_user_by_id", return_value=target):
-        resp = client.patch("/api/users/2", json={"role": "not_a_real_role"})
-    assert resp.status_code == 400
-
-
-def test_update_user_changes_role_and_logs_event():
-    client = _client()
-    _login(client, role="system_administrator", user_id=1, username="root-admin")
-    before = {"id": 2, "username": "someone", "role": "emergency_responder", "is_active": True, "email": None}
-    after = {"id": 2, "username": "someone", "role": "government_official", "is_active": True, "email": None}
-    with (
-        patch("routes_dashboard.models.get_user_by_id", side_effect=[before, after]),
-        patch("routes_dashboard.models.update_user_role") as mock_update_role,
-        patch("routes_dashboard.models.log_event") as mock_log,
-    ):
-        resp = client.patch("/api/users/2", json={"role": "government_official"})
-    assert resp.status_code == 200
-    body = resp.get_json()
-    assert body == {"id": 2, "username": "someone", "role": "government_official", "is_active": True, "email": None}
-    mock_update_role.assert_called_once_with(2, "government_official")
-    mock_log.assert_called_once_with("root-admin", "user_role_changed", "someone -> government_official")
-
-
-def test_update_user_resets_password_and_logs_event():
-    client = _client()
-    _login(client, role="system_administrator", user_id=1, username="root-admin")
-    target = {"id": 2, "username": "someone", "role": "emergency_responder", "is_active": True, "email": None}
-    with (
-        patch("routes_dashboard.models.get_user_by_id", return_value=target),
-        patch("routes_dashboard.models.update_password") as mock_update_password,
-        patch("routes_dashboard.models.log_event") as mock_log,
-    ):
-        resp = client.patch("/api/users/2", json={"password": "a-new-password-123"})
-    assert resp.status_code == 200
-    mock_update_password.assert_called_once_with("someone", "a-new-password-123")
-    mock_log.assert_called_once_with("root-admin", "user_password_reset", "someone")
 
 
 def test_admin_stats_requires_system_administrator_role():

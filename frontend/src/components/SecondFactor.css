@@ -1,0 +1,30 @@
+.second-factor-setup {
+  max-width: 440px;
+}
+
+.second-factor-steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.second-factor-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.second-factor-qr img {
+  width: 180px;
+  height: 180px;
+  image-rendering: pixelated;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.second-factor-key {
+  word-break: break-all;
+  font-size: 0.85rem;
+}

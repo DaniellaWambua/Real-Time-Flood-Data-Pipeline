@@ -1,0 +1,51 @@
+.app-dialog {
+  border: none;
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+  color: var(--text-primary);
+  background: var(--surface-1);
+}
+
+.app-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.app-dialog-body {
+  padding: 1.5rem 1.6rem 1.4rem;
+}
+
+.app-dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.app-dialog-title {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.app-dialog-description {
+  margin: 0.3rem 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.app-dialog-close {
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0.1rem 0.4rem;
+  color: var(--text-muted);
+}
+
+.app-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.4rem;
+}

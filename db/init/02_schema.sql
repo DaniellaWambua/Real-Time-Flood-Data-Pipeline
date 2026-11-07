@@ -88,7 +88,9 @@ CREATE INDEX idx_alerts_catchment_status ON alerts (catchment_id, status);
 CREATE TABLE users (
     id              SERIAL PRIMARY KEY,
     username        TEXT NOT NULL UNIQUE,
-    password_hash   TEXT NOT NULL,
+    password_hash   TEXT,            -- NULL until an invited user sets a password
+    full_name       TEXT,
+    organisation    TEXT,
     role            TEXT NOT NULL,   -- actor roles per Chapter 3 use case diagram
     is_active       BOOLEAN NOT NULL DEFAULT true,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -104,6 +106,20 @@ CREATE TABLE users (
     -- so this never opens the door to public self-registration.
     email           TEXT UNIQUE
 );
+
+-- Single-use links emailed for account invites and password resets. Only a SHA-256
+-- hash of each link's code is stored, so the table alone cannot be used to sign in.
+CREATE TABLE user_tokens (
+    id              SERIAL PRIMARY KEY,
+    user_id         INTEGER NOT NULL REFERENCES users(id),
+    purpose         TEXT NOT NULL CHECK (purpose IN ('invite', 'reset')),
+    token_hash      TEXT NOT NULL UNIQUE,
+    expires_at      TIMESTAMPTZ NOT NULL,
+    used_at         TIMESTAMPTZ,
+    created_by      TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_user_tokens_user ON user_tokens (user_id, purpose);
 
 -- System Administration screen's log panel (proposal 3.4.6). One row
 -- per notable event (sign-ins, account changes); actor is a username,
