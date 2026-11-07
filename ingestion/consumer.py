@@ -20,7 +20,8 @@ def get_source_id(name):
     """The data source's id, adding it the first time a new source appears."""
     row = db.query_one("SELECT id FROM data_sources WHERE name = %s", (name,))
     if row is None:
-        db.execute("INSERT INTO data_sources (name, source_type, fetch_interval) VALUES (%s, 'daily-feed', '1 day')",
+        db.execute("INSERT INTO data_sources (name, source_type, fetch_interval, datasets) "
+                   "VALUES (%s, 'daily-feed', '1 day', 'CHIRPS, IMERG, ERA5-Land')",
                    (name,))
         row = db.query_one("SELECT id FROM data_sources WHERE name = %s", (name,))
     db.execute("UPDATE data_sources SET connection_status = 'connected' WHERE id = %s", (row["id"],))

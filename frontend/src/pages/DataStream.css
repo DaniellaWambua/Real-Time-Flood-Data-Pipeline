@@ -91,6 +91,98 @@
   gap: 1.1rem;
 }
 
+/* Which of the model's ten readings to chart, grouped the way they are
+   grouped in readings.js. Same pill treatment as the river and range
+   pickers above it, but these toggle rather than choose one. */
+.reading-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-bottom: 1.1rem;
+}
+
+.reading-picker-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.reading-picker-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-right: 0.15rem;
+}
+
+.reading-picker button {
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.82rem;
+}
+
+.reading-picker button.active {
+  background: var(--accent-soft);
+  border-color: var(--accent-strong);
+}
+
+.datastream-main-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.datastream-main-header .panel-title {
+  margin: 0 0 0.2rem;
+}
+
+.datastream-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+/* Which of the model's ten readings to chart, grouped the way they are
+   grouped in readings.js. Same pill treatment as the river and range
+   pickers above it, but these toggle rather than choose one. */
+.reading-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin-bottom: 1.1rem;
+}
+
+.reading-picker-group {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.reading-picker-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-right: 0.15rem;
+}
+
+.reading-picker button {
+  border-radius: 999px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.82rem;
+}
+
+.reading-picker button.active {
+  background: var(--accent-soft);
+  border-color: var(--accent-strong);
+}
+
 .datastream-pair {
   display: flex;
   flex-direction: column;

@@ -5,50 +5,30 @@ import LineChart from "../components/LineChart";
 import PageHeader from "../components/PageHeader";
 import EmptyState from "../components/EmptyState";
 import { formatCompactTimestamp } from "../formatTimestamp";
+import { READINGS, READING_GROUPS, DEFAULT_READINGS } from "../readings";
 import { get } from "../api";
 import "./DataStream.css";
 
-// All four features side by side on one page, each as its own
-// small-multiple chart with its own axis, rather than a single
-// feature + dropdown. This mirrors the Power BI reference dashboard
-// Daniella shared (a river's metrics together on one screen, a river
-// picker to the side) with one deliberate change: that reference
-// combines rainfall and water level on shared dual axes, which the
-// dataviz skill treats as the single most common charting mistake
-// (two y-scales on one chart). Rainfall (mm) and river discharge
-// (m3/s) are different scales here too, so they stay as separate
-// charts instead. Rainfall is discrete event data, so it renders as
-// bars rather than a connected line; the other three are continuous
-// readings and keep the line (with an area fill).
+// The readings the model actually takes, charted side by side on one time axis,
+// each with its own scale. Two deliberate choices carried over from the earlier
+// version of this screen: never two scales on one chart (the dataviz skill's
+// first rule, and the reason rainfall and the other readings stay as separate
+// aligned charts rather than one combined plot), and rainfall-like readings as
+// bars rather than a line, since a daily total is a discrete quantity and a
+// line between two of them implies a reading that was never taken.
 //
-// Rainfall and discharge are also the specific pair Daniella pointed
-// to from a later "Temporal Alignment" reference screenshot (a
-// dual-axis combo chart). Asked how to carry that comparison over
-// without the dual axis, she chose two aligned single-axis charts -
-// which is what the two already were below - so they're now grouped
-// under their own heading and rendered first, rather than left as
-// two of four generically-labelled small multiples, to make that
-// specific comparison as visible as the reference made it, just
-// without sharing a scale.
-const RAINFALL_DISCHARGE = [
-  { key: "rainfall_mm", label: "Rainfall", unit: "mm", variant: "bars" },
-  { key: "river_discharge_m3s", label: "River discharge", unit: "m3/s", variant: "line" },
-];
+// There are ten readings and charting all of them at once would be a page of
+// scrolling, so they are offered as a picker with four charted by default. That
+// also means any one of the model's inputs can be put on screen during a
+// demonstration without leaving the page.
+const MAX_CHARTS = 6;
 
-const OTHER_FEATURES = [
-  { key: "soil_moisture_m3m3", label: "Soil moisture", unit: "m3/m3", variant: "line" },
-  { key: "evaporation_mm", label: "Evaporation", unit: "mm", variant: "line" },
-];
-
-// GET /api/readings/recent only takes a row limit, not a date range,
-// so "7 days"/"30 days" are approximated from the dataset's own
-// 3-hourly cadence rather than a real server-side date filter; "All"
-// is the API's own 500-row cap, the most it will ever return in one
-// page, not literally every reading on record.
+// The replay is one reading per catchment per day, so a range is simply that
+// many days. "All" is the API's own 500-row cap, not every reading on record.
 const RANGES = [
-  { key: "latest200", label: "Latest 200", limit: 200 },
-  { key: "7d", label: "7 days", limit: 56 },
-  { key: "30d", label: "30 days", limit: 240 },
+  { key: "30d", label: "30 days", limit: 30 },
+  { key: "90d", label: "90 days", limit: 90 },
+  { key: "1y", label: "1 year", limit: 365 },
   { key: "all", label: "All", limit: 500, title: "Capped at the 500 most recent readings the API returns" },
 ];
 
@@ -63,7 +43,8 @@ function pointsFor(readings, featureKey) {
 export default function DataStream() {
   const [catchments, setCatchments] = useState([]);
   const [catchment, setCatchment] = useState("");
-  const [rangeKey, setRangeKey] = useState(RANGES[0].key);
+  const [rangeKey, setRangeKey] = useState(RANGES[1].key);
+  const [chosen, setChosen] = useState(DEFAULT_READINGS);
   const [readings, setReadings] = useState(null);
   const [tableView, setTableView] = useState(false);
   const [error, setError] = useState(null);
@@ -89,16 +70,19 @@ export default function DataStream() {
       .catch((err) => setError(err.message));
   }, [catchment, range.limit]);
 
-  const selected = catchments.find((c) => c.name === catchment) ?? null;
+  // Tick a reading on or off, keeping at least one charted and no more than
+  // MAX_CHARTS, so the page never empties or turns into endless scrolling.
+  function toggleReading(key) {
+    setChosen((current) => {
+      if (current.includes(key)) {
+        return current.length === 1 ? current : current.filter((k) => k !== key);
+      }
+      return current.length >= MAX_CHARTS ? current : [...current, key];
+    });
+  }
 
-  // Interval is measured from the data itself (consecutive readings'
-  // own timestamps), not assumed, so this stays correct even if the
-  // dataset's cadence ever changes.
-  const intervalHours = useMemo(() => {
-    if (!readings || readings.length < 2) return null;
-    const diffMs = new Date(readings[0].recorded_at) - new Date(readings[1].recorded_at);
-    return Math.round(Math.abs(diffMs) / 3600000);
-  }, [readings]);
+  const selected = catchments.find((c) => c.name === catchment) ?? null;
+  const charted = READINGS.filter((r) => chosen.includes(r.key));
 
   const windowSpanDays = useMemo(() => {
     if (!readings || readings.length < 2) return null;
@@ -110,7 +94,7 @@ export default function DataStream() {
     <section>
       <PageHeader
         title="Data stream"
-        subtitle="Rainfall, river discharge, soil moisture and evaporation, aligned on one time axis"
+        subtitle="The ten readings the model takes, aligned on one time axis"
       />
 
       <div className="datastream-controls">
@@ -142,6 +126,30 @@ export default function DataStream() {
         </div>
       </div>
 
+      <div className="reading-picker">
+        {READING_GROUPS.map((group) => (
+          <div key={group} className="reading-picker-group">
+            <span className="reading-picker-label">{group}</span>
+            {READINGS.filter((r) => r.group === group).map((reading) => {
+              const on = chosen.includes(reading.key);
+              return (
+                <button
+                  key={reading.key}
+                  type="button"
+                  className={on ? "active" : ""}
+                  aria-pressed={on}
+                  disabled={!on && chosen.length >= MAX_CHARTS}
+                  title={!on && chosen.length >= MAX_CHARTS ? `Up to ${MAX_CHARTS} charts at a time` : undefined}
+                  onClick={() => toggleReading(reading.key)}
+                >
+                  {reading.label}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
       <div className="datastream-layout">
         <div className="datastream-main">
           {error && <p className="error">{error}</p>}
@@ -162,34 +170,21 @@ export default function DataStream() {
             </div>
           )}
 
-          {readings && (
-            <div className="datastream-grid">
-              <div className="datastream-pair">
-                <div className="datastream-pair-header">
-                  <h3 className="panel-title">Rainfall vs river discharge</h3>
-                  <span className="panel-caption">
-                    Two aligned charts on the same time axis, not one shared scale
-                  </span>
-                </div>
-                {RAINFALL_DISCHARGE.map((feature) => (
-                  <LineChart
-                    key={feature.key}
-                    title={feature.label}
-                    unit={feature.unit}
-                    variant={feature.variant}
-                    points={pointsFor(readings, feature.key)}
-                    forceTable={tableView}
-                  />
-                ))}
-              </div>
+          {readings && readings.length === 0 && (
+            <EmptyState>
+              No model readings for this catchment yet. Run the producer and consumer to feed it.
+            </EmptyState>
+          )}
 
-              {OTHER_FEATURES.map((feature) => (
+          {readings && readings.length > 0 && (
+            <div className="datastream-grid">
+              {charted.map((reading) => (
                 <LineChart
-                  key={feature.key}
-                  title={feature.label}
-                  unit={feature.unit}
-                  variant={feature.variant}
-                  points={pointsFor(readings, feature.key)}
+                  key={reading.key}
+                  title={reading.label}
+                  unit={reading.unit}
+                  variant={reading.variant}
+                  points={pointsFor(readings, reading.key)}
                   forceTable={tableView}
                 />
               ))}
@@ -218,7 +213,7 @@ export default function DataStream() {
                 </dd>
 
                 <dt>Interval</dt>
-                <dd className="figure">{intervalHours !== null ? `${intervalHours}-hourly` : "—"}</dd>
+                <dd className="figure">Daily, one reading per catchment</dd>
 
                 <dt>Last reading</dt>
                 <dd className="figure">{readings && readings[0] ? formatCompactTimestamp(readings[0].recorded_at) : "—"}</dd>

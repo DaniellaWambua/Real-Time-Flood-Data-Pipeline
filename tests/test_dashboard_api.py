@@ -52,24 +52,30 @@ def test_catchments_serializes_rows():
     assert resp.get_json() == rows
 
 
-def test_recent_readings_serializes_datetimes():
+def test_recent_readings_returns_the_model_readings_only():
     client = _client()
     _login(client)
     now = datetime.datetime(2026, 10, 10, 12, 0, 0)
     rows = [
         {"id": 1, "recorded_at": now, "catchment": "Nairobi River",
-         "source": "simulated-dataset-feed", "rainfall_mm": 5.0,
-         "river_discharge_m3s": 1.2, "soil_moisture_m3m3": 0.3,
-         "evaporation_mm": 2.0, "oni": 0.1},
+         "source": "historical-replay", "rainfall_mm": 5.0, "era5_rain_mm": 4.1,
+         "imerg_total_mm": 6.2, "imerg_max_rate": 1.8, "imerg_hours_ge5": 1.0,
+         "soil_1": 0.31, "soil_2": 0.29, "temp_c": 18.4,
+         "dewpoint_depression": 6.1, "pressure_hpa": 822.0},
     ]
     with patch("routes_dashboard.db.query_all", return_value=rows) as mocked:
         resp = client.get("/api/readings/recent?catchment=Nairobi+River&limit=10")
     assert resp.status_code == 200
     body = resp.get_json()
     assert body[0]["recorded_at"] == now.isoformat()
+    assert body[0]["soil_2"] == 0.29
+    sql = mocked.call_args.args[0]
+    # the retired design's readings are gone, and rows without the model's own
+    # inputs are left out rather than charted beside them
+    assert "river_discharge_m3s" not in sql and "evaporation_mm" not in sql
+    assert "era5_rain_mm IS NOT NULL" in sql
     # catchment filter and limit both reach the SQL params.
-    args = mocked.call_args.args[1]
-    assert args == ("Nairobi River", 10)
+    assert mocked.call_args.args[1] == ("Nairobi River", 10)
 
 
 def test_alerts_filters_pass_through():
@@ -172,12 +178,17 @@ def test_anomalies_recent_requires_login_only():
 
 
 
-def test_sources_list():
+def test_sources_list_hides_retired_sources():
     client = _client()
     _login(client)
-    with patch("routes_dashboard.db.query_all", return_value=[]):
+    with patch("routes_dashboard.db.query_all", return_value=[]) as mocked:
         resp = client.get("/api/sources")
     assert resp.status_code == 200
+    sql = mocked.call_args.args[0]
+    # retired feeds are kept in the table, like the retired catchments, but the
+    # screens only show the one that is still receiving
+    assert "WHERE ds.is_active" in sql
+    assert "ds.datasets" in sql
 
 
 def test_sources_serializes_last_ingested_at():

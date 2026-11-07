@@ -57,12 +57,14 @@ CATCHMENT_COUNTY = {
     "Tana River": "Garissa",
 }
 
+# One feed, carrying three datasets. CHIRPS, IMERG and ERA5-Land are combined
+# into a single daily reading per catchment before the producer publishes it, so
+# they are datasets inside this feed rather than separate ingestion paths. The
+# name has to match what the producer puts on each message
+# (ingestion/config.py's REPLAY_SOURCE).
 DATA_SOURCES = [
-    # (name, source_type, fetch_interval, connection_status)
-    ("CHIRPS", "satellite_rainfall", "1 day", "disconnected"),
-    ("GloFAS", "hydrological_model", "1 day", "disconnected"),
-    ("KMD", "advisory", "1 day", "disconnected"),
-    ("simulated-dataset-feed", "historical-replay", "1 second", "disconnected"),
+    # (name, source_type, fetch_interval, connection_status, datasets)
+    ("historical-replay", "daily-feed", "1 day", "disconnected", "CHIRPS, IMERG, ERA5-Land"),
 ]
 
 
@@ -81,15 +83,15 @@ def seed_catchments():
 
 
 def seed_data_sources():
-    for name, source_type, fetch_interval, status in DATA_SOURCES:
+    for name, source_type, fetch_interval, status, datasets in DATA_SOURCES:
         existing = db.query_one("SELECT id FROM data_sources WHERE name = %s", (name,))
         if existing:
             print(f"data source '{name}' already exists (id={existing['id']}), skipping.")
             continue
         db.execute(
-            "INSERT INTO data_sources (name, source_type, fetch_interval, connection_status) "
-            "VALUES (%s, %s, %s::interval, %s)",
-            (name, source_type, fetch_interval, status),
+            "INSERT INTO data_sources (name, source_type, fetch_interval, connection_status, datasets) "
+            "VALUES (%s, %s, %s::interval, %s, %s)",
+            (name, source_type, fetch_interval, status, datasets),
         )
         print(f"inserted data source '{name}'.")
 
