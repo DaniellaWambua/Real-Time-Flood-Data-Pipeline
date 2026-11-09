@@ -44,6 +44,13 @@ FEATURE_FIELDS = [
     "soil_1", "soil_2", "temp_c", "dewpoint_depression", "pressure_hpa",
 ]
 
+# Live feed from Google Earth Engine (producer.py --live)
+EE_PROJECT = os.environ.get("EE_PROJECT", "flood-pipeline-nairobi")
+CATCHMENTS_FILE = PROJECT_ROOT / "data_collection" / "data" / "05_spatial" / "processed" / "catchments.geojson"
+LIVE_SOURCE = "earth-engine"
+LIVE_DATASETS = "CHIRPS, IMERG, ERA5-Land"
+WINDOW_DAYS = 14  # the model's input length, backfilled on the first live run
+
 # The backend's flood detection endpoint, called after each reading is saved
 DETECTION_URL = os.environ.get("DETECTION_URL", "http://localhost:5001/internal/detect")
 INTERNAL_API_TOKEN = _required("INTERNAL_API_TOKEN")

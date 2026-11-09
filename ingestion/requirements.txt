@@ -1,3 +1,4 @@
 confluent-kafka==2.16.0
 psycopg2-binary==2.9.9
 python-dotenv==1.0.1
+earthengine-api>=1.6.15,<2  # 1.6.15 is the newest for Python 3.9; 1.7.x needs 3.10+
