@@ -12,16 +12,22 @@ def _env(name, default=""):
     """A setting's value, or the default when it is unset or left blank in backend/.env."""
     return os.environ.get(name) or default
 
-# Matches db/docker-compose.yml's defaults; override with real values in
-# production via environment variables, never commit real credentials here.
+
+def _required(name):
+    """A secret with no default: refuse to start when it is missing."""
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"{name} is not set; add it to backend/.env (see backend/.env.example)")
+    return value
+
 DB_HOST = _env("DB_HOST", "localhost")
 DB_PORT = _env("DB_PORT", "5432")
 DB_NAME = _env("DB_NAME", "flood_pipeline")
 DB_USER = _env("DB_USER", "flood_pipeline")
-DB_PASSWORD = _env("DB_PASSWORD", "flood_pipeline_dev")
+DB_PASSWORD = _required("DB_PASSWORD")
 
-SECRET_KEY = _env("SECRET_KEY", "dev-secret-change-before-deploying")
-INTERNAL_API_TOKEN = _env("INTERNAL_API_TOKEN", "dev-internal-token-change-before-deploying")
+SECRET_KEY = _required("SECRET_KEY")
+INTERNAL_API_TOKEN = _required("INTERNAL_API_TOKEN")
 
 # Not 5000: macOS's AirPlay Receiver (System Settings, General, AirDrop
 # and Handoff) also listens on 127.0.0.1:5000 and answers with its own

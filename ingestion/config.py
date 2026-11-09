@@ -3,14 +3,26 @@
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# One secrets file for the whole system, shared with the backend
+load_dotenv(PROJECT_ROOT / "backend" / ".env")
+
+
+def _required(name):
+    """A secret with no default: refuse to start when it is missing."""
+    value = os.environ.get(name)
+    if not value:
+        raise RuntimeError(f"{name} is not set; add it to backend/.env (see backend/.env.example)")
+    return value
+
 
 KAFKA_BROKER = os.environ.get("KAFKA_BROKER", "localhost:9092")
 TOPIC_RAW_READINGS = "hydro-raw-readings"
 CONSUMER_GROUP = "stream-processor"
 
-# Matches db/docker-compose.yml's defaults; override with real values in
-# production via environment variables, never commit real credentials here.
+# Read from backend/.env or the environment; never commit real credentials here.
 # (Deliberately duplicated from backend/config.py rather than imported
 # from it: both this file and that one are named config.py, and having
 # ingestion/ reach into backend/'s sys.path caused the two to shadow each
@@ -19,7 +31,7 @@ DB_HOST = os.environ.get("DB_HOST", "localhost")
 DB_PORT = os.environ.get("DB_PORT", "5432")
 DB_NAME = os.environ.get("DB_NAME", "flood_pipeline")
 DB_USER = os.environ.get("DB_USER", "flood_pipeline")
-DB_PASSWORD = os.environ.get("DB_PASSWORD", "flood_pipeline_dev")
+DB_PASSWORD = _required("DB_PASSWORD")
 
 # Historical daily readings replayed through Kafka until the live Earth Engine feed is wired in
 SIMULATION_DATA_FILE = PROJECT_ROOT / "data_collection" / "data" / "08_model_ready" / "features_daily_audited.csv"
@@ -34,4 +46,4 @@ FEATURE_FIELDS = [
 
 # The backend's flood detection endpoint, called after each reading is saved
 DETECTION_URL = os.environ.get("DETECTION_URL", "http://localhost:5001/internal/detect")
-INTERNAL_API_TOKEN = os.environ.get("INTERNAL_API_TOKEN", "dev-internal-token-change-before-deploying")
+INTERNAL_API_TOKEN = _required("INTERNAL_API_TOKEN")
