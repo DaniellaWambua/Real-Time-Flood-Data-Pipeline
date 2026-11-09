@@ -52,3 +52,21 @@ docker compose exec db psql -U flood_pipeline -d flood_pipeline \
 - Uses confluent-kafka rather than kafka-python: the latter has a known,
   unresolved bug (dpkp/kafka-python#2450) negotiating with newer brokers,
   which this project's Kafka image hits.
+
+## Live mode
+
+`python producer.py --live` fetches each new day's CHIRPS, IMERG and ERA5-Land
+readings for the three catchments from Google Earth Engine, computed exactly as
+the training data was (`earth_engine.py`). It sends every day after the last one
+stored from the live feed, up to the last day all three datasets have published.
+The first run backfills 14 days so the model has a full window. Run it once a day.
+
+The slowest dataset sets the delay: CHIRPS is published in monthly batches, so
+the newest scoreable day is usually several weeks old (`python check_latency.py`
+shows the current gap for each dataset).
+
+Each run marks the `earth-engine` data source connected or disconnected and logs
+the result in the activity log. Earth Engine failures are retried three times
+before being recorded as a failure. Locally it signs in with your own Earth
+Engine login; on the server, set `EE_SERVICE_ACCOUNT_KEY` to a service account
+key file.
