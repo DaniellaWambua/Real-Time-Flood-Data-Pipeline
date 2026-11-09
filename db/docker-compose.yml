@@ -1,15 +1,15 @@
 # PostgreSQL with TimescaleDB and PostGIS (proposal 3.4.4), plus a
 # single-node Apache Kafka broker (proposal 3.5.2/3.6.3) for the
 # ingestion and stream processing layers.
-# Run from the db/ directory: docker compose up -d
+# Run from the db/ directory: docker compose --env-file ../backend/.env up -d
 services:
   db:
     image: timescale/timescaledb-ha:pg16
     container_name: flood_pipeline_db
     environment:
-      POSTGRES_DB: flood_pipeline
-      POSTGRES_USER: flood_pipeline
-      POSTGRES_PASSWORD: flood_pipeline_dev
+      POSTGRES_DB: ${DB_NAME:-flood_pipeline}
+      POSTGRES_USER: ${DB_USER:-flood_pipeline}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is not set, run with --env-file ../backend/.env}
     ports:
       - "5432:5432"
     volumes:
