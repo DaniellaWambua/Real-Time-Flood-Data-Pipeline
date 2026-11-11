@@ -21,6 +21,7 @@ CREATE TABLE catchment_areas (
     code            TEXT UNIQUE,                     -- the model's name for the catchment
     geom            GEOMETRY(Point, 4326) NOT NULL,  -- map marker point
     boundary        GEOMETRY(Polygon, 4326),         -- delineated catchment shape
+    wards           TEXT[],                          -- wards mostly inside the catchment (db/add_catchment_wards.py)
     is_active       BOOLEAN NOT NULL DEFAULT true,   -- inactive catchments are kept, not deleted
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -90,6 +91,20 @@ CREATE TABLE alerts (
 );
 CREATE INDEX idx_alerts_catchment_status ON alerts (catchment_id, status);
 
+-- What responders and officials did about an alert (use cases "Coordinate field evacuation efforts",
+-- "Allocate emergency resources" and "Assist in post-disaster rehabilitation"). kind is 'field'
+-- (Emergency Responders), 'resources' (Government Officials) or 'recovery' (either, once resolved).
+CREATE TABLE alert_responses (
+    id          SERIAL PRIMARY KEY,
+    alert_id    INTEGER NOT NULL REFERENCES alerts(id),
+    kind        TEXT NOT NULL,
+    note        TEXT NOT NULL,
+    author      TEXT NOT NULL,
+    author_role TEXT NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_alert_responses_alert ON alert_responses (alert_id, created_at);
+
 CREATE TABLE users (
     id              SERIAL PRIMARY KEY,
     username        TEXT NOT NULL UNIQUE,
@@ -141,3 +156,25 @@ CREATE TABLE system_logs (
 );
 CREATE INDEX idx_system_logs_occurred_at ON system_logs (occurred_at DESC);
 CREATE INDEX idx_system_logs_category ON system_logs (category, id DESC);
+
+-- Ward boundaries (geoBoundaries, CC BY 4.0), used to name the wards each catchment covers.
+CREATE TABLE wards (
+    id              SERIAL PRIMARY KEY,
+    name            TEXT NOT NULL,
+    boundary        GEOMETRY(MultiPolygon, 4326) NOT NULL
+);
+CREATE INDEX idx_wards_boundary ON wards USING GIST (boundary);
+
+-- Open-Meteo daily rainfall forecasts per catchment, latest issue kept per day.
+-- is_warning marks a forecast at or above the rainfall warning threshold.
+CREATE TABLE rainfall_forecasts (
+    id              SERIAL PRIMARY KEY,
+    catchment_id    INTEGER NOT NULL REFERENCES catchment_areas(id),
+    forecast_date   DATE NOT NULL,
+    precipitation_mm DOUBLE PRECISION NOT NULL,
+    threshold_mm    DOUBLE PRECISION NOT NULL,
+    is_warning      BOOLEAN NOT NULL,
+    source          TEXT NOT NULL,
+    issued_at       TIMESTAMPTZ NOT NULL,
+    UNIQUE (catchment_id, forecast_date)
+);

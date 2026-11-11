@@ -20,6 +20,7 @@ def _required(name):
 
 KAFKA_BROKER = os.environ.get("KAFKA_BROKER", "localhost:9092")
 TOPIC_RAW_READINGS = "hydro-raw-readings"
+TOPIC_FORECASTS = "hydro-forecasts"
 CONSUMER_GROUP = "stream-processor"
 
 # Read from backend/.env or the environment; never commit real credentials here.
@@ -51,6 +52,16 @@ LIVE_SOURCE = "earth-engine"
 LIVE_DATASETS = "CHIRPS, IMERG, ERA5-Land"
 WINDOW_DAYS = 14  # the model's input length, backfilled on the first live run
 
+# Rainfall warning from Open-Meteo forecasts (producer.py --forecast)
+OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
+FORECAST_SOURCE = "open-meteo"
+FORECAST_DATASETS = "Open-Meteo daily rainfall forecast"
+FORECAST_DAYS = 3
+# KMD's flat 24-hour heavy-rainfall warning level (Kiptum et al., 2023)
+RAIN_WARNING_MM = 50.0
+
 # The backend's flood detection endpoint, called after each reading is saved
 DETECTION_URL = os.environ.get("DETECTION_URL", "http://localhost:5001/internal/detect")
+# where the consumer asks the backend to email a new rainfall warning
+WARNING_NOTIFY_URL = os.environ.get("WARNING_NOTIFY_URL", DETECTION_URL.rsplit("/", 1)[0] + "/notify-warning")
 INTERNAL_API_TOKEN = _required("INTERNAL_API_TOKEN")

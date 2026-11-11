@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
+import { formatWards } from "../wards";
 import { useOutletContext, useSearchParams } from "react-router-dom";
 import StatusChip from "../components/StatusChip";
 import PageHeader from "../components/PageHeader";
 import { severityRole, alertStatusRole } from "../statusRoles";
 import EmptyState from "../components/EmptyState";
+import AlertResponses from "./AlertResponses";
 import { get, patch } from "../api";
 import "./Alerts.css";
 
@@ -70,6 +72,7 @@ export default function Alerts() {
   const [visibleLimit, setVisibleLimit] = useState(PAGE_SIZE);
   const [alerts, setAlerts] = useState(null);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [openId, setOpenId] = useState(null);
   const [error, setError] = useState(null);
   const [summary, setSummary] = useState(EMPTY_SUMMARY);
 
@@ -366,12 +369,14 @@ export default function Alerts() {
                 <th>Score / threshold</th>
                 <th>Status</th>
                 <th>Updated</th>
+                <th>Responses</th>
                 {canAct && <th aria-hidden="true" />}
               </tr>
             </thead>
             <tbody>
               {alerts.map((alert) => (
-                <tr key={alert.id}>
+                <Fragment key={alert.id}>
+                <tr>
                   {canAct && (
                     <td className="alert-table-checkbox-cell">
                       <input
@@ -385,7 +390,10 @@ export default function Alerts() {
                   <td>
                     <StatusChip role={severityRole(alert.severity)} label={alert.severity} />
                   </td>
-                  <td>{alert.catchment}</td>
+                  <td>
+                    {alert.catchment}
+                    {alert.wards?.length > 0 && <span className="alert-wards">{formatWards(alert.wards)}</span>}
+                  </td>
                   <td className="figure">{formatDay(alert.flood_day)}</td>
                   <td className="figure">
                     {alert.anomaly_score.toFixed(3)} / {alert.threshold_used.toFixed(3)}
@@ -398,6 +406,16 @@ export default function Alerts() {
                     {(alert.resolved_by || alert.acknowledged_by) && (
                       <span className="alert-table-by"> by {alert.resolved_by || alert.acknowledged_by}</span>
                     )}
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="alert-responses-toggle"
+                      aria-expanded={openId === alert.id}
+                      onClick={() => setOpenId((id) => (id === alert.id ? null : alert.id))}
+                    >
+                      {alert.responses > 0 ? `${alert.responses} recorded` : "Record"}
+                    </button>
                   </td>
                   {canAct && (
                     <td className="alert-table-row-actions">
@@ -418,6 +436,14 @@ export default function Alerts() {
                     </td>
                   )}
                 </tr>
+                {openId === alert.id && (
+                  <tr className="alert-responses-row">
+                    <td colSpan={canAct ? 9 : 7}>
+                      <AlertResponses alert={alert} role={user.role} onAdded={() => setRefresh((n) => n + 1)} />
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>

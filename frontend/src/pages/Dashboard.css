@@ -141,6 +141,28 @@
   font-size: 1.05rem;
 }
 
+.catchment-wards {
+  margin: -0.5rem 0 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.alert-wards {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.dashboard-outlook-panel {
+  margin-bottom: 1.5rem;
+}
+
+.rainfall-outlook-table td:not(:first-child),
+.rainfall-outlook-table th:not(:first-child) {
+  font-family: var(--font-mono);
+  text-align: right;
+}
+
 .catchment-county {
   margin: 0 0 0.75rem;
   color: var(--text-muted);

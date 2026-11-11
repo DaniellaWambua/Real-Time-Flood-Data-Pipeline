@@ -6,6 +6,10 @@ for the three catchments from Google Earth Engine, up to the last day all three
 have published, and records whether the fetch worked on the data source and in
 the activity log. Run it once a day.
 
+Forecast mode (--forecast) fetches the next three days' rainfall forecast for each
+catchment from Open-Meteo and publishes it on the hydro-forecasts topic, where the
+consumer applies the rainfall warning rule. Run it once a day, or more often.
+
 Replay mode (the default) publishes the historical daily readings from the
 model-ready file instead, for testing and demonstrations.
 
@@ -14,6 +18,7 @@ hydro-raw-readings topic. Flood labels are never sent.
 
 Usage (from the ingestion/ directory, with the Kafka container running):
     python producer.py --live [--interval SECONDS] [--dry-run]
+    python producer.py --forecast [--dry-run]
     python producer.py [--start YYYY-MM-DD] [--end YYYY-MM-DD] [--catchment NAME]
                        [--interval SECONDS] [--dry-run]
 """
@@ -23,13 +28,14 @@ import csv
 import json
 import sys
 import time
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 from confluent_kafka import Producer
 
 import config
 import db
 import earth_engine
+import forecast
 
 
 def read_rows(catchment=None, start=None, end=None):
@@ -68,13 +74,13 @@ def delivery_report(err, msg):
         print(f"delivery failed for key {msg.key()}: {err}")
 
 
-def publish(messages, interval):
-    """Send the messages on the raw readings topic and return how many were sent."""
+def publish(messages, interval, topic=config.TOPIC_RAW_READINGS):
+    """Send the messages on a topic (the raw readings one by default) and return how many were sent."""
     producer = Producer({"bootstrap.servers": config.KAFKA_BROKER})
     count = 0
     for message in messages:
         producer.produce(
-            config.TOPIC_RAW_READINGS,
+            topic,
             key=message["catchment"].encode("utf-8"),
             value=json.dumps(message).encode("utf-8"),
             callback=delivery_report,
@@ -110,13 +116,13 @@ def last_live_day():
     return row["day"] if row else None
 
 
-def record_status(ok, detail):
-    """Mark the live source connected or disconnected and log what happened."""
+def record_status(ok, detail, source=config.LIVE_SOURCE, datasets=config.LIVE_DATASETS):
+    """Mark a source connected or disconnected and log what happened."""
     db.execute(
         "INSERT INTO data_sources (name, source_type, fetch_interval, datasets, connection_status) "
         "VALUES (%s, 'daily-feed', '1 day', %s, %s) "
         "ON CONFLICT (name) DO UPDATE SET connection_status = EXCLUDED.connection_status",
-        (config.LIVE_SOURCE, config.LIVE_DATASETS, "connected" if ok else "disconnected"))
+        (source, datasets, "connected" if ok else "disconnected"))
     db.execute("INSERT INTO system_logs (actor, action, detail, category) VALUES ('producer', %s, %s, 'pipeline')",
                ("source_fetched" if ok else "source_failed", detail))
     print(detail)
@@ -159,9 +165,43 @@ def run_live(interval, dry_run=False):
     return 0
 
 
+def forecast_catchments():
+    """(name, longitude, latitude) for each active catchment: a point inside its shape."""
+    rows = db.query_all(
+        "SELECT name, ST_X(p) AS lon, ST_Y(p) AS lat FROM (SELECT name, "
+        "ST_PointOnSurface(COALESCE(boundary, geom)) AS p FROM catchment_areas WHERE is_active) s ORDER BY name")
+    return [(r["name"], r["lon"], r["lat"]) for r in rows]
+
+
+def run_forecast(dry_run=False):
+    status = {"source": config.FORECAST_SOURCE, "datasets": config.FORECAST_DATASETS}
+    try:
+        catchments = forecast_catchments()
+        issued_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        messages = with_retries(lambda: forecast.fetch(catchments, issued_at))
+    except Exception as e:  # noqa: BLE001 - reported as a source failure
+        detail = f"Open-Meteo forecast failed: {type(e).__name__}: {e}"
+        if dry_run:
+            print(f"dry run: {detail}")
+        else:
+            record_status(False, detail, **status)
+        return 1
+    peak = max((d["precipitation_mm"] or 0 for m in messages for d in m["days"]), default=0)
+    summary = f"{len(messages)} catchments, {config.FORECAST_DAYS} days, highest {peak:.1f} mm"
+    if dry_run:
+        for m in messages:
+            print(json.dumps(m, indent=2))
+        print(f"dry run: forecast for {summary} would be sent")
+        return 0
+    publish(messages, 0, topic=config.TOPIC_FORECASTS)
+    record_status(True, f"published forecast for {summary}", **status)
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description="Publish daily readings through Kafka.")
     parser.add_argument("--live", action="store_true", help="Fetch new days from Google Earth Engine.")
+    parser.add_argument("--forecast", action="store_true", help="Fetch Open-Meteo rainfall forecasts.")
     parser.add_argument("--start", help="Replay: first date to send, YYYY-MM-DD (default: start of the file).")
     parser.add_argument("--end", help="Replay: last date to send, YYYY-MM-DD (default: end of the file).")
     parser.add_argument("--catchment", help="Replay: send one catchment only, by its database name.")
@@ -171,6 +211,8 @@ def main():
 
     if args.live:
         sys.exit(run_live(args.interval, args.dry_run))
+    if args.forecast:
+        sys.exit(run_forecast(args.dry_run))
 
     rows = read_rows(args.catchment, args.start, args.end)
     if args.dry_run:

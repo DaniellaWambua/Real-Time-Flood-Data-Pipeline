@@ -10,6 +10,7 @@ import { severityRole } from "../statusRoles";
 import EmptyState from "../components/EmptyState";
 import { formatReading } from "../readings";
 import { get } from "../api";
+import { formatWards } from "../wards";
 import "./Dashboard.css";
 
 const SEVERITY_RANK = { low: 1, medium: 2, high: 3 };
@@ -55,6 +56,9 @@ function CatchmentDetails({ catchment, role, alerts, latestReading, anomalies, o
         <div>
           <h3>{catchment.name}</h3>
           <p className="catchment-county">{catchment.county}</p>
+          {catchment.wards?.length > 0 && (
+            <p className="catchment-wards">Wards: {catchment.wards.join(", ")}</p>
+          )}
         </div>
         <button type="button" className="catchment-details-close" onClick={onClose} aria-label="Back to the risk list">
           ✕
@@ -112,6 +116,65 @@ function CatchmentDetails({ catchment, role, alerts, latestReading, anomalies, o
   );
 }
 
+// The rainfall outlook: Open-Meteo's daily forecast per catchment, a rule-based
+// warning (KMD's 50 mm in a day) shown apart from the LSTM's alerts.
+function RainfallOutlook({ forecast }) {
+  const days = [...new Set(forecast.map((f) => f.forecast_date))].sort();
+  const byCatchment = new Map();
+  for (const f of forecast) {
+    if (!byCatchment.has(f.catchment)) byCatchment.set(f.catchment, {});
+    byCatchment.get(f.catchment)[f.forecast_date] = f;
+  }
+  const threshold = forecast[0]?.threshold_mm;
+  const issued = forecast.reduce((latest, f) => (f.issued_at > latest ? f.issued_at : latest), "");
+  const dayLabel = (d) =>
+    new Date(`${d}T00:00:00`).toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+
+  return (
+    <div className="panel dashboard-outlook-panel">
+      <div className="panel-header">
+        <h2 className="panel-title">Rainfall outlook</h2>
+        <span className="panel-caption">
+          {forecast.length === 0
+            ? "Open-Meteo forecast, not fetched yet"
+            : `Open-Meteo forecast, warning at ${threshold} mm in a day, issued ${new Date(issued).toLocaleString()}`}
+        </span>
+      </div>
+      {forecast.length === 0 ? (
+        <EmptyState>No forecast stored yet. It appears after the producer's next forecast run.</EmptyState>
+      ) : (
+        <table className="dashboard-high-severity-table rainfall-outlook-table">
+          <thead>
+            <tr>
+              <th>Catchment</th>
+              {days.map((d) => (
+                <th key={d}>{dayLabel(d)}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[...byCatchment.entries()].map(([name, perDay]) => (
+              <tr key={name}>
+                <td>{name}</td>
+                {days.map((d) => {
+                  const f = perDay[d];
+                  if (!f) return <td key={d}>no forecast</td>;
+                  const text = `${f.precipitation_mm.toFixed(1)} mm`;
+                  return (
+                    <td key={d}>
+                      {f.is_warning ? <StatusChip role="warning" label={`${text}, warning`} /> : text}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
+
 function RiskList({ catchments, activeAlerts, onSelect }) {
   const ranked = useMemo(() => {
     const rank = { critical: 2, warning: 1, good: 0 };
@@ -149,6 +212,7 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [selectedName, setSelectedName] = useState(null);
   const [latestReading, setLatestReading] = useState(null);
+  const [forecast, setForecast] = useState([]);
 
   useEffect(() => {
     Promise.all([
@@ -168,6 +232,10 @@ export default function Dashboard() {
         setRecentHighSeverity(highSeverity);
       })
       .catch((err) => setError(err.message));
+    // Loaded on its own so a missing forecast never blocks the rest of the screen
+    get("/api/forecast")
+      .then(setForecast)
+      .catch(() => setForecast([]));
   }, []);
 
   // Clearing the selection resets latestReading from the event that
@@ -323,6 +391,8 @@ export default function Dashboard() {
         </aside>
       </div>
 
+      <RainfallOutlook forecast={forecast} />
+
       <div className="panel dashboard-high-severity-panel">
         <div className="panel-header">
           <h2 className="panel-title">Latest high-severity alerts</h2>
@@ -349,7 +419,10 @@ export default function Dashboard() {
                   <td>
                     <StatusChip role={severityRole(alert.severity)} label={alert.severity} />
                   </td>
-                  <td>{alert.catchment}</td>
+                  <td>
+                    {alert.catchment}
+                    {alert.wards?.length > 0 && <span className="alert-wards">{formatWards(alert.wards)}</span>}
+                  </td>
                   <td>
                     <StatusChip
                       role={alert.status === "resolved" ? "good" : "active"}
