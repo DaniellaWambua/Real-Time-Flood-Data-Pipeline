@@ -211,11 +211,14 @@ export default function OverviewTab({ model }) {
         <div className="lstm-stat lstm-stat--deep">
           <div className="lstm-stat-label">False alarms</div>
           <div className="lstm-stat-value figure">
-            {evaluation.false_alarms_per_catchment_year.toFixed(1)}
-            <span className="lstm-stat-of">days a year</span>
+            {evaluation.false_episodes_per_catchment_year.toFixed(1)}
+            <span className="lstm-stat-of">a year</span>
           </div>
-          <Months rate={evaluation.false_alarms_per_catchment_year} />
-          <p className="lstm-stat-note">per catchment</p>
+          <Months rate={evaluation.false_episodes_per_catchment_year} />
+          <p className="lstm-stat-note">
+            alarm episodes per catchment that matched no flood; {Math.round(evaluation.event_precision * 100)}% of
+            episodes were real
+          </p>
         </div>
 
         <div className="lstm-stat lstm-stat--soft">

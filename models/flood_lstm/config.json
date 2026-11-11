@@ -1,5 +1,6 @@
 {
-  "version": "v1",
+  "version": "v2",
+  "training": "event-weighted",
   "features": [
     "rain_mm",
     "imerg_max_rate",
@@ -52,7 +53,7 @@
     0.4714711606502533,
     0.47143760323524475
   ],
-  "threshold": 0.555,
+  "threshold": 0.528,
   "seeds": [
     0,
     1,

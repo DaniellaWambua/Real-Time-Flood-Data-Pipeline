@@ -13,7 +13,9 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 import app as app_module  # noqa: E402
 
-MODEL = "lstm_raw v1"
+MODEL_DIR = Path(__file__).resolve().parent.parent / "models" / "flood_lstm"
+CONFIG = json.loads((MODEL_DIR / "config.json").read_text())
+MODEL = f"lstm_raw {CONFIG['version']}"
 
 
 def _client():
@@ -47,7 +49,7 @@ def test_model_card_reads_config_and_evaluation():
     assert resp.status_code == 200
     body = resp.get_json()
     assert body["name"] == MODEL
-    assert body["threshold"] == 0.555
+    assert body["threshold"] == CONFIG["threshold"]
     assert len(body["features"]) == 15
     assert body["live"]["last_day"] == "2025-12-31"
     # the evaluation travels with the weights, so the page always shows this version's own figures
