@@ -8,14 +8,20 @@ import hmac
 from flask import Blueprint, jsonify, request
 
 import config
+import db
 import flood_detection
+import notify
 
 detection_bp = Blueprint("detection", __name__, url_prefix="/internal")
 
 
+def _allowed():
+    return hmac.compare_digest(request.headers.get("X-Internal-Token", ""), config.INTERNAL_API_TOKEN)
+
+
 @detection_bp.route("/detect", methods=["POST"])
 def detect():
-    if not hmac.compare_digest(request.headers.get("X-Internal-Token", ""), config.INTERNAL_API_TOKEN):
+    if not _allowed():
         return jsonify({"error": "not allowed"}), 403
     data = request.get_json(silent=True) or {}
     try:
@@ -23,5 +29,24 @@ def detect():
         day = datetime.date.fromisoformat(data["date"])
     except (KeyError, TypeError, ValueError):
         return jsonify({"error": "catchment_id and date (YYYY-MM-DD) are required"}), 400
-    result = flood_detection.detect(catchment_id, day, data.get("hydro_data_record_id"))
+    result = flood_detection.detect(catchment_id, day, data.get("hydro_data_record_id"), notify=data.get("notify") is True)
     return jsonify(result), 200 if result["scored"] else 422
+
+@detection_bp.route("/notify-warning", methods=["POST"])
+def notify_warning():
+    """The consumer reports a newly raised rainfall warning; responders and officials are emailed."""
+    if not _allowed():
+        return jsonify({"error": "not allowed"}), 403
+    data = request.get_json(silent=True) or {}
+    try:
+        catchment_id = int(data["catchment_id"])
+        day = datetime.date.fromisoformat(data["date"])
+        mm = float(data["precipitation_mm"])
+        threshold_mm = float(data["threshold_mm"])
+    except (KeyError, TypeError, ValueError):
+        return jsonify({"error": "catchment_id, date (YYYY-MM-DD), precipitation_mm and threshold_mm are required"}), 400
+    place = db.query_one("SELECT name, wards FROM catchment_areas WHERE id = %s", (catchment_id,))
+    if place is None:
+        return jsonify({"error": "no such catchment"}), 404
+    sent = notify.rainfall_warning(place["name"], place.get("wards"), day, mm, threshold_mm)
+    return jsonify({"notified": sent})
