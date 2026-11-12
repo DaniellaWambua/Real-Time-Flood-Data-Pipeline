@@ -1,0 +1,19 @@
+# Everything the backend, the consumer and the producer need on the server (Linux, Python 3.9),
+# pinned to the versions the system was tested with on the MacBook.
+Flask==3.0.3
+Flask-Cors==6.0.5
+Werkzeug==3.1.8
+gunicorn==23.0.0
+psycopg2-binary==2.9.9
+python-dotenv==1.0.1
+pyotp==2.9.0
+qrcode[pil]==7.4.2
+google-auth==2.35.0
+requests==2.32.3
+pywebpush==2.0.3
+numpy==2.0.2
+h5py==3.14.0
+tensorflow-cpu==2.19.1
+keras==3.10.0
+confluent-kafka==2.16.0
+earthengine-api==1.6.15
