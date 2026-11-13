@@ -70,5 +70,15 @@ MAIL_FROM_ADDRESS = _env("MAIL_FROM_ADDRESS", "") or SMTP_USERNAME
 
 # Where the links in emails point (the React app), and how long they last
 FRONTEND_URL = _env("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+
+# Web Push for the installed app (notify.py). Generate a key pair once with
+# python generate_vapid_keys.py and paste the lines it prints into backend/.env.
+# Without them notifications still appear in the app; they are just not pushed.
+VAPID_PUBLIC_KEY = _env("VAPID_PUBLIC_KEY", "")
+VAPID_PRIVATE_KEY = _env("VAPID_PRIVATE_KEY", "")
+# Field roles are told about a verified incident only if its last day is this recent, so verifying a
+# replayed year does not notify anyone
+NOTIFY_WITHIN_DAYS = int(_env("NOTIFY_WITHIN_DAYS", "60"))
+VAPID_SUBJECT = _env("VAPID_SUBJECT", "mailto:" + (_env("MAIL_FROM_ADDRESS", "") or "admin@example.org"))
 INVITE_LINK_HOURS = int(_env("INVITE_LINK_HOURS", "72"))
 RESET_LINK_HOURS = int(_env("RESET_LINK_HOURS", "2"))

@@ -67,6 +67,7 @@ CREATE TABLE anomaly_detection_results (
     detected_at         TIMESTAMPTZ NOT NULL,
     catchment_id        INTEGER NOT NULL REFERENCES catchment_areas(id),
     hydro_data_record_id BIGINT,              -- final day's record this score was computed for
+    model_name          TEXT NOT NULL,        -- e.g. 'lstm_raw v2' or 'lstm_fast v1' (flood_detection.py)
     anomaly_score       DOUBLE PRECISION NOT NULL,
     threshold_used       DOUBLE PRECISION NOT NULL,
     is_anomalous         BOOLEAN NOT NULL,
@@ -75,35 +76,59 @@ CREATE TABLE anomaly_detection_results (
 SELECT create_hypertable('anomaly_detection_results', 'detected_at');
 CREATE INDEX idx_anomaly_results_catchment ON anomaly_detection_results (catchment_id, detected_at DESC);
 
+-- A flood incident: consecutive flagged days in one catchment, worked as one case. Each flagged day is
+-- still an alert (below), linked to its incident. Disaster Management officers verify or dismiss an
+-- incident before responders and officials are told; Emergency Responders acknowledge and resolve it,
+-- and on resolving record what they found, which becomes a dated, place-named label for retraining.
+CREATE TABLE incidents (
+    id                  SERIAL PRIMARY KEY,
+    catchment_id        INTEGER NOT NULL REFERENCES catchment_areas(id),
+    start_day           DATE NOT NULL,
+    end_day             DATE NOT NULL,
+    verification        TEXT NOT NULL DEFAULT 'pending',  -- 'pending', 'verified', 'dismissed'
+    verified_by         TEXT,
+    verified_at         TIMESTAMPTZ,
+    verification_note   TEXT,
+    status              TEXT NOT NULL DEFAULT 'active',   -- 'active', 'acknowledged', 'resolved'
+    acknowledged_by     TEXT,
+    acknowledged_at     TIMESTAMPTZ,
+    resolved_by         TEXT,
+    resolved_at         TIMESTAMPTZ,
+    outcome             TEXT,      -- on resolving: 'flooding_observed', 'no_flooding' or 'not_checked'
+    outcome_places      TEXT,
+    outcome_note        TEXT,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_incidents_catchment_days ON incidents (catchment_id, end_day DESC);
+
 CREATE TABLE alerts (
     id                      SERIAL PRIMARY KEY,
     anomaly_detection_result_id BIGINT,
     catchment_id            INTEGER NOT NULL REFERENCES catchment_areas(id),
+    incident_id             INTEGER REFERENCES incidents(id),
     severity                TEXT NOT NULL,     -- e.g. 'low', 'medium', 'high'
-    status                  TEXT NOT NULL DEFAULT 'active',  -- 'active', 'acknowledged', 'resolved'
-    created_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
-    -- Who moved the alert on and when (Emergency Responders only)
-    acknowledged_at         TIMESTAMPTZ,
-    acknowledged_by         TEXT,
-    resolved_at             TIMESTAMPTZ,
-    resolved_by             TEXT
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+    -- Raised by the fast model before CHIRPS arrives; settled when the full model scores the day
+    provisional             BOOLEAN NOT NULL DEFAULT false,
+    confirmation            TEXT               -- NULL, 'confirmed' or 'not_confirmed'
 );
-CREATE INDEX idx_alerts_catchment_status ON alerts (catchment_id, status);
+CREATE INDEX idx_alerts_incident ON alerts (incident_id);
 
--- What responders and officials did about an alert (use cases "Coordinate field evacuation efforts",
+-- What responders and officials did about an incident (use cases "Coordinate field evacuation efforts",
 -- "Allocate emergency resources" and "Assist in post-disaster rehabilitation"). kind is 'field'
 -- (Emergency Responders), 'resources' (Government Officials) or 'recovery' (either, once resolved).
-CREATE TABLE alert_responses (
+CREATE TABLE incident_responses (
     id          SERIAL PRIMARY KEY,
-    alert_id    INTEGER NOT NULL REFERENCES alerts(id),
+    incident_id INTEGER NOT NULL REFERENCES incidents(id),
     kind        TEXT NOT NULL,
     note        TEXT NOT NULL,
     author      TEXT NOT NULL,
     author_role TEXT NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_alert_responses_alert ON alert_responses (alert_id, created_at);
+CREATE INDEX idx_incident_responses_incident ON incident_responses (incident_id, created_at);
 
 CREATE TABLE users (
     id              SERIAL PRIMARY KEY,
@@ -125,6 +150,29 @@ CREATE TABLE users (
     -- POST /login/google only succeeds for an email that matches here,
     -- so this never opens the door to public self-registration.
     email           TEXT UNIQUE
+);
+
+-- In-app notifications (the Notifications screen), one row per recipient. read_at is NULL until read.
+CREATE TABLE notifications (
+    id          BIGSERIAL PRIMARY KEY,
+    user_id     INTEGER NOT NULL REFERENCES users(id),
+    kind        TEXT NOT NULL,    -- 'verify', 'incident', 'update', 'rain'
+    title       TEXT NOT NULL,
+    body        TEXT NOT NULL,
+    link        TEXT,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    read_at     TIMESTAMPTZ
+);
+CREATE INDEX idx_notifications_user ON notifications (user_id, created_at DESC);
+
+-- Browsers and phones that have the installed app's push notifications turned on (Web Push)
+CREATE TABLE push_subscriptions (
+    id          SERIAL PRIMARY KEY,
+    user_id     INTEGER NOT NULL REFERENCES users(id),
+    endpoint    TEXT NOT NULL UNIQUE,
+    p256dh      TEXT NOT NULL,
+    auth        TEXT NOT NULL,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Single-use links emailed for account invites and password resets. Only a SHA-256

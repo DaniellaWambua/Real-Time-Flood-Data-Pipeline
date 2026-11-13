@@ -97,6 +97,54 @@ function Split({ measured, total }) {
   );
 }
 
+// The fast model scores each day from IMERG and ERA5-Land, about a week after it happens, instead of
+// waiting about six weeks for CHIRPS. Its alerts are provisional until the model above confirms them.
+function ProvisionalModel({ card }) {
+  const e = card.evaluation;
+  return (
+    <>
+      <div className="lstm-section-head">
+        <h2 className="panel-title">Provisional model: {card.name}</h2>
+        <span className="panel-caption">
+          same network without CHIRPS, flag line {card.threshold}; {card.live.days_scored.toLocaleString()} days
+          scored so far{card.live.last_day ? `, latest ${formatDay(card.live.last_day)}` : ""}
+        </span>
+      </div>
+      {e ? (
+        <div className="lstm-stat-grid">
+          <div className="lstm-stat lstm-stat--soft">
+            <div className="lstm-stat-label">Events caught</div>
+            <div className="lstm-stat-value figure">
+              {e.events_detected}
+              <span className="lstm-stat-of">of {e.events_total}</span>
+            </div>
+            <p className="lstm-stat-note">on the same held-out years</p>
+          </div>
+          <div className="lstm-stat lstm-stat--deep">
+            <div className="lstm-stat-label">Real alarm episodes</div>
+            <div className="lstm-stat-value figure">{Math.round(e.event_precision * 100)}%</div>
+            <p className="lstm-stat-note">{e.false_episodes_per_catchment_year.toFixed(1)} false a year per catchment</p>
+          </div>
+          <div className="lstm-stat lstm-stat--soft">
+            <div className="lstm-stat-label">Average precision</div>
+            <div className="lstm-stat-value figure">{e.average_precision.toFixed(3)}</div>
+            <Scale value={e.average_precision} />
+          </div>
+          <div className="lstm-stat lstm-stat--deep">
+            <div className="lstm-stat-label">Waits for</div>
+            <div className="lstm-stat-value figure">
+              ~8<span className="lstm-stat-of">days</span>
+            </div>
+            <p className="lstm-stat-note">ERA5-Land, the slowest input it uses</p>
+          </div>
+        </div>
+      ) : (
+        <EmptyState>No evaluation saved for the provisional model yet.</EmptyState>
+      )}
+    </>
+  );
+}
+
 // When the model actually fired, month by month across the measured period.
 // One short bar chart rather than another figure: it shows at a glance that the
 // flags fall in Nairobi's two wet seasons rather than scattered through the
@@ -238,6 +286,8 @@ export default function OverviewTab({ model }) {
           <p className="lstm-stat-note">days the audit settled</p>
         </div>
       </div>
+
+      {model.provisional && <ProvisionalModel card={model.provisional} />}
 
       <WhenItFlagged evaluation={evaluation} />
     </div>

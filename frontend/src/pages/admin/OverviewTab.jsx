@@ -48,10 +48,10 @@ function StatsRow({ stats }) {
       description: `latest ${formatDay(stats.readings_last_day)}`,
     },
     {
-      label: "Alerts",
-      value: stats.alerts.toLocaleString(),
+      label: "Incidents",
+      value: stats.incidents.toLocaleString(),
       glyph: IconBell,
-      description: `${stats.alerts_open} open, ${stats.alerts_acknowledged} acknowledged`,
+      description: `${stats.incidents_pending} waiting for verification, ${stats.incidents_open} open`,
     },
     {
       label: "Anomaly results",
@@ -94,7 +94,7 @@ function StatsRowSkeleton() {
   );
 }
 
-// GET /api/alerts/summary and /api/alerts/trend taught the same lesson
+// GET /api/incidents/summary taught the same lesson
 // here: a database overview is a glance, not a page of its own, so
 // this reads one small endpoint rather than totalling up what the
 // other panels already fetched.

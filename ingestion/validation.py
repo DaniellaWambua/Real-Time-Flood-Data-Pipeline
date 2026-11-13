@@ -17,10 +17,10 @@ def check_reading(message, fields):
         v = readings.get(f)
         if v is None or isinstance(v, bool) or not isinstance(v, (int, float)) or math.isnan(v):
             return f"missing or non-numeric value for {f}"
-    for f in RAIN_FIELDS:
+    for f in (f for f in RAIN_FIELDS if f in fields):
         if readings[f] < 0:
             return f"negative rainfall in {f} ({readings[f]})"
-    for f in SOIL_FIELDS:
+    for f in (f for f in SOIL_FIELDS if f in fields):
         if not 0 <= readings[f] <= 1:
             return f"soil moisture {f} outside 0 to 1 ({readings[f]})"
     return None

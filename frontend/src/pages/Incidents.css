@@ -306,3 +306,62 @@
 .alert-responses-form input {
   flex: 1;
 }
+
+/* Provisional / confirmed tag under the severity, and how late the alert was raised */
+.alert-confirmation,
+.alert-raised {
+  display: block;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.alert-raised {
+  color: var(--text-muted);
+}
+
+/* One incident opened under its row */
+.incident-detail {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.2fr);
+  gap: 16px 28px;
+  padding: 8px 4px;
+}
+
+.incident-detail .alert-responses {
+  grid-column: 1 / -1;
+}
+
+.incident-detail-heading {
+  margin: 0 0 6px;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.incident-detail-form,
+.incident-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.incident-detail-form input {
+  flex: 1 1 260px;
+}
+
+.incident-resolve {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  border: 1px solid var(--border, rgba(0, 0, 0, 0.12));
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.incident-resolve-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

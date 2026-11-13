@@ -29,12 +29,13 @@ def detect():
         day = datetime.date.fromisoformat(data["date"])
     except (KeyError, TypeError, ValueError):
         return jsonify({"error": "catchment_id and date (YYYY-MM-DD) are required"}), 400
-    result = flood_detection.detect(catchment_id, day, data.get("hydro_data_record_id"), notify=data.get("notify") is True)
+    result = flood_detection.detect(catchment_id, day, data.get("hydro_data_record_id"), notify=data.get("notify") is True,
+                                     provisional=data.get("provisional") is True)
     return jsonify(result), 200 if result["scored"] else 422
 
 @detection_bp.route("/notify-warning", methods=["POST"])
 def notify_warning():
-    """The consumer reports a newly raised rainfall warning; responders and officials are emailed."""
+    """The consumer reports a newly raised rainfall warning; Disaster Management, responders and officials are notified."""
     if not _allowed():
         return jsonify({"error": "not allowed"}), 403
     data = request.get_json(silent=True) or {}

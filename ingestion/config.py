@@ -51,6 +51,10 @@ CATCHMENTS_FILE = PROJECT_ROOT / "data_collection" / "data" / "05_spatial" / "pr
 LIVE_SOURCE = "earth-engine"
 LIVE_DATASETS = "CHIRPS, IMERG, ERA5-Land"
 WINDOW_DAYS = 14  # the model's input length, backfilled on the first live run
+# Days IMERG and ERA5-Land have published but CHIRPS has not: sent without rain_mm, scored by the fast model
+PROVISIONAL_SOURCE = "earth-engine-provisional"
+PROVISIONAL_DATASETS = "IMERG, ERA5-Land (CHIRPS pending)"
+PROVISIONAL_FIELDS = [f for f in FEATURE_FIELDS if f != "rain_mm"]
 
 # Rainfall warning from Open-Meteo forecasts (producer.py --forecast)
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"

@@ -22,9 +22,10 @@ def get_source_id(name):
     """The data source's id, adding it the first time a new source appears."""
     row = db.query_one("SELECT id FROM data_sources WHERE name = %s", (name,))
     if row is None:
+        datasets = config.PROVISIONAL_DATASETS if name == config.PROVISIONAL_SOURCE else "CHIRPS, IMERG, ERA5-Land"
         db.execute("INSERT INTO data_sources (name, source_type, fetch_interval, datasets) "
-                   "VALUES (%s, 'daily-feed', '1 day', 'CHIRPS, IMERG, ERA5-Land')",
-                   (name,))
+                   "VALUES (%s, 'daily-feed', '1 day', %s)",
+                   (name, datasets))
         row = db.query_one("SELECT id FROM data_sources WHERE name = %s", (name,))
     db.execute("UPDATE data_sources SET connection_status = 'connected' WHERE id = %s", (row["id"],))
     return row["id"]
@@ -37,8 +38,9 @@ def is_duplicate(source_id, catchment_id, day):
 
 
 def save_reading(source_id, catchment_id, message):
+    """Store one reading. A provisional reading has no rain_mm, which is stored as NULL."""
     cols = [DB_COLUMN.get(f, f) for f in config.FEATURE_FIELDS]
-    values = [message["readings"][f] for f in config.FEATURE_FIELDS]
+    values = [message["readings"].get(f) for f in config.FEATURE_FIELDS]
     return db.execute_returning(
         f"INSERT INTO hydro_data_records (recorded_at, data_source_id, catchment_id, {', '.join(cols)}) "
         f"VALUES (%s, %s, %s, {', '.join(['%s'] * len(cols))}) RETURNING id",
@@ -65,11 +67,12 @@ def post_internal(url, payload):
         return {"scored": False, "reason": f"backend not reachable ({e.reason})"}
 
 
-def request_detection(catchment_id, day, record_id, notify=False):
+def request_detection(catchment_id, day, record_id, notify=False, provisional=False):
     """Ask the backend to score this catchment-day, and return its reply. notify asks it to email
-    any new alert, which only live readings do."""
+    any new alert, which only live readings do; provisional asks for the fast model (no CHIRPS)."""
     return post_internal(config.DETECTION_URL, {"catchment_id": catchment_id, "date": day,
-                                                "hydro_data_record_id": record_id, "notify": notify})
+                                                "hydro_data_record_id": record_id, "notify": notify,
+                                                "provisional": provisional})
 
 
 def handle(message, catchment_ids, source_ids, counts):
@@ -78,7 +81,8 @@ def handle(message, catchment_ids, source_ids, counts):
         counts["skipped"] += 1
         return
     catchment_id = catchment_ids.get(message.get("catchment"))
-    reason = check_reading(message, config.FEATURE_FIELDS)
+    provisional = message.get("source") == config.PROVISIONAL_SOURCE
+    reason = check_reading(message, config.PROVISIONAL_FIELDS if provisional else config.FEATURE_FIELDS)
     if reason is None and catchment_id is None:
         reason = "unknown or inactive catchment"
     if reason is None and not message.get("source"):
@@ -95,7 +99,8 @@ def handle(message, catchment_ids, source_ids, counts):
         return
     record_id = save_reading(source_ids[message["source"]], catchment_id, message)
     counts["saved"] += 1
-    result = request_detection(catchment_id, message["date"], record_id, notify=message["source"] == config.LIVE_SOURCE)
+    live = message["source"] in (config.LIVE_SOURCE, config.PROVISIONAL_SOURCE)
+    result = request_detection(catchment_id, message["date"], record_id, notify=live, provisional=provisional)
     if result.get("scored"):
         counts["scored"] += 1
         counts["flagged"] += int(result["flagged"])

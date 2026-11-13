@@ -7,6 +7,7 @@ import StatusChip from "../components/StatusChip";
 import PageHeader from "../components/PageHeader";
 import { IconBell, IconBrain, IconChevronRight, IconDatabase, IconMap } from "../components/icons";
 import { severityRole } from "../statusRoles";
+import { confirmationTag } from "../provisional";
 import EmptyState from "../components/EmptyState";
 import { formatReading } from "../readings";
 import { get } from "../api";
@@ -26,14 +27,14 @@ const ROLE_COLOR = {
 };
 
 const LEGEND = [
-  { role: "good", label: "No active alerts" },
+  { role: "good", label: "No open incidents" },
   { role: "warning", label: "Medium severity active" },
   { role: "critical", label: "High severity active" },
 ];
 
-const RISK_LABEL = { critical: "High", warning: "Medium", good: "No active alert" };
+const RISK_LABEL = { critical: "High", warning: "Medium", good: "No open incident" };
 
-// A catchment's map color is its highest-severity ACTIVE alert right
+// A catchment's map color is its highest-severity OPEN incident right
 // now, there is no live LSTM risk score yet (see project-checklist.md,
 // "needs a finished training run first"), so this is the most honest
 // stand-in for "risk level" available from real data today, not a
@@ -64,9 +65,9 @@ function CatchmentDetails({ catchment, role, alerts, latestReading, anomalies, o
           ✕
         </button>
       </div>
-      <StatusChip role={role} label={role === "good" ? "no active alerts" : `${role} risk`} />
+      <StatusChip role={role} label={role === "good" ? "no open incidents" : `${role} risk`} />
 
-      <h4>Active alerts</h4>
+      <h4>Open incidents</h4>
       {alerts.length === 0 ? (
         <EmptyState>None right now.</EmptyState>
       ) : (
@@ -74,6 +75,7 @@ function CatchmentDetails({ catchment, role, alerts, latestReading, anomalies, o
           {alerts.map((a) => (
             <li key={a.id}>
               <StatusChip role={severityRole(a.severity)} label={a.severity} />
+              {confirmationTag(a) && <StatusChip {...confirmationTag(a)} />}
               <span className="detail-time">{new Date(a.created_at).toLocaleString()}</span>
             </li>
           ))}
@@ -99,15 +101,16 @@ function CatchmentDetails({ catchment, role, alerts, latestReading, anomalies, o
       <h4>Recent anomaly scores</h4>
       {anomalies.length === 0 ? (
         <EmptyState>
-          None yet, real-time LSTM inference is not wired into the running
-          system (see project-checklist.md).
+          No scores for this catchment yet.
         </EmptyState>
       ) : (
         <ul className="detail-list">
           {anomalies.map((a) => (
             <li key={a.id}>
-              score {a.anomaly_score.toFixed(3)} (threshold {a.threshold_used.toFixed(3)})
-              {a.is_anomalous ? ", anomalous" : ""}
+              {new Date(a.detected_at).toLocaleDateString("en-GB", { timeZone: "UTC" })}: score{" "}
+              {a.anomaly_score.toFixed(3)} (threshold {a.threshold_used.toFixed(3)})
+              {a.is_anomalous ? ", flagged" : ""}
+              {a.provisional ? ", provisional (CHIRPS pending)" : ""}
             </li>
           ))}
         </ul>
@@ -217,11 +220,11 @@ export default function Dashboard() {
   useEffect(() => {
     Promise.all([
       get("/api/catchments"),
-      get("/api/alerts", { status: "active", limit: 500 }),
+      get("/api/incidents", { status: "open", limit: 500 }),
       get("/api/anomalies/recent", { limit: 50 }),
       get("/api/sources"),
-      get("/api/alerts/summary"),
-      get("/api/alerts", { severity: "high", limit: 5 }),
+      get("/api/incidents/summary"),
+      get("/api/incidents", { severity: "high", limit: 5 }),
     ])
       .then(([catchmentRows, alertRows, anomalyRows, sourceRows, summary, highSeverity]) => {
         setCatchments(catchmentRows);
@@ -306,7 +309,7 @@ export default function Dashboard() {
         <MetricCard
           tone="deep"
           glyph={IconBell}
-          label="Active alerts"
+          label="Active incidents"
           value={alertsSummary.active.toLocaleString()}
           segments={[
             { amount: alertsSummary.by_severity.high.active, color: "var(--status-critical)" },
@@ -343,7 +346,7 @@ export default function Dashboard() {
         <div className="panel dashboard-map-panel">
           <div className="panel-header">
             <h2 className="panel-title">Catchment risk map</h2>
-            <span className="panel-caption">Colour shows the highest active alert in each catchment</span>
+            <span className="panel-caption">Colour shows the most severe open incident in each catchment</span>
           </div>
 
           <CatchmentMap
@@ -382,7 +385,7 @@ export default function Dashboard() {
                 segments={[
                   { role: "critical", label: "High", count: elevatedHigh },
                   { role: "warning", label: "Medium", count: elevatedMedium },
-                  { role: "good", label: "No active alert", count: catchments.length - elevated.length },
+                  { role: "good", label: "No open incident", count: catchments.length - elevated.length },
                 ]}
               />
               <RiskList catchments={catchments} activeAlerts={activeAlerts} onSelect={selectCatchment} />
@@ -395,14 +398,14 @@ export default function Dashboard() {
 
       <div className="panel dashboard-high-severity-panel">
         <div className="panel-header">
-          <h2 className="panel-title">Latest high-severity alerts</h2>
-          <Link to="/alerts?severity=high" className="panel-link">
-            View all {alertsSummary.by_severity.high.active + alertsSummary.by_severity.high.resolved} high-severity alerts
+          <h2 className="panel-title">Latest high-severity incidents</h2>
+          <Link to="/incidents?severity=high" className="panel-link">
+            View all {alertsSummary.by_severity.high.active + alertsSummary.by_severity.high.resolved} high-severity incidents
           </Link>
         </div>
 
         {recentHighSeverity.length === 0 ? (
-          <EmptyState>No high-severity alerts right now.</EmptyState>
+          <EmptyState>No high-severity incidents right now.</EmptyState>
         ) : (
           <table className="dashboard-high-severity-table">
             <thead>
@@ -418,6 +421,11 @@ export default function Dashboard() {
                 <tr key={alert.id}>
                   <td>
                     <StatusChip role={severityRole(alert.severity)} label={alert.severity} />
+                    {confirmationTag(alert) && (
+                      <span className="alert-confirmation">
+                        <StatusChip {...confirmationTag(alert)} />
+                      </span>
+                    )}
                   </td>
                   <td>
                     {alert.catchment}

@@ -265,3 +265,10 @@
     max-height: none;
   }
 }
+
+/* Provisional / confirmed tag under an alert severity */
+.alert-confirmation {
+  display: block;
+  font-size: 12px;
+  margin-top: 2px;
+}
