@@ -18,3 +18,9 @@
 		file_server
 	}
 }
+
+# Other names for the site (the www name and the original Azure address) send visitors to the main address,
+# so sign-in and Google sign-in only ever see one origin.
+{$REDIRECT_ADDRESSES} {
+	redir https://{$SITE_ADDRESS}{uri} permanent
+}
