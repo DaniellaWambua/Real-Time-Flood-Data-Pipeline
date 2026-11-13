@@ -22,11 +22,7 @@
 
 .metric-card-value {
   font-size: 1.9rem;
-  /* 900 (black), not 700 - these are the dashboard's headline KPI
-     numbers, so they get Lato's heaviest weight plus --brand-deep
-     (the moodboard's Forest Green), matching how the reference
-     dashboard's own hero numbers read: heavier and in the hero
-     color, not just the default dark text. */
+  /* Headline KPI numbers: heaviest weight in the brand colour */
   font-weight: 900;
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono);
@@ -86,11 +82,7 @@
   line-height: 1.4;
 }
 
-/* Filled-card tones from Daniella's palette spec, alternated across
-   the Overview screen's hero row (see MetricCard.jsx). Both keep the
-   same border-radius/shadow/padding as the plain card - only the
-   fill and the text colors that need to change for contrast on it
-   are overridden below. */
+/* Filled tones: only the fill and the text colours change */
 .metric-card--soft {
   background: var(--accent-soft);
   border-color: transparent;
@@ -130,10 +122,7 @@
   color: rgba(255, 255, 255, 0.85);
 }
 
-/* Decorative watermark of what the card counts, bottom-right and well
-   behind the number (MetricCard.jsx's `glyph`). Sized and faded so it
-   reads as texture on the filled cards rather than as an icon to look
-   at; the label is what names the number. */
+/* Faint decorative icon behind the number */
 .metric-card-glyph {
   position: absolute;
   right: -12px;

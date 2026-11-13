@@ -4,12 +4,7 @@
   gap: 1.25rem;
 }
 
-/* A noticeably larger corner radius on this page's cards, closer to
-   the pill-shaped pickers on the Data stream page, per Daniella's
-   request - not a literal 999px, since these panels hold a full
-   table with left-aligned content close to the corner, where a true
-   pill radius would curve the background away before it reaches
-   that content. */
+/* Larger corner radius on this page's cards */
 .admin-panel-stack .panel {
   border-radius: 24px;
 }
@@ -18,10 +13,7 @@
   border-radius: 24px;
 }
 
-/* Force all six stat cards onto one line, per the reference mockup,
-   instead of shared.css's generic auto-fit wrap (which is right for
-   Overview's four-card row but not this one). Falls back to wrapping
-   only once the screen is too narrow for six columns to stay legible. */
+/* All six stat cards on one line, wrapping only on narrow screens */
 .admin-metric-row {
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
@@ -86,17 +78,12 @@
   padding: 0.3rem 0.6rem;
 }
 
-/* Full opacity even though it's disabled: the mockup shows this
-   control as a plain, crisp button (not visibly greyed out), and
-   there's nothing misleading about that here - the title attribute
-   and cursor still say why it doesn't do anything. */
+/* Kept at full opacity; the title explains why it is disabled */
 .admin-reconnect-button:disabled {
   opacity: 1;
 }
 
-/* "View stream" matches Reconnect's size/shape exactly (same action
-   column, same row height) but reads as a real, working link - border
-   and text in the accent color instead of the page's ink color. */
+/* "View stream" matches Reconnect's size but reads as a working link */
 .admin-stream-link {
   display: inline-block;
   font-size: 0.8rem;
@@ -113,9 +100,7 @@
   background: var(--accent-soft);
 }
 
-/* The small "You" marker next to the signed-in user's own row, same
-   pill shape as MetricCard's badge, in the accent family rather than
-   a status color since it isn't a state. */
+/* The "You" marker beside the signed-in user's row */
 .admin-you-badge {
   display: inline-block;
   margin-left: 0.5rem;
@@ -257,9 +242,7 @@
   border-radius: 24px;
 }
 
-/* What a feed carries, under its status. One feed brings CHIRPS, IMERG and
-   ERA5-Land in together as a single daily reading per catchment, so the
-   datasets are named here rather than listed as sources of their own. */
+/* The datasets a feed carries, under its status */
 .pipeline-health-tile-datasets {
   margin: 0.35rem 0 0;
   font-size: 0.78rem;

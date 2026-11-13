@@ -1,11 +1,4 @@
-/*
- * Two-column main row (map card left, risk panel right) under the
- * metric-card row, modelled on Daniella's reference layout: a big map
- * that never needs manual resizing, a ranked "catchments by risk"
- * list beside it that swaps to a single catchment's detail view when
- * one is selected (from the map or from the list itself), and a
- * high-severity alerts table full width underneath.
- */
+/* Map card and risk panel side by side under the metric cards, high-severity table below. */
 
 .dashboard-main-row {
   display: grid;
@@ -41,9 +34,7 @@
   flex-direction: column;
 }
 
-/* A thin separator between rows rather than a gap, so a long ranked
-   list reads as one continuous list (like the reference dashboard)
-   instead of a stack of separate floating rows. */
+/* Thin separators so the ranked list reads as one list. */
 .risk-list li {
   border-bottom: 1px solid var(--gridline);
 }

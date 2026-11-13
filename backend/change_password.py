@@ -1,16 +1,7 @@
 """
-CLI script to change an existing user's password.
-
-Companion to create_user.py: the proposal's authentication module
-(3.6.2) implies admin-provisioned accounts rather than public
-self-registration, so there is no "forgot password" web flow either.
-An admin changes a password the same way an account gets created, from
-the backend/ directory:
+Change a user's password. From backend/:
 
     python change_password.py <username> <new_password>
-
-Example:
-    python change_password.py admin a-new-password123
 """
 
 import sys

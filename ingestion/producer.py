@@ -1,25 +1,13 @@
 """
-Kafka producer for the data ingestion layer.
+Kafka producer for the ingestion layer. Sends one message per catchment per day, in date order,
+on hydro-raw-readings. Flood labels are never sent.
 
-Live mode (--live) fetches each new day's CHIRPS, IMERG and ERA5-Land readings
-for the three catchments from Google Earth Engine, up to the last day all three
-have published, and records whether the fetch worked on the data source and in
-the activity log. Days that IMERG and ERA5-Land have published but CHIRPS has not
-(CHIRPS runs about six weeks late) are also sent, without rain_mm and marked
-provisional, so the fast model can score them about a week after they happen.
-Run it once a day.
+--live      fetches new days of CHIRPS, IMERG and ERA5-Land from Earth Engine. Days without CHIRPS yet
+            are sent without rain_mm, marked provisional, for the fast model. Run once a day.
+--forecast  publishes Open-Meteo's three-day rainfall forecast on hydro-forecasts.
+(default)   replays the historical readings from the model-ready file.
 
-Forecast mode (--forecast) fetches the next three days' rainfall forecast for each
-catchment from Open-Meteo and publishes it on the hydro-forecasts topic, where the
-consumer applies the rainfall warning rule. Run it once a day, or more often.
-
-Replay mode (the default) publishes the historical daily readings from the
-model-ready file instead, for testing and demonstrations.
-
-Both send one message per catchment per day, in date order, on the
-hydro-raw-readings topic. Flood labels are never sent.
-
-Usage (from the ingestion/ directory, with the Kafka container running):
+Usage (from ingestion/, with Kafka running):
     python producer.py --live [--interval SECONDS] [--dry-run]
     python producer.py --forecast [--dry-run]
     python producer.py [--start YYYY-MM-DD] [--end YYYY-MM-DD] [--catchment NAME]

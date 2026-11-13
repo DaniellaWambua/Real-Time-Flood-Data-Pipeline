@@ -6,10 +6,7 @@ import { IconBell, IconBrain, IconDatabase, IconDrop, IconMap, IconUsers } from 
 import { connectionRole } from "../../statusRoles";
 import { get } from "../../api";
 
-// GET /api/admin/stats. Each card carries the one breakdown that says what
-// state it is in, not just how many rows there are, and the row alternates the
-// two filled tones the Overview screen uses (Pale Ice Blue and Forest Green) so
-// Administration reads as the same system rather than a second palette.
+// GET /api/admin/stats: each card shows a count and the breakdown that explains it.
 function formatDay(iso) {
   return iso ? new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { timeZone: "UTC" }) : "no data yet";
 }
@@ -94,10 +91,7 @@ function StatsRowSkeleton() {
   );
 }
 
-// GET /api/incidents/summary taught the same lesson
-// here: a database overview is a glance, not a page of its own, so
-// this reads one small endpoint rather than totalling up what the
-// other panels already fetched.
+// One small endpoint rather than totalling what the other panels fetched.
 function StatsPanel() {
   const [stats, setStats] = useState(null);
   const [error, setError] = useState(null);
@@ -109,20 +103,13 @@ function StatsPanel() {
   }, []);
 
   if (error) return <p className="error">{error}</p>;
-  // Hold the row's place while the counts load. Returning nothing here let the
-  // Data sources panel render first and the cards drop in above it a moment
-  // later, which read as the page reordering itself.
+  // Hold the row's place while loading so the page does not reorder itself.
   if (!stats) return <StatsRowSkeleton />;
 
   return <StatsRow stats={stats} />;
 }
 
-// GET /api/sources has no matching PATCH (it is historical replay
-// data, see routes_dashboard.py's list_sources()), so, same as
-// Alerts.jsx's read-only table, there is nothing real for a
-// "Reconnect" button to do yet and one is not added here - only
-// "View stream" is a genuine link, to the Data stream page this data
-// actually feeds.
+// GET /api/sources is read-only, so the only action is a link to the data stream.
 function SourcesPanel() {
   const [sources, setSources] = useState(null);
   const [error, setError] = useState(null);
@@ -147,12 +134,7 @@ function SourcesPanel() {
         </span>
       </div>
 
-      {/* A glanceable status grid above the detail table, per
-          Daniella's request for something closer to how Kubernetes
-          shows node/pod health - one small tile per source with its
-          live connection status up front, rather than only a text
-          row buried in a wider table. Same /api/sources data as the
-          table below, not a second fetch or a separate concept. */}
+      {/* One tile per source with its connection status */}
       <div className="pipeline-health-grid">
         {sources.map((source) => (
           <div key={source.id} className="pipeline-health-tile">
@@ -206,10 +188,7 @@ function SourcesPanel() {
                   label={source.connection_status}
                 />
               </td>
-              {/* This is historical replay data, not a live feed (see
-                  routes_dashboard.py's list_sources()), so this is a
-                  record of when ingestion last actually happened, not a
-                  real-time freshness check against wall-clock time. */}
+              {/* When ingestion last ran, not a live freshness check */}
               <td className="figure">
                 {source.last_ingested_at
                   ? new Date(source.last_ingested_at).toLocaleString()
@@ -223,12 +202,7 @@ function SourcesPanel() {
                     View stream
                   </Link>
                 ) : (
-                  // Visual-only, matching the Alerts page's Acknowledge/
-                  // Resolve precedent: GET /api/sources has no matching
-                  // PATCH, so there is nothing real behind a reconnect
-                  // action yet. Shown disabled with an explanatory title
-                  // rather than left out, since the reference layout
-                  // always shows one of these two controls per row.
+                  // Shown disabled: the sources endpoint has no reconnect action.
                   <button
                     type="button"
                     className="admin-reconnect-button"

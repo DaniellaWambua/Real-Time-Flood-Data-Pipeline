@@ -1,12 +1,8 @@
 """
-One-off migration to incidents, verification, field outcomes and in-app notifications, for a database
-created before 02_schema.sql had them. Safe to run more than once.
-
-It groups the current models' existing alerts into incidents (consecutive flagged days in a catchment),
-carries each alert's acknowledge/resolve state over to its incident, moves recorded responses from alerts
-to incidents, then drops the per-alert workflow columns the incidents replace. Backfilled incidents start
-as 'pending' verification, like any new one.
-Run from the db/ directory: python add_incidents.py
+Migration to incidents, verification, field outcomes and notifications for an older database.
+Groups existing alerts into incidents, carries over their acknowledge and resolve state and responses,
+then drops the per-alert workflow columns. Backfilled incidents start as pending. Safe to re-run.
+Run from db/: python add_incidents.py
 """
 import sys
 from datetime import timedelta

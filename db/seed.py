@@ -1,20 +1,8 @@
 """
-Seed data_sources and catchment_areas so the ingestion pipeline has
-somewhere to write to.
+Seed data_sources and catchment_areas. Safe to re-run; existing rows are left as they are
+(use update_catchment_coords.py to move a seeded catchment).
 
-CATCHMENT_COORDS below are single points actually on each named river's
-channel, taken from OpenStreetMap's own "waterway" data for that river,
-near the locality CATCHMENT_COUNTY already associates it with (CBD,
-Huruma, Kibera, Karen, Ahero, Garissa), not hand-picked guesses. They
-are NOT the coordinates used in the ERA5/CHIRPS extraction notebooks,
-which live outside this repository (see project-checklist.md) and
-remain the more authoritative source if they turn up; replace
-CATCHMENT_COORDS with those exact values if so, then re-run this script
-(it is safe to re-run, existing rows are left as is: see
-update_catchment_coords.py in this directory for moving an already-
-seeded database onto a new CATCHMENT_COORDS value instead).
-
-Usage (from the db/ directory, with the db container running):
+Usage (from db/, with the db container running):
     python seed.py
 """
 
@@ -24,11 +12,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 import db  # noqa: E402  (backend/db.py's psycopg2 connection helper)
 
-# name -> (longitude, latitude). Longitude first, to match PostGIS's
-# ST_MakePoint(lon, lat) argument order.
-# Each point is a node on that river's own OSM waterway way, nearest to
-# the locality below, queried via the Overpass API on 2026-10-11 (see
-# db/COORDS_SOURCES.md for the exact queries and OSM way ids).
+# name -> (longitude, latitude), in PostGIS ST_MakePoint order. Each point lies on the river's
+# OpenStreetMap waterway near the named locality (queries in db/COORDS_SOURCES.md).
 CATCHMENT_COORDS = {
     # On "Nairobi River" (OSM way), 0.84km from the CBD.
     "Nairobi River": (36.8222826, -1.2790314),
@@ -36,11 +21,7 @@ CATCHMENT_COORDS = {
     "Mathare": (36.8688588, -1.2564097),
     # On "Ngong river" (OSM way), 0.10km from Kibera.
     "Ngong": (36.7897207, -1.3107824),
-    # On "Motoine River" (OSM way); OSM's mapped extent of this river
-    # currently stops in Karen, about 8.5km north of Ongata Rongai town
-    # (where Motoine flooding is usually reported) with no mapped
-    # segment there to verify against, so this is the southmost point
-    # OSM has actually mapped on the channel, not an Ongata Rongai point.
+    # OSM's mapped Motoine stops in Karen, so this is its southernmost mapped point.
     "Motoine": (36.7529515, -1.3196194),
     # On "Nyando river" (OSM way), 0.21km from Ahero.
     "Nyando River": (34.9208784, -0.172945),
@@ -57,11 +38,8 @@ CATCHMENT_COUNTY = {
     "Tana River": "Garissa",
 }
 
-# One feed, carrying three datasets. CHIRPS, IMERG and ERA5-Land are combined
-# into a single daily reading per catchment before the producer publishes it, so
-# they are datasets inside this feed rather than separate ingestion paths. The
-# name has to match what the producer puts on each message
-# (ingestion/config.py's REPLAY_SOURCE).
+# One feed carrying CHIRPS, IMERG and ERA5-Land, combined into one daily reading per catchment.
+# The name must match ingestion/config.py's REPLAY_SOURCE.
 DATA_SOURCES = [
     # (name, source_type, fetch_interval, connection_status, datasets)
     ("historical-replay", "daily-feed", "1 day", "disconnected", "CHIRPS, IMERG, ERA5-Land"),

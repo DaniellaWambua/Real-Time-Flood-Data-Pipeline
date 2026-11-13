@@ -18,10 +18,7 @@ function niceTicks(min, max, count = 4) {
   return Array.from({ length: count + 1 }, (_, i) => min + step * i);
 }
 
-// A vertical bar with its top two corners rounded and its baseline
-// edge square, per the dataviz skill's mark spec (rounded data-ends
-// anchored to the baseline). Falls back to a plain rectangle path
-// when the bar is too thin or too short for the radius to make sense.
+// A bar with rounded top corners and a square base; a plain rectangle when too small for the radius.
 function roundedTopBarPath(x, width, yTop, yBottom) {
   const r = Math.max(0, Math.min(3, width / 2, (yBottom - yTop) / 2));
   if (r < 0.75) {
@@ -39,26 +36,9 @@ function roundedTopBarPath(x, width, yTop, yBottom) {
 }
 
 /**
- * A single-series chart in plain SVG (dataviz skill: thin 2px line or
- * rounded bars, a surface-anchored end marker, hairline gridlines, a
- * crosshair tooltip, and a table-view toggle as the accessibility
- * twin). One series only, by design, so no legend box, per that
- * skill's rule that a single series names itself in the title.
- *
- * `variant="bars"` draws each reading as its own rounded bar instead
- * of a connected line, for the rainfall readings: a daily total is a
- * discrete quantity, and a line drawn between two of them implies a
- * reading that was never taken. Continuous readings (soil water,
- * temperature, pressure) keep the line, with a light area fill.
- *
- * Every chart marks its own peak reading with a dashed guide line and
- * value label, not just the latest point, so a spike earlier in the
- * window is never lost once newer, smaller readings follow it.
- *
- * `forceTable`, when set by a parent showing several of these charts
- * together, shows every chart as a table at once; the chart's own
- * toggle button is hidden in that case rather than fighting the
- * parent's state.
+ * A single-series SVG chart with a crosshair tooltip and a table view.
+ * variant="bars" draws daily rainfall totals as separate bars. The peak reading is always marked.
+ * forceTable lets a parent show every chart as a table at once.
  */
 export default function LineChart({ title, unit, points, variant = "line", forceTable = false }) {
   const [hoverIndex, setHoverIndex] = useState(null);
@@ -180,9 +160,7 @@ export default function LineChart({ title, unit, points, variant = "line", force
             </>
           )}
 
-          {/* Peak marker: a dashed guide back to the axis, plus the
-              reading's own value, so the highest point in the window
-              is legible even when it isn't the most recent one. */}
+          {/* Peak marker: a dashed guide to the axis and the value */}
           <line
             x1={PADDING.left}
             x2={xFor(peakIndex)}

@@ -1,10 +1,4 @@
-/* A noticeably larger corner radius, closer to the fully pill-shaped
-   pickers on the Data stream page, per Daniella's request. Not a
-   literal 999px here: with left-aligned text starting close to the
-   corner and only ~1rem of padding, a true pill radius on a box this
-   shape would curve the background away from under that text before
-   it reaches the corner. 24px keeps the same rounder character
-   without that clipping. */
+/* Larger corner radius, short of a full pill so the text is not clipped. */
 .alert-hero {
   display: flex;
   flex-wrap: wrap;
@@ -30,9 +24,7 @@
 
 .alert-hero-value {
   font-size: 2.6rem;
-  /* Same hero-number treatment as MetricCard's headline figures:
-     Lato Black (900) in --brand-deep rather than the regular dark
-     text color - this is the single biggest number on the page. */
+  /* Headline number: heaviest weight in the brand colour */
   font-weight: 900;
   line-height: 1;
   color: var(--brand-deep);
@@ -114,9 +106,7 @@
   border-radius: 24px;
 }
 
-/* Discrete bordered buttons with a visible gap between them, matching
-   the reference mockup, rather than one segmented container with
-   borderless buttons inside it. */
+/* Separate bordered buttons with a gap between them */
 .severity-tabs {
   display: flex;
   flex-wrap: wrap;

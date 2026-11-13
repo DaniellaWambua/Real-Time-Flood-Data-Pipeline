@@ -9,18 +9,8 @@ import { READINGS, READING_GROUPS, DEFAULT_READINGS } from "../readings";
 import { get } from "../api";
 import "./DataStream.css";
 
-// The readings the model actually takes, charted side by side on one time axis,
-// each with its own scale. Two deliberate choices carried over from the earlier
-// version of this screen: never two scales on one chart (the dataviz skill's
-// first rule, and the reason rainfall and the other readings stay as separate
-// aligned charts rather than one combined plot), and rainfall-like readings as
-// bars rather than a line, since a daily total is a discrete quantity and a
-// line between two of them implies a reading that was never taken.
-//
-// There are ten readings and charting all of them at once would be a page of
-// scrolling, so they are offered as a picker with four charted by default. That
-// also means any one of the model's inputs can be put on screen during a
-// demonstration without leaving the page.
+// The model's input readings on one time axis, each on its own scale (never two scales on one chart).
+// Daily totals are bars, since a line would imply readings in between. Four are charted by default.
 const MAX_CHARTS = 6;
 
 // The replay is one reading per catchment per day, so a range is simply that
@@ -193,10 +183,7 @@ export default function DataStream() {
         </div>
 
         <aside className="datastream-aside">
-          {/* Just the selected river, closely zoomed and labelled, per
-              Daniella's Google Maps reference, not the whole-catchments
-              view the main dashboard uses: switching rivers here happens
-              through the picker above, not by clicking the map. */}
+          {/* Only the selected river, zoomed in; rivers are switched with the picker above */}
           <CatchmentMap catchments={selected ? [selected] : []} />
 
           {selected && (

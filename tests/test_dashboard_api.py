@@ -1,12 +1,6 @@
 """
-Sanity checks for the dashboard API blueprint (backend/routes_dashboard.py),
-run directly with plain Python (no pytest, no live Postgres), matching
-tests/test_preprocessing.py's style.
-
-db.query_all/db.query_one are monkeypatched with canned rows, so these
-check the blueprint's routing, auth decorators and JSON/datetime
-serialization only, not real SQL. db/seed.py plus a live Postgres (see
-db/docker-compose.yml) remain the way to check the SQL itself.
+Checks for the dashboard endpoints (backend/routes_dashboard.py) with canned database rows:
+routing, access control and JSON output, not the SQL itself.
 """
 
 import datetime

@@ -1,13 +1,5 @@
-// A small set of inline-SVG icons for the sidebar nav and a couple of
-// page details. Per Daniella's request these are Font Awesome Free
-// (Solid style) icons rather than the previous custom outline set:
-// the raw path data below is copied from the @fortawesome/free-solid-
-// svg-icons package (one <path> per icon, filled with currentColor
-// instead of stroked), not the npm package itself, so there is no
-// extra runtime dependency, matching the project's existing
-// no-internet-at-the-demo posture (see fonts.css). Font Awesome Free
-// icons are licensed CC BY 4.0 - see assets/icons/FONT-AWESOME-LICENSE.txt
-// for the full notice and attribution.
+// Inline SVG icons. Path data from Font Awesome Free (Solid), licensed CC BY 4.0;
+// see assets/icons/FONT-AWESOME-LICENSE.txt. Inlined so there is no runtime dependency.
 
 function Svg({ viewBox, children, ...props }) {
   return (
@@ -89,10 +81,7 @@ export function IconSwitch(props) {
   );
 }
 
-/* Watermark icons for the Administration stat cards (MetricCard's `glyph`).
-   These are drawn here as plain geometry rather than taken from Font Awesome:
-   they sit large and faint behind a number, where a simple outline reads
-   better than a filled glyph, and nothing else in the app uses them. */
+/* Outline watermark icons for the Administration stat cards */
 function Outline({ children, ...props }) {
   return (
     <svg

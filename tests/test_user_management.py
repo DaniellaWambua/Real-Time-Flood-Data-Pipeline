@@ -1,11 +1,5 @@
 """
-Sanity checks for the user-management/logging additions to models.py
-(update_user_role, set_user_active, log_event), the helpers behind the
-System Administration screen's new user controls and log panel. Same
-style as tests/test_change_password.py: db.get_connection() is mocked
-with a MagicMock cursor/connection pair, so this checks the SQL shape
-and the found/not-found return value, not real SQL against a live
-database.
+Checks for the user management and logging helpers in models.py, with a mocked connection.
 """
 
 import sys

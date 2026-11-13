@@ -1,11 +1,7 @@
 """
-The LSTM anomaly screen's own endpoints: what the deployed model is and how it has
-done (/anomalies/model), where each catchment stands now (/anomalies/latest), the
-scores list with a date range (/anomalies/scores), one month of scores for the
-calendar (/anomalies/calendar) and one day in full (/anomalies/day).
-
-Kept apart from routes_dashboard.py, which still serves the main dashboard's own
-/anomalies/recent panel, the same way the activity log lives in routes_logs.py.
+Endpoints for the LSTM screen: the deployed model (/anomalies/model), each catchment's latest score
+(/anomalies/latest), the scores list (/anomalies/scores), a month for the calendar
+(/anomalies/calendar) and one day in full (/anomalies/day).
 """
 import datetime
 import json
@@ -75,13 +71,8 @@ def _filters():
 @anomalies_bp.route("/model", methods=["GET"])
 @login_required
 def model_status():
-    """The deployed model card: what is running, how much it has scored, and the
-    held-out evaluation saved beside the weights in models/flood_lstm/.
-
-    The evaluation is read from evaluation.json rather than computed here: scoring
-    precision needs the audited labels, which are a training artefact and are not
-    in the operational database. Retraining writes a new evaluation.json with the
-    weights, so the page always shows the deployed version's own figures."""
+    """The deployed model card. The evaluation is read from evaluation.json, saved with the weights,
+        because computing it needs the audited labels, which are not in the operational database."""
     cfg = json.loads((flood_detection.MODEL_DIR / "config.json").read_text())
     evaluation_file = flood_detection.MODEL_DIR / "evaluation.json"
     evaluation = json.loads(evaluation_file.read_text()) if evaluation_file.exists() else None

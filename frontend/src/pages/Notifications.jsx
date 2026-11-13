@@ -7,10 +7,8 @@ import { get, post } from "../api";
 import { pushState, turnPushOff, turnPushOn } from "../push";
 import "./Notifications.css";
 
-// Each user's own notifications (backend/notify.py): incidents to verify (Disaster Management),
-// verified incidents and model updates (Emergency Responders and Government Officials), and heavy-rain
-// forecasts. Opening one marks it read and goes to the incident. Push notifications to this phone or
-// browser can be turned on here once the app is installed.
+// The user's notifications (backend/notify.py). Opening one marks it read and goes to the incident.
+// Push notifications can be turned on here once the app is installed.
 const KIND = {
   verify: { role: "warning", label: "to verify" },
   incident: { role: "critical", label: "incident" },

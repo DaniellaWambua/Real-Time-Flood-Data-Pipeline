@@ -1,19 +1,14 @@
 """
-Downloads what Open-Meteo forecast models said about the three catchments, as a live system would have
-seen it, for the forecast-driven early warning test (forecast_test.py).
+Downloads Open-Meteo forecasts for the three catchments, as a live system would have seen them,
+for the forecast test (forecast_test.py).
 
-  lead 0  Historical Forecast API, 2022-2025: the first hours of each model run stitched together, which is
-          what a live system has for today and the days just gone (no waiting for ERA5-Land or CHIRPS).
-  lead 1  Previous Runs API, 2024-2025: the value for each day as forecast one day earlier
+  lead 0  Historical Forecast API, 2022-2025 (2022-2023 only used to match values to the training data)
+  lead 1  Previous Runs API, 2024-2025: each day as forecast one day earlier
   lead 2  the same, two days earlier
-2022-2023 at lead 0 are only used to match Open-Meteo's values to the ERA5-Land and IMERG values the model
-was trained on; 2024-2025 are the test years.
 
-Each catchment is represented by up to four model grid points inside its boundary, averaged. Hourly values
-are summed or averaged into UTC days, as the training data were.
+Each catchment averages up to four grid points inside its boundary; hourly values become UTC days.
 
-Run from the project folder (needs internet access to open-meteo.com; about 20 minutes, it pauses to stay
-within the free limits):
+Run from the project folder (needs internet, about 20 minutes):
     python data_collection/src/fetch_forecast_archive.py
 Writes data_collection/data/02_weather/processed/openmeteo_forecast_archive_2022_2025.csv
 """

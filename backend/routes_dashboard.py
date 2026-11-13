@@ -1,10 +1,7 @@
 """
-Read-only API endpoints for the Flood Risk Dashboard Module (proposal
-3.6.6), serving the data its React frontend needs: the catchment map,
-the data stream monitor's time series, the rainfall outlook, data source
-status and the administration cards. All require a logged-in session
-(login_required), per the proposal's "authenticated users" framing; none of
-this writes data. Incidents have their own module, routes_incidents.py.
+Read-only endpoints for the dashboard: catchments, the data stream, the rainfall outlook,
+data source status and the administration cards. All need a signed-in session.
+Incidents are in routes_incidents.py.
 """
 
 import datetime
@@ -44,14 +41,9 @@ def list_catchments():
 @dashboard_bp.route("/readings/recent", methods=["GET"])
 @login_required
 def recent_readings():
-    """The Data stream screen: the ten measured readings the model reads, newest
-    first, for one catchment.
-
-    Only rows carrying those readings are returned (era5_rain_mm is the marker,
-    the same test flood_detection.build_window uses). A catchment's table also
-    holds older rows from the retired rule-based design, which have river
-    discharge and evaporation but none of the model's own inputs; showing the two
-    together would mix two different feeds on one time axis."""
+    """The Data stream screen: the ten readings the model uses, newest first, for one catchment.
+        Only rows with those readings are returned (era5_rain_mm marks them), so rows left from the
+        retired rule-based design are not mixed in."""
     catchment = request.args.get("catchment")
     limit = min(request.args.get("limit", default=50, type=int) or 50, 500)
 
@@ -97,14 +89,7 @@ def rainfall_forecast():
 @dashboard_bp.route("/sources", methods=["GET"])
 @login_required
 def list_sources():
-    """System Administration screen: pipeline component (data source)
-    statuses, plus each source's own last-ingested-record timestamp and
-    total record count, not just the static connection_status column -
-    "ensures the continuity of the data pipeline" (proposal 3.4.1)
-    needs something to check that against. This reads from a historical
-    Kafka replay rather than a live feed, so it's informational (when
-    ingestion last actually happened), not a real-time freshness check
-    against wall-clock time."""
+    """System Administration: each data source's status, last ingested record and record count."""
     rows = db.query_all(
         "SELECT ds.id, ds.name, ds.source_type, ds.connection_status, ds.datasets, ds.created_at, "
         "MAX(hdr.recorded_at) AS last_ingested_at, COUNT(hdr.id) AS record_count "
@@ -151,17 +136,8 @@ def recent_anomalies():
 @dashboard_bp.route("/admin/stats", methods=["GET"])
 @role_required("system_administrator")
 def admin_stats():
-    """System Administration screen's stat cards: row counts across the main
-    tables, each with the one breakdown its card shows (how many users are still
-    invited, how many alerts are still open, and so on), so a card says what
-    state the system is in rather than only how many rows there are. One query
-    of hardcoded sub-selects, so nothing here is ever assembled from request
-    input, and the page makes a single call.
-
-    Scoped the same way every other screen is: active catchments and the active
-    feed only, and the current model's scores and the incidents raised from them, so
-    these cards agree with the Data stream, Incidents and LSTM screens rather than
-    counting rows left behind by the replaced rule-based design."""
+    """System Administration stat cards: row counts with the breakdown each card shows, in one query.
+        Scoped like the other screens (active catchments and feed, current model) so the numbers agree."""
     counts = db.query_one(
         "SELECT (SELECT COUNT(*) FROM users) AS users, "
         "(SELECT COUNT(*) FROM users WHERE is_active AND password_hash IS NULL) AS users_pending, "

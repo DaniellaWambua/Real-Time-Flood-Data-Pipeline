@@ -1,21 +1,11 @@
 """
-CLI script to seed an initial user.
-
-The proposal implies admin-provisioned accounts (disaster management agency
-staff, emergency responders, government officials, system administrators)
-rather than public self-registration, so there is no public /register route.
-Use this script instead, from the backend/ directory:
+Create a user. Accounts are provisioned by an administrator; there is no public registration.
+From backend/:
 
     python create_user.py <username> <password> <role> [email]
 
-Example:
-    python create_user.py admin changeme123 system_administrator
-    python create_user.py admin changeme123 system_administrator admin@gmail.com
-
-Valid roles are listed in config.ROLES. The email is optional and only
-needed if this account should also be able to sign in with Google
-(routes_auth.py's POST /login/google); add or change it later with
-set_user_email.py if you skip it now.
+Roles are listed in config.ROLES. The email is only needed for Google sign-in
+(it can be added later with set_user_email.py).
 """
 
 import sys

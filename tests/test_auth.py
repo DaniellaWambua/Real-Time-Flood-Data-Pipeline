@@ -1,10 +1,6 @@
 """
-Sanity checks for the auth routes (backend/routes_auth.py), run the
-same way as tests/test_dashboard_api.py: plain Python, no pytest, no
-live Postgres. models.get_user_by_login/verify_password/log_event
-are mocked with canned values, so this checks login's branching (bad
-credentials, a deactivated account, success) and that each branch logs
-the right system_logs event, not real password hashing or SQL.
+Checks for the sign-in routes with mocked models: each branch (bad credentials, deactivated
+account, success) and the event it logs.
 """
 
 import sys

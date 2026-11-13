@@ -1,7 +1,4 @@
-/* No pill, no glyph - per Daniella's request, a status is now just
-   its label in the matching color. A flat, inline run of text rather
-   than a chip, so it sits in a table cell exactly like any other
-   value. */
+/* A status is its label in the matching colour, inline like any other value. */
 .status-chip {
   font-weight: 700;
   white-space: nowrap;
@@ -29,9 +26,7 @@
   color: var(--text-muted);
 }
 
-/* An alert's workflow state (active/resolved), independent of
-   severity - blue, so it never duplicates what the Severity column
-   in the same row already says. */
+/* Workflow state in blue, so it never repeats the severity colour. */
 .status-active {
   color: var(--accent-strong);
 }

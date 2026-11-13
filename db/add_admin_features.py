@@ -1,17 +1,8 @@
 """
-One-off migration for the System Administration screen's new features
-(user account controls, system logs, pipeline-health timestamps): adds
-what db/init/02_schema.sql now expects to a database that was already
-initialised before these columns/tables existed. A fresh
-`docker compose up` picks these up automatically from 02_schema.sql;
-this script is for an already-running database, the same reason
-update_catchment_coords.py exists for the catchment coordinates fix,
-run once from the db/ directory:
+Migration adding the System Administration columns and tables to an existing database
+(a fresh database gets them from db/init/02_schema.sql). Safe to re-run. From db/:
 
     python add_admin_features.py
-
-Both statements are idempotent (IF NOT EXISTS), safe to run more than
-once or against a database that already has them.
 """
 
 import sys

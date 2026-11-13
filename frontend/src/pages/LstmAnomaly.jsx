@@ -8,13 +8,7 @@ import DayLookupTab from "./lstm/DayLookupTab";
 import { get } from "../api";
 import "./LstmAnomaly.css";
 
-// The headline scores stay at the top of the page, as they always have, and the
-// detail below them is split into three tabs: how the model was measured
-// (Overview), the scores themselves (Recent scores), and one chosen day in full
-// (Day lookup). Nothing on this page is hardcoded any more - the figures come
-// from the deployed model's own evaluation and the scores it has written, and
-// which version is running is stated on the Recent scores tab rather than in a
-// status bar of its own.
+// Headline scores at the top, then three tabs. All figures come from the deployed model.
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "scores", label: "Recent scores" },
@@ -25,11 +19,7 @@ const TABS = [
 // model is being held to rather than quietly dropped.
 const PROPOSAL_TARGET = { f1: 0.7, recall: 0.75 };
 
-// Precision, recall and F1, in the same two filled tones the Overview and
-// Administration screens use. Each card shows the count behind its own ratio
-// rather than a generic bar: precision is flags that were right out of flags
-// made, recall is flood days caught out of flood days there were, and F1 has
-// no two counts of its own, so it carries the proposal target instead.
+// Precision, recall and F1, each with the counts behind it (F1 shows the proposal target).
 function ScoreCards({ evaluation }) {
   const flags = evaluation.true_positives + evaluation.false_positives;
   return (

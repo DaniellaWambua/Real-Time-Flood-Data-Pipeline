@@ -1,13 +1,5 @@
-// The ten measured readings the model takes, in the order the Data stream
-// screen offers them, with the label and unit the dashboard shows. Keys are
-// the columns GET /api/readings/recent returns, which are also the
-// hydro_data_records columns. Kept here rather than in either page so the
-// Data stream charts and the Overview screen's catchment panel name and unit
-// a reading the same way.
-//
-// `variant` follows the dataviz rule the charts already use: rainfall-like
-// readings are discrete daily totals and read as bars, continuous quantities
-// keep the line.
+// The ten readings the model takes, with the label and unit shown. Keys are the columns
+// GET /api/readings/recent returns. Rainfall-like totals are drawn as bars, the rest as lines.
 export const READINGS = [
   { key: "rainfall_mm", label: "Rainfall, CHIRPS", unit: "mm", variant: "bars", group: "Rainfall" },
   { key: "era5_rain_mm", label: "Rainfall, ERA5-Land", unit: "mm", variant: "bars", group: "Rainfall" },
@@ -23,9 +15,7 @@ export const READINGS = [
 
 export const READING_GROUPS = ["Rainfall", "Soil water", "Atmosphere"];
 
-// What the Data stream screen charts before anyone picks anything: one rainfall
-// reading, the satellite total beside it, and both soil layers, which is the
-// combination the model's flagged days are usually explained by.
+// Charted by default: CHIRPS rainfall, the IMERG total and both soil layers.
 export const DEFAULT_READINGS = ["rainfall_mm", "imerg_total_mm", "soil_1", "soil_2"];
 
 export function readingLabel(key) {

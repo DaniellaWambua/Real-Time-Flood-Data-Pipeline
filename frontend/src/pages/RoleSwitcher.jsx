@@ -4,18 +4,8 @@ import StatusChip from "../components/StatusChip";
 import { roleLabel } from "../roleLabel";
 import "./RoleSwitcher.css";
 
-// The four roles are real accounts: which screens each one reaches is
-// decided in one place, roleAccess.js's ROUTE_ROLES, applied both by
-// Layout.jsx (hides the link) and App.jsx (redirects away even if the
-// URL is typed directly). Admin's own endpoints (users, logs, pipeline
-// stats) are separately enforced server-side too (backend/config.py's
-// ROLES, checked by routes_dashboard.py's role_required), since those
-// carry real account data; the other screens differ only in which
-// workflow each role is presented, not in redacting shared sensor/
-// alert data the Main Dashboard already summarises for everyone. This
-// page is a reference showing what each role can see today, plus the
-// one genuine way to view another role's screens: sign out and sign
-// back in as that account.
+// What each role can see. Screen access is set in roleAccess.js and admin endpoints are also
+// checked on the server. To view another role's screens, sign in as that account.
 const ROLES = [
   {
     role: "system_administrator",

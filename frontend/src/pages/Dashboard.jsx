@@ -16,9 +16,7 @@ import "./Dashboard.css";
 
 const SEVERITY_RANK = { low: 1, medium: 2, high: 3 };
 
-// Hex values pulled straight from the dataviz skill's reserved status
-// palette (theme.css), not re-picked here: Leaflet's CircleMarker takes
-// a literal color prop, it cannot read CSS custom properties.
+// Status colours as literal hex, since Leaflet cannot read CSS variables.
 const ROLE_COLOR = {
   good: "#0ca30c",
   warning: "#e5a83b",
@@ -34,11 +32,7 @@ const LEGEND = [
 
 const RISK_LABEL = { critical: "High", warning: "Medium", good: "No open incident" };
 
-// A catchment's map color is its highest-severity OPEN incident right
-// now, there is no live LSTM risk score yet (see project-checklist.md,
-// "needs a finished training run first"), so this is the most honest
-// stand-in for "risk level" available from real data today, not a
-// placeholder number. No active alerts reads as "good".
+// A catchment's map colour is its highest-severity open incident; none reads as good.
 function riskRoleFor(catchmentName, activeAlerts) {
   const matching = activeAlerts.filter((a) => a.catchment === catchmentName);
   if (matching.length === 0) return "good";
@@ -241,18 +235,13 @@ export default function Dashboard() {
       .catch(() => setForecast([]));
   }, []);
 
-  // Clearing the selection resets latestReading from the event that
-  // caused it (selectCatchment below), not synchronously inside this
-  // effect; the effect's own job is only the fetch for a real selection.
+  // The effect only fetches; clearing the selection is handled in selectCatchment.
   function selectCatchment(name) {
     setSelectedName(name);
     setLatestReading(null);
   }
 
-  // Fetch the selected catchment's latest reading separately: it is the
-  // one piece of detail not already loaded for every catchment up front
-  // (readings/recent is per-catchment and potentially large, unlike
-  // catchments/alerts/anomalies which are small enough to load whole).
+  // The selected catchment's latest reading is fetched on its own, since readings are per catchment.
   useEffect(() => {
     if (!selectedName) return;
     get("/api/readings/recent", { catchment: selectedName, limit: 1 })
