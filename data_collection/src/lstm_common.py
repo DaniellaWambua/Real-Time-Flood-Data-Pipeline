@@ -21,15 +21,15 @@ def load_windows(which, inputs, t=14):
     return X[keep], meta
 
 
-def make_model(n_feats):
-    # same network as train_lstm.py
+def make_model(n_feats, window=14, units=32, dropout=0.3, lr=1e-3):
+    # same network as train_lstm.py; the defaults are the v1/v2 settings, v3 (colab/final_tuning.ipynb) uses 64 and 0.5
     m = tf.keras.Sequential([
-        tf.keras.layers.Input((14, n_feats)),
-        tf.keras.layers.LSTM(32),
-        tf.keras.layers.Dropout(0.3),
+        tf.keras.layers.Input((window, n_feats)),
+        tf.keras.layers.LSTM(units),
+        tf.keras.layers.Dropout(dropout),
         tf.keras.layers.Dense(1, activation="sigmoid"),
     ])
-    m.compile(optimizer=tf.keras.optimizers.Adam(1e-3), loss="binary_crossentropy")
+    m.compile(optimizer=tf.keras.optimizers.Adam(lr), loss="binary_crossentropy")
     return m
 
 

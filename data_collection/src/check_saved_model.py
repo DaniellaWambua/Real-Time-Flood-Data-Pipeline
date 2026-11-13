@@ -8,26 +8,36 @@ from lstm_common import make_model
 # Day-level counts use known labels only. Events and alarm episodes follow event_evaluate.py: an event is detected
 # by an alarm in the same catchment from one day before it to one day after it, and an alarm episode (consecutive
 # alarm days, unknown days included) is false when it overlaps no such event window.
+# Usage: check_saved_model.py [full|fast]
+import sys
+KIND = sys.argv[1] if len(sys.argv) > 1 else "full"
 D = "data_collection/data/08_model_ready/"
-M = "models/flood_lstm/"
+M = {"full": "models/flood_lstm/", "fast": "models/flood_lstm_fast/"}[KIND]
+REF = {"full": "event_train_final_scores_eventweight_s0-7.csv",
+       "fast": "event_train_final_scores_eventweight_no_rain_mm_s0-7.csv"}[KIND]
 DAY = pd.Timedelta(days=1)
 TEST = [2024, 2025]
 CATCHMENT_YEARS = 3 * len(TEST)
 NAMES = {"nairobi": "Nairobi River", "ngong": "Ngong", "mathare": "Mathare"}
 cfg = json.load(open(M + "config.json"))
+if cfg.get("tuned_in"):  # v3 and later: compare with the scores the Colab tuning notebook saved
+    REF = f"final_tuning/final_scores_{KIND}.csv"
 mu, sd = np.array(cfg["mean"]), np.array(cfg["std"])
 
 X, meta = make_windows(path=D + cfg["labels"], t=cfg["window"])
+from sequences import SEQ_FEATS, CATCHMENTS
+ALL = SEQ_FEATS + [f"is_{c}" for c in CATCHMENTS]
+X = X[:, :, [ALL.index(f) for f in cfg["features"]]]
 va = meta["year"].isin(TEST).values
 days = meta.loc[va, ["catchment", "date", "label_status", "event_id"]].reset_index(drop=True)
 Xva = ((X[va] - mu) / sd).astype("float32")
 for seed in cfg["seeds"]:
-    model = make_model(X.shape[2])
+    model = make_model(X.shape[2], cfg["window"], cfg.get("units", 32), cfg.get("dropout", 0.3))
     model.load_weights(M + f"lstm_raw_seed{seed}.weights.h5")
     days[f"s{seed}"] = model.predict(Xva, verbose=0).ravel()
 days["score"] = days[[f"s{s}" for s in cfg["seeds"]]].mean(axis=1)
 
-ref = pd.read_csv(D + "event_train_final_scores_eventweight_s0-7.csv", parse_dates=["date"])
+ref = pd.read_csv(D + REF, parse_dates=["date"])
 ref = ref.groupby(["catchment", "date"], as_index=False)["score"].mean().rename(columns={"score": "ref"})
 chk = days.merge(ref, on=["catchment", "date"])
 print("rows compared", len(chk), "max difference from the chosen scores", round(float((chk["score"] - chk["ref"]).abs().max()), 5))
@@ -74,7 +84,7 @@ thr = cfg["threshold"]
 m = measure(thr)
 flagged = days[days["score"] >= thr]
 evaluation = {
-    "model": f"lstm_raw {cfg['version']}",
+    "model": f"{cfg.get('name', 'lstm_raw')} {cfg['version']}",
     "training": cfg.get("training", "class-weighted"),
     "threshold": thr,
     "method": ("Scored by the saved model (eight-seed mean) over 2024-2025 and compared against the audited labels in "
@@ -106,7 +116,7 @@ evaluation = {
                  "the development years for the best day-level F1; the rest are for the write-up, not used by the system."),
         "points": []},
 }
-for t in sorted({thr, 0.4, 0.35, 0.3, 0.25}, reverse=True):
+for t in sorted({thr, 0.6, 0.5, 0.4, 0.3}, reverse=True):
     q = measure(t)
     point = {"threshold": t, "precision": round(q["precision"], 3), "recall": round(q["recall"], 3),
              "f1": round(q["f1"], 3), "events_detected": q["events_detected"],
