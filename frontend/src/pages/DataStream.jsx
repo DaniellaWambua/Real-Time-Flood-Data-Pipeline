@@ -222,8 +222,8 @@ export default function DataStream() {
                 <dd>{readings && readings[0] ? `${readings[0].source}, historical replay` : "—"}</dd>
               </dl>
 
-              <Link to={`/alerts?catchment=${encodeURIComponent(selected.name)}`} className="btn-primary datastream-open-alerts">
-                Open {selected.name} alerts
+              <Link to={`/incidents?catchment=${encodeURIComponent(selected.name)}`} className="btn-primary datastream-open-alerts">
+                Open {selected.name} incidents
               </Link>
             </div>
           )}

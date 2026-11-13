@@ -4,7 +4,10 @@ Kafka producer for the data ingestion layer.
 Live mode (--live) fetches each new day's CHIRPS, IMERG and ERA5-Land readings
 for the three catchments from Google Earth Engine, up to the last day all three
 have published, and records whether the fetch worked on the data source and in
-the activity log. Run it once a day.
+the activity log. Days that IMERG and ERA5-Land have published but CHIRPS has not
+(CHIRPS runs about six weeks late) are also sent, without rain_mm and marked
+provisional, so the fast model can score them about a week after they happen.
+Run it once a day.
 
 Forecast mode (--forecast) fetches the next three days' rainfall forecast for each
 catchment from Open-Meteo and publishes it on the hydro-forecasts topic, where the
@@ -60,12 +63,15 @@ def to_message(row):
     }
 
 
-def to_live_message(row):
+def to_live_message(row, provisional=False):
+    readings = dict(row["readings"])
+    if provisional:
+        readings.pop("rain_mm", None)
     return {
         "date": row["date"],
         "catchment": config.CATCHMENT_NAMES[row["catchment"]],
-        "source": config.LIVE_SOURCE,
-        "readings": row["readings"],
+        "source": config.PROVISIONAL_SOURCE if provisional else config.LIVE_SOURCE,
+        "readings": readings,
     }
 
 
@@ -108,11 +114,11 @@ def with_retries(task, attempts=3, wait=30):
             time.sleep(wait * attempt)
 
 
-def last_live_day():
-    """The newest day already stored from the live feed, or None before the first run."""
+def last_live_day(source=config.LIVE_SOURCE):
+    """The newest day already stored from a live source, or None before the first run."""
     row = db.query_one(
         "SELECT max(r.recorded_at)::date AS day FROM hydro_data_records r "
-        "JOIN data_sources s ON s.id = r.data_source_id WHERE s.name = %s", (config.LIVE_SOURCE,))
+        "JOIN data_sources s ON s.id = r.data_source_id WHERE s.name = %s", (source,))
     return row["day"] if row else None
 
 
@@ -129,9 +135,19 @@ def record_status(ok, detail, source=config.LIVE_SOURCE, datasets=config.LIVE_DA
 
 
 def plan_range(latest, last_stored):
-    """(start, end) of the days to fetch: after the last stored day, or a full window on the first run."""
+    """(start, end) of the complete days to fetch: after the last stored day, or a full window on the first run."""
     end = min(latest.values())
     start = last_stored + timedelta(days=1) if last_stored else end - timedelta(days=config.WINDOW_DAYS - 1)
+    return start, end
+
+
+def plan_provisional(latest, full_end, last_provisional):
+    """(start, end) of the provisional days to fetch: after CHIRPS's last day (and after any provisional day
+    already sent) up to the last day both IMERG and ERA5-Land have. start > end when there are none."""
+    end = min(latest["imerg"], latest["era5"])
+    start = full_end + timedelta(days=1)
+    if last_provisional and last_provisional >= start:
+        start = last_provisional + timedelta(days=1)
     return start, end
 
 
@@ -139,14 +155,18 @@ def run_live(interval, dry_run=False):
     try:
         latest = with_retries(earth_engine.latest_days)
         start, end = plan_range(latest, last_live_day())
+        p_start, p_end = plan_provisional(latest, end, last_live_day(config.PROVISIONAL_SOURCE))
         newest = f"latest CHIRPS {latest['chirps']}, IMERG {latest['imerg']}, ERA5-Land {latest['era5']}"
-        if start > end:
+        has_full, has_provisional = start <= end, p_start <= p_end
+        if not (has_full or has_provisional):
             if dry_run:
-                print(f"dry run: up to date to {end}; {newest}")
+                print(f"dry run: up to date to {p_end}; {newest}")
             else:
-                record_status(True, f"up to date to {end}; {newest}")
+                record_status(True, f"up to date to {p_end}; {newest}")
             return 0
-        rows = with_retries(lambda: earth_engine.fetch(start, end))
+        first = start if has_full else p_start
+        last = p_end if has_provisional else end
+        rows = with_retries(lambda: earth_engine.fetch(first, last))
     except Exception as e:  # noqa: BLE001 - reported as a source failure
         detail = f"Earth Engine fetch failed: {type(e).__name__}: {e}"
         if dry_run:
@@ -154,14 +174,25 @@ def run_live(interval, dry_run=False):
         else:
             record_status(False, detail)
         return 1
-    messages = [to_live_message(r) for r in rows]
+    full = [to_live_message(r) for r in rows if has_full and start.isoformat() <= r["date"] <= end.isoformat()]
+    provisional = [to_live_message(r, provisional=True) for r in rows
+                   if has_provisional and p_start.isoformat() <= r["date"] <= p_end.isoformat()]
+    parts = []
+    if full:
+        parts.append(f"{len(full)} readings for {start} to {end}")
+    if provisional:
+        parts.append(f"{len(provisional)} provisional readings for {p_start} to {p_end}")
+    summary = " and ".join(parts) or "no readings"
     if dry_run:
-        for m in messages[:3]:
+        for m in (full + provisional)[:3]:
             print(json.dumps(m, indent=2))
-        print(f"dry run: {len(messages)} readings for {start} to {end} would be sent; {newest}")
+        print(f"dry run: {summary} would be sent; {newest}")
         return 0
-    count = publish(messages, interval)
-    record_status(True, f"published {count} readings for {start} to {end}; {newest}")
+    publish(full + provisional, interval)
+    record_status(True, f"published {summary}; {newest}")
+    if provisional:
+        record_status(True, f"published {summary}; {newest}", source=config.PROVISIONAL_SOURCE,
+                      datasets=config.PROVISIONAL_DATASETS)
     return 0
 
 

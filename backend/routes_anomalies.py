@@ -107,8 +107,28 @@ def model_status():
             "target": cfg["target"],
             "live": _iso([live])[0],
             "evaluation": evaluation,
+            "provisional": _provisional_card(),
         }
     )
+
+
+def _provisional_card():
+    """The fast model that scores days before CHIRPS arrives, or None when it is not installed."""
+    if not flood_detection.has_model("fast"):
+        return None
+    folder = flood_detection.MODEL_DIRS["fast"]
+    cfg = flood_detection.read_config("fast")
+    evaluation_file = folder / "evaluation.json"
+    name = flood_detection.current_model_name("fast")
+    pending = db.query_one(
+        "SELECT COUNT(*) AS days_scored, COUNT(*) FILTER (WHERE ar.is_anomalous) AS flagged, "
+        "MAX(ar.detected_at)::date AS last_day FROM anomaly_detection_results ar "
+        "JOIN catchment_areas ca ON ca.id = ar.catchment_id WHERE ca.is_active AND ar.model_name = %s",
+        (name,),
+    )
+    return {"name": name, "threshold": cfg["threshold"], "features": cfg["features"],
+            "live": _iso([pending])[0],
+            "evaluation": json.loads(evaluation_file.read_text()) if evaluation_file.exists() else None}
 
 
 @anomalies_bp.route("/scores", methods=["GET"])
@@ -122,6 +142,7 @@ def list_scores():
         "FROM anomaly_detection_results ar "
         "JOIN catchment_areas ca ON ca.id = ar.catchment_id "
         "LEFT JOIN alerts a ON a.anomaly_detection_result_id = ar.id "
+        "LEFT JOIN incidents i ON i.id = a.incident_id "
         "WHERE ca.is_active AND ar.model_name = %s "
     )
     total = db.query_one(f"SELECT COUNT(*) AS count {joins}{where}", tuple(model + params))["count"]
@@ -130,7 +151,7 @@ def list_scores():
     offset = max(request.args.get("offset", default=0, type=int) or 0, 0)
     rows = db.query_all(
         "SELECT ar.id, ar.detected_at::date AS day, ca.name AS catchment, ar.anomaly_score, "
-        "ar.threshold_used, ar.is_anomalous, a.severity AS alert_severity, a.status AS alert_status "
+        "ar.threshold_used, ar.is_anomalous, a.severity AS alert_severity, i.status AS alert_status, a.incident_id "
         + joins
         + where
         + "ORDER BY ar.detected_at DESC, ca.name LIMIT %s OFFSET %s",
@@ -201,10 +222,11 @@ def one_day():
     row = db.query_one(
         "SELECT ar.id, ar.detected_at::date AS day, ca.name AS catchment, ca.id AS catchment_id, "
         "ar.anomaly_score, ar.threshold_used, ar.is_anomalous, ar.hydro_data_record_id, "
-        "a.id AS alert_id, a.severity AS alert_severity, a.status AS alert_status "
+        "a.id AS alert_id, a.severity AS alert_severity, i.status AS alert_status, a.incident_id "
         "FROM anomaly_detection_results ar "
         "JOIN catchment_areas ca ON ca.id = ar.catchment_id "
         "LEFT JOIN alerts a ON a.anomaly_detection_result_id = ar.id "
+        "LEFT JOIN incidents i ON i.id = a.incident_id "
         "WHERE ca.is_active AND ar.model_name = %s AND ca.name = %s AND ar.detected_at::date = %s",
         (flood_detection.current_model_name(), catchment, day),
     )

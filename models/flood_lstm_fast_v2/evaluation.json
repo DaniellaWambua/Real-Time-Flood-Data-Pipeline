@@ -1,0 +1,104 @@
+{
+  "model": "lstm_fast v2",
+  "training": "event-weighted",
+  "threshold": 0.7293287316337169,
+  "method": "Scored by the saved model (eight-seed mean) over 2024-2025 and compared against the audited labels in features_daily_audited.csv. Precision, recall and F1 count only days whose label is known; days labelled 'unknown' are left out of those counts and reported as flagged_on_unlabelled_days. An event is detected when a flag falls in the same catchment from one day before it to one day after it. An alarm episode is a run of consecutive flagged days; it is false when it overlaps no event window. Event precision is the share of alarm episodes that are not false.",
+  "test_period": [
+    "2024-01-01",
+    "2025-12-31"
+  ],
+  "train_years": [
+    2015,
+    2023
+  ],
+  "days_scored": 2193,
+  "days_with_label": 2027,
+  "flood_days": 96,
+  "true_positives": 25,
+  "false_positives": 3,
+  "false_negatives": 71,
+  "true_negatives": 1928,
+  "flagged_total": 67,
+  "flagged_on_unlabelled_days": 39,
+  "precision": 0.893,
+  "recall": 0.26,
+  "f1": 0.403,
+  "average_precision": 0.561,
+  "events_total": 38,
+  "events_detected": 14,
+  "event_recall": 0.368,
+  "alarm_episodes": 12,
+  "false_alarm_episodes": 3,
+  "event_precision": 0.75,
+  "event_f1": 0.494,
+  "false_alarms_per_catchment_year": 0.5,
+  "false_episodes_per_catchment_year": 0.5,
+  "flagged_by_catchment": {
+    "Ngong": 28,
+    "Nairobi River": 22,
+    "Mathare": 17
+  },
+  "computed_on": "2026-11-11",
+  "computed_by": "data_collection/src/check_saved_model.py from the saved weights",
+  "operating_points": {
+    "note": "Same scores, different flag lines, measured on the same held-out days. The deployed line was chosen on the development years for the best day-level F1; the rest are for the write-up, not used by the system.",
+    "points": [
+      {
+        "threshold": 0.7293287316337169,
+        "precision": 0.893,
+        "recall": 0.26,
+        "f1": 0.403,
+        "events_detected": 14,
+        "event_precision": 0.75,
+        "event_f1": 0.494,
+        "flagged_days": 67,
+        "alarm_share": 0.031,
+        "deployed": true
+      },
+      {
+        "threshold": 0.6,
+        "precision": 0.673,
+        "recall": 0.385,
+        "f1": 0.49,
+        "events_detected": 18,
+        "event_precision": 0.433,
+        "event_f1": 0.453,
+        "flagged_days": 110,
+        "alarm_share": 0.05
+      },
+      {
+        "threshold": 0.5,
+        "precision": 0.528,
+        "recall": 0.49,
+        "f1": 0.508,
+        "events_detected": 23,
+        "event_precision": 0.5,
+        "event_f1": 0.548,
+        "flagged_days": 149,
+        "alarm_share": 0.068
+      },
+      {
+        "threshold": 0.4,
+        "precision": 0.433,
+        "recall": 0.542,
+        "f1": 0.481,
+        "events_detected": 24,
+        "event_precision": 0.425,
+        "event_f1": 0.508,
+        "flagged_days": 184,
+        "alarm_share": 0.084
+      },
+      {
+        "threshold": 0.3,
+        "precision": 0.389,
+        "recall": 0.604,
+        "f1": 0.473,
+        "events_detected": 25,
+        "event_precision": 0.447,
+        "event_f1": 0.533,
+        "flagged_days": 222,
+        "alarm_share": 0.101
+      }
+    ]
+  }
+}

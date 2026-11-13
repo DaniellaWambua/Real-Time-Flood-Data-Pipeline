@@ -78,96 +78,6 @@ def test_recent_readings_returns_the_model_readings_only():
     assert mocked.call_args.args[1] == ("Nairobi River", 10)
 
 
-def test_alerts_filters_pass_through():
-    client = _client()
-    _login(client)
-    with patch("routes_dashboard.db.query_all", return_value=[]) as mocked:
-        resp = client.get("/api/alerts?severity=high&status=active")
-    assert resp.status_code == 200
-    args = mocked.call_args.args[1]
-    assert "high" in args and "active" in args
-
-
-def test_alerts_summary_requires_login():
-    client = _client()
-    resp = client.get("/api/alerts/summary")
-    assert resp.status_code == 401
-
-
-def test_alerts_summary_counts_across_status_and_severity():
-    client = _client()
-    _login(client)
-    # Three grouped rows, as GROUP BY status, severity would return them.
-    rows = [
-        {"status": "active", "severity": "high", "count": 3},
-        {"status": "active", "severity": "low", "count": 2},
-        {"status": "resolved", "severity": "medium", "count": 5},
-    ]
-    with patch("routes_dashboard.db.query_all", return_value=rows):
-        resp = client.get("/api/alerts/summary")
-    assert resp.status_code == 200
-    body = resp.get_json()
-    assert body == {
-        "total": 10,
-        "active": 5,
-        "acknowledged": 0,
-        "resolved": 5,
-        "low": 2,
-        "medium": 5,
-        "high": 3,
-        "by_severity": {
-            "low": {"active": 2, "acknowledged": 0, "resolved": 0},
-            "medium": {"active": 0, "acknowledged": 0, "resolved": 5},
-            "high": {"active": 3, "acknowledged": 0, "resolved": 0},
-        },
-    }
-
-
-def test_alerts_summary_catchment_filter_reaches_sql():
-    client = _client()
-    _login(client)
-    with patch("routes_dashboard.db.query_all", return_value=[]) as mocked:
-        resp = client.get("/api/alerts/summary?catchment=Mathare")
-    assert resp.status_code == 200
-    args = mocked.call_args.args[1]
-    # the current model's name comes first, then the catchment
-    assert args[0].startswith("lstm_raw") and args[1:] == ("Mathare",)
-
-
-def test_alerts_trend_requires_login():
-    client = _client()
-    resp = client.get("/api/alerts/trend")
-    assert resp.status_code == 401
-
-
-def test_alerts_trend_serializes_daily_counts():
-    client = _client()
-    _login(client)
-    rows = [
-        {"day": datetime.datetime(2026, 9, 1), "count": 4},
-        {"day": datetime.datetime(2026, 9, 2), "count": 7},
-    ]
-    with patch("routes_dashboard.db.query_all", return_value=rows):
-        resp = client.get("/api/alerts/trend")
-    assert resp.status_code == 200
-    body = resp.get_json()
-    assert body == [
-        {"day": "2026-09-01T00:00:00", "count": 4},
-        {"day": "2026-09-02T00:00:00", "count": 7},
-    ]
-
-
-def test_alerts_trend_catchment_filter_reaches_sql():
-    client = _client()
-    _login(client)
-    with patch("routes_dashboard.db.query_all", return_value=[]) as mocked:
-        resp = client.get("/api/alerts/trend?catchment=Mathare")
-    assert resp.status_code == 200
-    args = mocked.call_args.args[1]
-    # the current model's name comes first, then the catchment
-    assert args[0].startswith("lstm_raw") and args[1:] == ("Mathare",)
-
-
 def test_anomalies_recent_requires_login_only():
     client = _client()
     _login(client, role="emergency_responder")
@@ -247,16 +157,16 @@ def test_admin_stats_returns_counts_and_breakdowns():
         "readings_last_day": datetime.date(2025, 12, 31),
         "anomalies": 2193,
         "anomalies_flagged": 118,
-        "alerts": 118,
-        "alerts_open": 4,
-        "alerts_acknowledged": 2,
+        "incidents": 31,
+        "incidents_pending": 4,
+        "incidents_open": 2,
     }
     with patch("routes_dashboard.db.query_one", return_value=dict(counts)):
         resp = client.get("/api/admin/stats")
     assert resp.status_code == 200
     body = resp.get_json()
     assert body["users"] == 6 and body["users_pending"] == 1
-    assert body["alerts_open"] == 4 and body["anomalies_flagged"] == 118
+    assert body["incidents_pending"] == 4 and body["anomalies_flagged"] == 118
     # the one date in the row is serialized, like every other endpoint here
     assert body["readings_last_day"] == "2025-12-31"
 

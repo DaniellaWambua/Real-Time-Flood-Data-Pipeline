@@ -10,7 +10,8 @@ import Dashboard from "./pages/Dashboard";
 import DataStream from "./pages/DataStream";
 import LstmAnomaly from "./pages/LstmAnomaly";
 import RoleSwitcher from "./pages/RoleSwitcher";
-import Alerts from "./pages/Alerts";
+import Incidents from "./pages/Incidents";
+import Notifications from "./pages/Notifications";
 import Admin from "./pages/Admin";
 import SetPassword from "./pages/SetPassword";
 import SecondFactor from "./components/SecondFactor";
@@ -234,7 +235,9 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="data-stream" element={guarded("/data-stream", <DataStream />)} />
           <Route path="lstm-anomaly" element={guarded("/lstm-anomaly", <LstmAnomaly />)} />
-          <Route path="alerts" element={guarded("/alerts", <Alerts />)} />
+          <Route path="incidents" element={guarded("/incidents", <Incidents />)} />
+          <Route path="alerts" element={<Navigate to="/incidents" replace />} />
+          <Route path="notifications" element={guarded("/notifications", <Notifications />)} />
           <Route path="admin" element={guarded("/admin", <Admin />)} />
           <Route path="role-switcher" element={<RoleSwitcher />} />
           <Route path="*" element={<Navigate to="/" replace />} />

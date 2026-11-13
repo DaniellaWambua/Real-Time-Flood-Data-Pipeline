@@ -1,6 +1,6 @@
 """
-Tests for alert and warning emails (backend/notify.py), the notify flag through detection,
-and the internal /notify-warning endpoint. Mail and the database are replaced by stand-ins.
+Tests for in-app notifications and Web Push (backend/notify.py, routes_notifications.py), who is told
+what, and the internal /notify-warning endpoint. The database and push service are stand-ins.
 """
 import datetime
 import sys
@@ -11,11 +11,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 import app as app_module  # noqa: E402
 import config  # noqa: E402
 import flood_detection  # noqa: E402
-import mailer  # noqa: E402
 import notify  # noqa: E402
 
 HEADERS = {"X-Internal-Token": config.INTERNAL_API_TOKEN}
-DAY = datetime.date(2024, 4, 29)
+DAY = datetime.date(2026, 10, 5)
+INCIDENT = {"id": 7, "catchment": "Mathare", "wards": ["Mabatini"], "start_day": DAY, "end_day": DAY,
+            "severity": "high", "verification": "pending", "provisional": True}
 
 
 def _client():
@@ -24,57 +25,110 @@ def _client():
     return flask_app.test_client()
 
 
-def test_a_flood_alert_is_emailed_to_every_recipient_and_logged():
-    with patch("notify.recipients", return_value=["a@x.org", "b@x.org"]), \
-         patch("notify.mailer.send_email") as send, patch("notify.models.log_event") as log:
-        sent = notify.flood_alert("Mathare", ["Mabatini", "Huruma"], DAY, "high", 0.91, 0.528)
-    assert sent == 2 and send.call_count == 2
-    subject = send.call_args.args[1]
-    assert "Mathare" in subject and "high" in subject and "29 Apr 2024" in subject
-    assert "Mabatini, Huruma" in send.call_args.args[2]
-    assert log.call_args.args[1] == "alert_notified" and "emailed 2 of 2" in log.call_args.args[2]
+def _login(client, role="emergency_responder", user_id=3):
+    with client.session_transaction() as sess:
+        sess["user_id"] = user_id
+        sess["username"] = "user"
+        sess["role"] = role
 
 
-def test_one_failing_address_does_not_stop_the_others():
-    with patch("notify.recipients", return_value=["a@x.org", "b@x.org"]), \
-         patch("notify.mailer.send_email", side_effect=[OSError("refused"), None]), \
-         patch("notify.models.log_event") as log:
-        sent = notify.rainfall_warning("Ngong", [], DAY, 62.0, 50.0)
-    assert sent == 1 and "failed a@x.org" in log.call_args.args[2]
+def _send(fn, *args):
+    with patch("notify._users", side_effect=lambda roles: [{"disaster_management_agency": 1,
+                                                              "emergency_responder": 2,
+                                                              "government_official": 3}[r] for r in roles]) as users, \
+         patch("notify.db.execute") as execute, patch("notify._push", return_value=0) as push:
+        told = fn(*args)
+    return told, users, execute, push
 
 
-def test_nothing_is_sent_without_mail_settings_or_recipients():
-    with patch("notify.recipients", return_value=["a@x.org"]), \
-         patch("notify.mailer.send_email", side_effect=mailer.MailNotConfigured("no smtp")), \
-         patch("notify.models.log_event") as log:
-        assert notify.flood_alert("Ngong", [], DAY, "low", 0.6, 0.528) == 0
-    assert log.call_args.args[1] == "alert_notify_skipped"
-    with patch("notify.recipients", return_value=[]), patch("notify.models.log_event") as log:
-        assert notify.rainfall_warning("Ngong", [], DAY, 70.0, 50.0) == 0
-    assert "no responder" in log.call_args.args[2]
+def test_a_new_incident_goes_to_disaster_management_to_verify():
+    told, users, execute, push = _send(notify.incident_to_verify, INCIDENT)
+    assert told == 1 and users.call_args.args[0] == notify.DMA
+    user_id, kind, title, body, link = execute.call_args.args[1]
+    assert (user_id, kind, link) == (1, "verify", "/incidents?id=7")
+    assert "Mathare (Mabatini)" in body and "05 Oct 2026" in body and "Provisional" in body
+    assert push.call_args.args[1]["title"] == title
 
 
-def _detect(notify_flag):
+def test_a_verified_incident_goes_to_responders_and_officials():
+    told, users, execute, _ = _send(notify.incident_verified, dict(INCIDENT, verification="verified"), "officer-1")
+    assert told == 2 and users.call_args.args[0] == notify.FIELD
+    assert "Verified by officer-1" in execute.call_args.args[1][3]
+
+
+def test_a_settled_incident_reaches_the_field_only_if_it_was_verified():
+    told, *_ = _send(notify.incident_settled, INCIDENT, "confirmed")
+    assert told == 1
+    told, _, execute, _ = _send(notify.incident_settled, dict(INCIDENT, verification="verified"), "not_confirmed")
+    assert told == 3 and "not confirmed" in execute.call_args.args[1][2]
+
+
+def test_a_rain_warning_goes_to_all_three_roles():
+    told, *_ = _send(notify.rainfall_warning, "Ngong", [], DAY, 62.0, 50.0)
+    assert told == 3
+
+
+def test_push_is_skipped_without_keys():
+    with patch.object(config, "VAPID_PRIVATE_KEY", ""), patch("notify.db.query_all") as q:
+        assert notify._push([1], {"title": "x"}) == 0
+    q.assert_not_called()
+
+
+def _detect(notify_flag, settled_alert=None):
     conn = MagicMock()
     cur = conn.cursor.return_value.__enter__.return_value
-    cur.fetchone.side_effect = [[11], [22]]
+    cur.fetchone.side_effect = [[11], [22]] if settled_alert is None else [[11], [settled_alert], [5]]
+    full = {"name": "lstm_raw", "version": "v2", "threshold": 0.528}
     with patch("flood_detection.build_window", return_value=("window", None)), \
          patch("flood_detection.score_window", return_value=0.9), \
-         patch("flood_detection.load_models", return_value=({"threshold": 0.528, "version": "v2"}, [])), \
+         patch("flood_detection.load_models", return_value=(full, [])), \
          patch("flood_detection.db.get_connection", return_value=conn), \
-         patch("flood_detection.db.query_one", return_value={"name": "Mathare", "wards": ["Mabatini"]}), \
-         patch("notify.flood_alert", return_value=3) as alert:
+         patch("flood_detection.has_model", return_value=settled_alert is not None), \
+         patch("flood_detection.read_config", return_value={"name": "lstm_fast", "version": "v1"}), \
+         patch("incidents.attach", return_value=(5, True)), \
+         patch("incidents.get", return_value=INCIDENT), \
+         patch("notify.incident_to_verify", return_value=1) as verify, \
+         patch("notify.incident_settled", return_value=2) as settled:
         result = flood_detection.detect(2, DAY, 99, notify=notify_flag)
-    return result, alert
+    return result, verify, settled
 
 
-def test_only_a_live_reading_emails_its_alert():
-    result, alert = _detect(True)
-    alert.assert_called_once_with("Mathare", ["Mabatini"], DAY, "high", 0.9, 0.528)
-    assert result["notified"] == 3
-    result, alert = _detect(False)
-    alert.assert_not_called()
+def test_only_live_readings_notify_and_a_new_incident_asks_for_verification():
+    result, verify, _ = _detect(True)
+    verify.assert_called_once_with(INCIDENT)
+    assert result["notified"] == 1 and result["incident_id"] == 5
+    result, verify, _ = _detect(False)
+    verify.assert_not_called()
     assert result["notified"] is None
+
+
+def test_a_settled_provisional_incident_is_reported():
+    result, verify, settled = _detect(True, settled_alert=40)
+    settled.assert_called_once_with(INCIDENT, "confirmed")
+    verify.assert_not_called()
+    assert result["settled"] == "confirmed" and result["incident_id"] == 5
+
+
+def test_each_user_reads_only_their_own_notifications():
+    client = _client()
+    assert client.get("/api/notifications").status_code == 401
+    _login(client, user_id=3)
+    with patch("routes_notifications.db.query_all", return_value=[]) as q:
+        client.get("/api/notifications?unread=true")
+    assert q.call_args.args[1][0] == 3 and "read_at IS NULL" in q.call_args.args[0]
+    with patch("routes_notifications.db.execute") as execute:
+        client.post("/api/notifications/9/read")
+    assert execute.call_args.args[1] == (9, 3)
+
+
+def test_a_push_subscription_needs_an_https_endpoint_and_keys():
+    client = _client()
+    _login(client)
+    assert client.post("/api/push/subscribe", json={"endpoint": "http://x"}).status_code == 400
+    sub = {"endpoint": "https://push.example/abc", "keys": {"p256dh": "p", "auth": "a"}}
+    with patch("routes_notifications.db.execute") as execute:
+        assert client.post("/api/push/subscribe", json=sub).status_code == 201
+    assert execute.call_args.args[1] == (3, "https://push.example/abc", "p", "a")
 
 
 def test_notify_warning_needs_the_token_and_complete_details():

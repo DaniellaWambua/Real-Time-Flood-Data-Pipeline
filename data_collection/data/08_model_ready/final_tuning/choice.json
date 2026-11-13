@@ -1,0 +1,20 @@
+{
+  "full": {
+    "lr": 0.001,
+    "window": 14,
+    "units": 64,
+    "dropout": 0.5,
+    "epochs": 12,
+    "threshold": 0.7156328438501769,
+    "dev_alarm_rate": 0.00502283105022831
+  },
+  "fast": {
+    "lr": 0.001,
+    "window": 14,
+    "units": 64,
+    "dropout": 0.5,
+    "epochs": 10,
+    "threshold": 0.7293287316337169,
+    "dev_alarm_rate": 0.00502283105022831
+  }
+}

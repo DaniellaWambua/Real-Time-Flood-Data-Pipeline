@@ -37,7 +37,7 @@ def test_detect_passes_the_request_to_the_module():
     with patch("routes_detection.flood_detection.detect", return_value=result) as mock_detect:
         resp = _client().post("/internal/detect", json={**BODY, "hydro_data_record_id": 99}, headers=HEADERS)
     assert resp.status_code == 200 and resp.get_json() == result
-    mock_detect.assert_called_once_with(2, datetime.date(2024, 4, 29), 99, notify=False)
+    mock_detect.assert_called_once_with(2, datetime.date(2024, 4, 29), 99, notify=False, provisional=False)
 
 
 def test_detect_reports_a_day_it_could_not_score():

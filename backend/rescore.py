@@ -17,7 +17,8 @@ first, last = (datetime.date.fromisoformat(d) for d in sys.argv[1:3]) if len(sys
 sql = (
     "SELECT h.catchment_id, h.recorded_at::date AS day, MAX(h.id) AS record_id FROM hydro_data_records h "
     "JOIN catchment_areas ca ON ca.id = h.catchment_id AND ca.is_active "
-    "WHERE NOT EXISTS (SELECT 1 FROM anomaly_detection_results ar WHERE ar.catchment_id = h.catchment_id "
+    "WHERE h.rainfall_mm IS NOT NULL "  # provisional readings wait for CHIRPS before the full model scores them
+    "AND NOT EXISTS (SELECT 1 FROM anomaly_detection_results ar WHERE ar.catchment_id = h.catchment_id "
     "AND ar.detected_at::date = h.recorded_at::date AND ar.model_name = %s) "
 )
 params = [model]

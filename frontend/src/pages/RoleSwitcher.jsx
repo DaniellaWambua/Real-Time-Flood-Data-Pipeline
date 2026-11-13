@@ -20,22 +20,22 @@ const ROLES = [
   {
     role: "system_administrator",
     description:
-      "The only role with access to Administration: user management, pipeline health, and system logs. Also sees every other screen.",
+      "The only role with access to Administration: user management, pipeline health, and system logs. Also sees every other screen except Notifications.",
   },
   {
     role: "disaster_management_agency",
     description:
-      "Overview, Data stream and LSTM Anomaly - monitoring the incoming CHIRPS, IMERG and ERA5-Land readings and the model's anomaly scores directly.",
+      "Overview, Data stream, LSTM Anomaly, Incidents and Notifications - monitors the readings and the model, and verifies or dismisses each new incident before the field is told.",
   },
   {
     role: "emergency_responder",
     description:
-      "Overview and Alerts - acknowledges and resolves alerts, records field updates and recovery work, and is emailed each new alert and heavy rain warning.",
+      "Overview, Incidents and Notifications - sees verified incidents, acknowledges and resolves them saying whether flooding was found, and records field updates and recovery work.",
   },
   {
     role: "government_official",
     description:
-      "Overview and Alerts - monitors high-risk areas, records the resources allocated to each alert and recovery work, and is emailed each new alert and heavy rain warning.",
+      "Overview, Incidents and Notifications - sees verified incidents in high-risk areas and records the resources allocated to each, and recovery work.",
   },
 ];
 

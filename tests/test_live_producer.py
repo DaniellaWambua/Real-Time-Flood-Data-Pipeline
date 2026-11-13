@@ -69,11 +69,14 @@ def test_the_first_run_backfills_one_model_window():
     assert producer.plan_range(LATEST, None) == (date(2026, 9, 17), date(2026, 9, 30))
 
 
-def _run_live(latest=LATEST, last=date(2026, 9, 29), fetch=None):
+def _run_live(latest=LATEST, last=date(2026, 9, 29), fetch=None, last_provisional=date(2026, 11, 2)):
+    def last_day(source=producer.config.LIVE_SOURCE):
+        return last if source == producer.config.LIVE_SOURCE else last_provisional
+
     with patch.object(earth_engine, "latest_days", return_value=latest) if not callable(latest) else \
             patch.object(earth_engine, "latest_days", side_effect=latest), \
          patch.object(earth_engine, "fetch", side_effect=fetch or (lambda s, e: ROWS)) as fetch_mock, \
-         patch.object(producer, "last_live_day", return_value=last), \
+         patch.object(producer, "last_live_day", side_effect=last_day), \
          patch.object(producer, "publish", return_value=len(ROWS)) as publish, \
          patch.object(producer, "record_status") as status, \
          patch.object(producer.time, "sleep"):
@@ -123,3 +126,37 @@ def test_a_missing_package_fails_at_once_without_retrying():
     code, _, publish, status = _run_live(latest=no_module)
     assert code == 1 and len(calls) == 1
     assert status.call_args.args[0] is False
+
+
+def test_days_chirps_has_not_reached_are_planned_as_provisional():
+    # CHIRPS ends 30 Sep; IMERG and ERA5-Land both have up to 2 Nov
+    assert producer.plan_provisional(LATEST, date(2026, 9, 30), None) == (date(2026, 10, 1), date(2026, 11, 2))
+    # provisional days already sent are not sent again
+    assert producer.plan_provisional(LATEST, date(2026, 9, 30), date(2026, 10, 20)) == \
+        (date(2026, 10, 21), date(2026, 11, 2))
+
+
+def test_a_provisional_message_has_no_chirps_rainfall_and_its_own_source():
+    row = {"date": "2026-10-05", "catchment": "ngong", "readings": {"rain_mm": None, "soil_1": 0.3}}
+    m = producer.to_live_message(row, provisional=True)
+    assert m["source"] == "earth-engine-provisional" and "rain_mm" not in m["readings"]
+    assert m["readings"]["soil_1"] == 0.3
+
+
+def test_a_live_run_sends_complete_and_provisional_days_in_one_fetch():
+    rows = [{"date": "2026-09-30", "catchment": "mathare", "readings": {"rain_mm": 1.0}},
+            {"date": "2026-10-01", "catchment": "mathare", "readings": {"rain_mm": None}}]
+    code, fetch, publish, status = _run_live(last_provisional=None, fetch=lambda s, e: rows)
+    assert code == 0
+    fetch.assert_called_once_with(date(2026, 9, 30), date(2026, 11, 2))
+    sent = publish.call_args.args[0]
+    assert [m["source"] for m in sent] == ["earth-engine", "earth-engine-provisional"]
+    detail = status.call_args_list[0].args[1]
+    assert "1 readings for 2026-09-30" in detail and "1 provisional readings for 2026-10-01 to 2026-11-02" in detail
+    assert status.call_args_list[1].kwargs["source"] == "earth-engine-provisional"
+
+
+def test_only_provisional_days_are_fetched_when_chirps_is_up_to_date():
+    code, fetch, publish, _ = _run_live(last=date(2026, 9, 30), last_provisional=date(2026, 10, 31),
+                                        fetch=lambda s, e: [])
+    fetch.assert_called_once_with(date(2026, 11, 1), date(2026, 11, 2))
