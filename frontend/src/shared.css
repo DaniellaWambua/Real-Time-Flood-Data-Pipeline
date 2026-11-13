@@ -1,9 +1,4 @@
-/* Small set of rules shared across pages, so filter rows, form
-   controls, buttons, panels, errors and empty states look the same
-   everywhere rather than being redefined per page. This is the base
-   layer: page-specific stylesheets (loaded after this one) override
-   individual rules where a screen genuinely needs something different
-   (pill-shaped picker buttons, pale sidebar buttons, and so on). */
+/* Rules shared across pages; page stylesheets override them where needed. */
 
 input,
 select,
@@ -60,15 +55,7 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Filled buttons use --accent-soft (the moodboard's Pale Ice Blue),
-   per Daniella's palette spec ("button fills"). That's too light for
-   white text at AA contrast, so unlike the old --accent-strong fill,
-   the label stays dark (--text-primary) instead of white - the same
-   fix applied to Admin/Alerts' status text elsewhere, just for a
-   fill instead of a glyph. --accent-strong still borders the fill,
-   both so the button reads against white/pale-blue surfaces and to
-   keep a visual link to the sidebar's active-tab color, which is
-   still --accent-strong. */
+/* Pale fill with dark text for contrast; the border keeps it visible on pale surfaces. */
 button[type="submit"],
 .btn-primary {
   background: var(--accent-soft);
@@ -83,10 +70,7 @@ button[type="submit"]:hover:not(:disabled),
   color: var(--text-primary);
 }
 
-/* A bordered, slightly elevated panel, for the cards each screen
-   already builds its own version of (admin-new-user, river-select,
-   dashboard-details, severity-breakdown-table); new panels can use
-   this directly instead of restating the same four declarations. */
+/* A bordered, slightly raised panel. */
 .panel {
   background: var(--surface-1);
   border: 1px solid var(--border);
@@ -142,10 +126,6 @@ h2 {
   margin-bottom: 0.75rem;
 }
 
-/* --font-heading is just an alias for --font-sans (one typeface, Lato,
-   everywhere) - kept as its own variable/rule rather than removed so
-   headings (h1 through h4, including .panel-title's h2/h3s) stay
-   independently themeable if that ever changes again. */
 h1,
 h2,
 h3,
@@ -153,13 +133,7 @@ h4 {
   font-family: var(--font-heading);
 }
 
-/* --font-mono is likewise just an alias for --font-sans now (figures,
-   timestamps and chart axes use the same Lato as everything else) -
-   tabular-nums is kept regardless, so a column of numbers or dates
-   still doesn't jitter even without a dedicated monospace face.
-   Applied directly where a dedicated class already exists (metric
-   cards, chart axes, stat rows); this utility is for the handful of
-   one-off JSX spots that don't have one. */
+/* Tabular figures so columns of numbers and dates line up. */
 .figure {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -174,9 +148,7 @@ h4 {
   margin-bottom: 1.5rem;
 }
 
-/* A card's own header row: a title plus an optional caption or link
-   aligned to the right, used by every "panel" card across Dashboard,
-   DataStream and Alerts instead of each restating this layout. */
+/* A panel's header row: a title with an optional caption or link on the right. */
 .panel-header {
   display: flex;
   align-items: baseline;
@@ -212,12 +184,7 @@ h4 {
   text-decoration: underline;
 }
 
-/* Filter pill: the field's label sits inside the control and the arrow
-   follows the value, instead of a wide box with the label stacked above it
-   and the arrow pushed to the far edge. Used by the Alerts filter bar and the
-   LSTM screen's query bars, so it lives here rather than in either page.
-   Wraps a <select> or an <input type="date">, which keep their native menu
-   and date picker - only the chrome around them changes. */
+/* Filter pill: the label sits inside the control and the arrow follows the value. */
 .pill-select {
   display: inline-flex;
   align-items: center;

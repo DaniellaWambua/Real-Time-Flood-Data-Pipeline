@@ -1,18 +1,8 @@
 """
-Bring an existing database's data_sources table to the final shape: one active
-feed carrying three datasets.
-
-CHIRPS, GloFAS and KMD were seeded as separate sources when the design expected
-three separate ingestion paths. The pipeline that was built combines CHIRPS,
-IMERG and ERA5-Land into one daily reading per catchment before publishing, so
-those rows never received anything and sat on the screens as three disconnected
-sources. They are marked inactive rather than deleted, the same way the retired
-catchments are kept, so the old rows that reference them stay readable.
-
-Safe to re-run. Run once against an existing database:
+Bring an existing database's data_sources to one active feed carrying three datasets.
+The old CHIRPS, GloFAS and KMD rows are marked inactive, not deleted, so rows referencing them
+stay readable. Safe to re-run; a fresh database does not need it.
     python db/retire_old_sources.py
-A database built fresh from db/init/02_schema.sql and db/seed.py already comes
-out this way and does not need it.
 """
 import sys
 from pathlib import Path

@@ -1,9 +1,5 @@
 """
-User-related queries against the `users` table (db/init/02_schema.sql),
-plus system_logs writes (the System Administration screen's log panel).
-
-Kept separate from db.py so routes_auth.py can import just what it needs
-(user lookups) without pulling in the lower-level query helpers directly.
+Queries on the users table, and writes to system_logs for the activity log.
 """
 
 import hashlib
@@ -211,13 +207,8 @@ def create_user(username, plain_password, role, email=None):
     id. email is optional and lets this account also sign in via Google
     (routes_auth.py's POST /login/google), still only after an admin has
     set it here, never through self-registration."""
-    # Explicit pbkdf2 method: Werkzeug's default ("scrypt") needs
-    # hashlib.scrypt, which is missing on a Python built against LibreSSL
-    # rather than OpenSSL 1.1+ (notably the Python that ships with Xcode
-    # Command Line Tools on macOS), raising AttributeError at hash time.
-    # pbkdf2 uses hashlib.pbkdf2_hmac instead, which has no such
-    # dependency. check_password_hash() reads the method back out of the
-    # stored hash string itself, so verify_password() needs no change.
+    # pbkdf2 rather than Werkzeug's default scrypt, which is missing from Pythons built against LibreSSL
+    # (such as the one with the macOS Command Line Tools). check_password_hash reads the method from the hash.
     password_hash = generate_password_hash(plain_password, method="pbkdf2:sha256")
     conn = db.get_connection()
     try:
@@ -271,12 +262,7 @@ def update_password(username, new_password):
 
 
 def update_user_role(user_id, new_role):
-    """Change an existing user's role in place. Returns True if a
-    matching user was found and updated, False otherwise. The caller
-    (routes_dashboard.py) is responsible for checking new_role against
-    config.ROLES first; this function trusts what it's given, same
-    division of responsibility create_user.py's CLI script already
-    has with models.create_user()."""
+    """Change a user's role. Returns whether the user was found. The caller checks new_role against config.ROLES."""
     conn = db.get_connection()
     try:
         with conn.cursor() as cur:

@@ -1,21 +1,7 @@
 /*
- * One self-hosted type family, Lato, used everywhere - body text,
- * headings, and figures/timestamps/chart axes alike (there is no
- * longer a separate heading or monospace face; --font-heading and
- * --font-mono in theme.css both just point back to --font-sans).
- * Self-hosted as a repo asset rather than loaded from Google Fonts,
- * so the dashboard still renders at a defence demo with no internet.
- * Taken from the @fontsource/lato npm package, licensed under the
- * SIL Open Font License 1.1 (assets/fonts/OFL-LICENSE.txt).
- *
- * Four static weights are bundled: 300 (light) and 900 (black) were
- * added for Daniella's palette/typography spec, which calls for
- * weights 300/400/700/900 across KPI numbers, chart labels and table
- * text; 400 (regular) and 700 (bold) were already here from the
- * earlier Lato switch. Lato has no 500/600 ("semibold") weight at
- * all, so any existing CSS asking for one still falls back to the
- * nearest bundled weight via the browser's own font-weight matching
- * rather than shipping a fifth file for it.
+ * Lato, self-hosted so the dashboard renders without internet access.
+ * From @fontsource/lato, SIL Open Font License 1.1 (assets/fonts/OFL-LICENSE.txt).
+ * Weights 300, 400, 700 and 900.
  */
 
 @font-face {

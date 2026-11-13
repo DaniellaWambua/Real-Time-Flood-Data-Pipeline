@@ -1,22 +1,10 @@
 """
-Authentication routes: login, logout, and "who am I" using Flask's built-in
-signed-cookie session (matches the proposal's "session management" wording
-in section 3.6.2/3.6.6 rather than a token-based scheme like JWT).
+Authentication routes using Flask's signed-cookie session.
 
-Every account signs in with two factors (TOTP, so it works with no internet at demo
-time). /login checks the password and never opens a full session by itself: an account
-with 2FA set up is asked for its 6-digit code (/login/verify-totp), and an account
-without it must set it up there and then (/totp/setup, /totp/enable) before it can use
-the system. The same second step follows Google sign-in and a set-password link.
-
-POST /login/google is a second, parallel way to clear the password
-step: the frontend hands it a Google-issued ID token instead of a
-username/password pair, this verifies that token against Google (so it
-needs internet, unlike the rest of this system) and looks up the
-verified email against an already-provisioned account (models.
-get_user_by_email). There is still no public registration anywhere:
-an email with no matching account is refused outright, and a matching
-account then goes through the same second step as a password sign-in.
+Every account signs in with two factors. /login checks the password but never opens a full session:
+the account then gives its authenticator code (/login/verify-totp), or sets one up first
+(/totp/setup, /totp/enable). POST /login/google replaces the password step with a Google ID token
+matched to an existing account's email; there is no public registration.
 """
 
 import base64
@@ -71,9 +59,7 @@ def login():
 
     user = models.get_user_by_login(username)
     if user is None or not models.verify_password(user, password):
-        # Logged under the attempted username even when it doesn't match
-        # a real account, so a run of failed logins against one name is
-        # visible on the System Administration screen's log panel.
+        # Logged under the attempted name, so repeated failures show in the activity log.
         models.log_event(username, "login_failure", "invalid username or password")
         return jsonify({"error": "invalid username or password"}), 401
 
@@ -130,9 +116,7 @@ def login_google():
     email = idinfo["email"]
     user = models.get_user_by_email(email)
     if user is None:
-        # Deliberately generic: this is the one guardrail keeping Google
-        # sign-in from becoming public self-registration, so it must not
-        # leak whether any OTHER email is already linked.
+        # Generic on purpose, so it does not reveal which emails have accounts.
         models.log_event(email, "login_failure", "no account linked to this Google email")
         return jsonify({"error": "no account is linked to this Google account. Ask an administrator to add it."}), 403
 

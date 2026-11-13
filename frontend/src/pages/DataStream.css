@@ -1,8 +1,4 @@
-/*
- * River picker + time-range picker above a main column of four
- * stacked small-multiple charts, with a focused map and a detail
- * card in a right-hand rail, per Daniella's reference layout.
- */
+/* River and range pickers above the stacked charts, with a map and detail card on the right. */
 
 .datastream-controls {
   display: flex;
@@ -91,9 +87,7 @@
   gap: 1.1rem;
 }
 
-/* Which of the model's ten readings to chart, grouped the way they are
-   grouped in readings.js. Same pill treatment as the river and range
-   pickers above it, but these toggle rather than choose one. */
+/* The reading picker: pills that toggle each reading on or off. */
 .reading-picker {
   display: flex;
   flex-wrap: wrap;
@@ -146,9 +140,7 @@
   gap: 1.1rem;
 }
 
-/* Which of the model's ten readings to chart, grouped the way they are
-   grouped in readings.js. Same pill treatment as the river and range
-   pickers above it, but these toggle rather than choose one. */
+/* The reading picker: pills that toggle each reading on or off. */
 .reading-picker {
   display: flex;
   flex-wrap: wrap;
@@ -245,10 +237,7 @@
   font-family: var(--font-mono);
 }
 
-/* Slightly bigger than a default button, with a more rounded corner
-   (var(--radius-lg) rather than the base 4px) - this is the page's
-   one primary call-to-action, so it reads as more prominent than the
-   river/range picker pills above it. */
+/* The page's main call to action, slightly larger and rounder than the pickers. */
 .datastream-open-alerts {
   display: block;
   text-align: center;

@@ -1,14 +1,5 @@
 """
-Sanity checks for db/update_catchment_coords.py, the one-off script
-that moves an already-seeded database's catchment_areas.geom onto
-whatever seed.py's CATCHMENT_COORDS currently says (see
-db/COORDS_SOURCES.md for why this script exists alongside seed.py,
-which deliberately never touches an existing row).
-
-db.query_one/db.execute are monkeypatched with canned data, same style
-as tests/test_dashboard_api.py and tests/test_change_password.py, so
-this checks the comparison and update logic, not real SQL against a
-live database.
+Checks for db/update_catchment_coords.py, with the database calls replaced by canned data.
 """
 
 import sys

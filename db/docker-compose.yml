@@ -1,7 +1,5 @@
-# PostgreSQL with TimescaleDB and PostGIS (proposal 3.4.4), plus a
-# single-node Apache Kafka broker (proposal 3.5.2/3.6.3) for the
-# ingestion and stream processing layers.
-# Run from the db/ directory: docker compose --env-file ../backend/.env up -d
+# PostgreSQL with TimescaleDB and PostGIS, and a single-node Kafka broker.
+# Run from db/: docker compose --env-file ../backend/.env up -d
 services:
   db:
     image: timescale/timescaledb-ha:pg16
@@ -18,9 +16,7 @@ services:
     restart: unless-stopped
 
   kafka:
-    # Official Apache Kafka image (bitnami/kafka's free tags were
-    # withdrawn from Docker Hub after this was first written; see
-    # https://hub.docker.com/r/apache/kafka).
+    # Official Apache Kafka image.
     image: apache/kafka:4.2.2
     container_name: flood_pipeline_kafka
     ports:
@@ -30,14 +26,8 @@ services:
       # controller, so no separate Zookeeper service is needed.
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      # The broker's own client-facing listener (PLAINTEXT) must bind to
-      # 0.0.0.0, not localhost: Docker's port forwarding from the host
-      # lands on the container's external interface, and a socket bound
-      # only to the container's own loopback never sees that traffic,
-      # which is what was causing every host-side connection to reset
-      # immediately (see Docker's own Kafka guide for this pattern).
-      # ADVERTISED_LISTENERS is what the host-side client is told to use
-      # for all subsequent connections, so that one does stay "localhost".
+      # The client listener binds to 0.0.0.0 so Docker's port forwarding reaches it;
+      # clients on the host are told to use localhost (ADVERTISED_LISTENERS).
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://localhost:9093
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER

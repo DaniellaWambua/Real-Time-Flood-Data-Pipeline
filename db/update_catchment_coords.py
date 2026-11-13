@@ -1,17 +1,8 @@
 """
-Move an already-seeded database's catchment_areas.geom onto whatever
-seed.py's CATCHMENT_COORDS currently says, by name.
+Move existing catchment_areas.geom onto seed.py's CATCHMENT_COORDS, by name.
+seed.py skips catchments that already exist, so a coordinate change needs this step.
 
-seed.py itself is deliberately idempotent the other way: it skips a
-catchment that already exists rather than touching it, so running it
-again after editing CATCHMENT_COORDS does nothing to existing rows.
-That is the right default for a script every setup runs, but it means
-a correction to CATCHMENT_COORDS (like the 2026-10-11 move from rough
-guesses to real OSM waterway points, see COORDS_SOURCES.md) needs this
-separate, explicit step to actually reach a database that was already
-seeded under the old values.
-
-Usage (from the db/ directory, with the db container running):
+Usage (from db/, with the db container running):
     python update_catchment_coords.py
 """
 

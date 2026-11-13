@@ -1,10 +1,6 @@
 import "./PageHeader.css";
 
-/**
- * The title/subtitle row every screen opens with, factored out so
- * each page states its own title and subtitle without re-laying-out
- * the row around it.
- */
+/** The title and subtitle row each screen opens with. */
 export default function PageHeader({ title, subtitle }) {
   return (
     <div className="page-header">

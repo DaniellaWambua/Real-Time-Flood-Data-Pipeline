@@ -6,9 +6,7 @@ CREATE TABLE data_sources (
     source_type     TEXT NOT NULL,              -- e.g. 'daily-feed'
     fetch_interval  INTERVAL NOT NULL,
     connection_status TEXT NOT NULL DEFAULT 'disconnected',
-    -- The datasets that arrive through this feed, for the screens to name.
-    -- One feed carries all of them: they are combined into one daily reading
-    -- per catchment before publishing, not ingested on separate paths.
+    -- The datasets this feed carries, combined into one daily reading per catchment.
     datasets        TEXT,
     is_active       BOOLEAN NOT NULL DEFAULT true,  -- retired sources are kept, not deleted
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -39,11 +37,7 @@ CREATE TABLE hydro_data_records (
     soil_moisture_m3m3  DOUBLE PRECISION,
     evaporation_mm       DOUBLE PRECISION,
     oni                  DOUBLE PRECISION,
-    -- Rolling features the simulated feed already publishes alongside
-    -- the raw readings above (see ingestion/config.py's FEATURE_FIELDS).
-    -- Stored here too so live model scoring (ingestion/model_scoring.py)
-    -- can read a catchment's full feature history straight back out of
-    -- this table, rather than recomputing rolling sums/diffs itself.
+    -- Rolling features published with the raw readings (ingestion/config.py's FEATURE_FIELDS).
     rainfall_3day       DOUBLE PRECISION,
     rainfall_7day       DOUBLE PRECISION,
     discharge_change    DOUBLE PRECISION,
@@ -136,19 +130,14 @@ CREATE TABLE users (
     password_hash   TEXT,            -- NULL until an invited user sets a password
     full_name       TEXT,
     organisation    TEXT,
-    role            TEXT NOT NULL,   -- actor roles per Chapter 3 use case diagram
+    role            TEXT NOT NULL,   -- one of config.ROLES
     is_active       BOOLEAN NOT NULL DEFAULT true,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    -- Two-factor authentication (TOTP), beyond what the proposal asked
-    -- for. totp_secret is NULL until a user enrols; totp_enabled stays
-    -- false until they confirm their first code, so a half-finished
-    -- enrolment never locks anyone out (see backend/routes_auth.py).
+    -- Two-factor authentication: totp_enabled stays false until the first code is confirmed,
+    -- so an unfinished enrolment never locks anyone out.
     totp_secret     TEXT,
     totp_enabled    BOOLEAN NOT NULL DEFAULT false,
-    -- Google Sign-In (also beyond the proposal). NULL until an admin
-    -- attaches a Gmail address to this already-provisioned account;
-    -- POST /login/google only succeeds for an email that matches here,
-    -- so this never opens the door to public self-registration.
+    -- Used for Google sign-in, which only works for an email already on an account.
     email           TEXT UNIQUE
 );
 
@@ -189,10 +178,7 @@ CREATE TABLE user_tokens (
 );
 CREATE INDEX idx_user_tokens_user ON user_tokens (user_id, purpose);
 
--- System Administration screen's log panel (proposal 3.4.6). One row
--- per notable event (sign-ins, account changes); actor is a username,
--- null for an attempt that never resolved to a real account (e.g. a
--- login for an unknown username).
+-- The activity log: one row per notable event. actor is NULL when no real account matched.
 CREATE TABLE system_logs (
     id              BIGSERIAL PRIMARY KEY,
     occurred_at     TIMESTAMPTZ NOT NULL DEFAULT now(),

@@ -100,18 +100,7 @@
   min-width: 0;
 }
 
-/* Amber, not the sidebar's own blue, matching the reference mockup:
-   this badge is a live count of outstanding alerts, so it reads as an
-   attention/warning indicator (dataviz skill's warning status color)
-   rather than generic chrome - the one nav item this badge appears on
-   is also the one whose whole subject is alert severity. Text is a
-   fixed dark color rather than var(--sidebar-bg) - that token used to
-   be a safe dark color by coincidence, back when the sidebar itself
-   was dark; now the sidebar is light blue, so the badge needs its own
-   dark text regardless of the sidebar's own fill. Needs no separate
-   active-state override any more either, since both the default
-   (light blue) and active (white) sidebar backgrounds are light
-   enough for the same dark text to read clearly on this amber fill. */
+/* Amber count of outstanding incidents, with dark text for contrast */
 .sidebar-nav-badge {
   flex-shrink: 0;
   background: var(--status-warning);

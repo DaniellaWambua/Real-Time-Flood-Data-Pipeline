@@ -1,9 +1,5 @@
 """
-Database connection helper for the backend.
-
-Thin wrapper around psycopg2 so the rest of the backend never has to know
-connection details directly. Uses RealDictCursor so query results come back
-as dicts (easier to work with in routes and templates than plain tuples).
+Database helper for the backend: a thin psycopg2 wrapper returning rows as dicts.
 """
 
 import psycopg2

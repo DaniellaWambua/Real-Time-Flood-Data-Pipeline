@@ -1,9 +1,6 @@
 """
-Access-control decorators for Flask routes.
-
-login_required: any authenticated user.
-role_required(*roles): authenticated AND one of the given roles
-(see config.ROLES for the four actor roles from Chapter 3's use case diagram).
+Access-control decorators: login_required for any signed-in user, role_required(*roles)
+for the given roles (config.ROLES).
 """
 
 from functools import wraps

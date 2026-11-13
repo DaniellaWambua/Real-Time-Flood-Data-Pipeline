@@ -7,10 +7,7 @@ import { IconGrid, IconPulse, IconBell, IconSliders, IconBrain, IconSwitch, Icon
 import Footer from "./Footer";
 import "./Layout.css";
 
-// Which of these show up in the sidebar is decided by roleAccess.js's
-// ROUTE_ROLES, matching the proposal's wireframes (3.4.6): a role that
-// cannot open a screen does not see it linked either, rather than
-// seeing a link that leads to a redirect or a 403.
+// Links a role cannot open are hidden (roleAccess.js).
 const NAV_ITEMS = [
   { to: "/", label: "Overview", end: true, Icon: IconGrid },
   { to: "/data-stream", label: "Data stream", Icon: IconPulse },
@@ -24,9 +21,7 @@ const NAV_ITEMS = [
 export default function Layout({ user, onLoggedOut }) {
   const [badges, setBadges] = useState({ incidents: 0, unread: 0 });
 
-  // The sidebar's two badges: incidents waiting for this role (pending verification for Disaster
-  // Management, active verified ones for everyone else) and unread notifications. Refreshed every
-  // minute, and straight away when the Notifications screen marks something read.
+  // Sidebar badges: incidents waiting for this role and unread notifications, refreshed every minute.
   useEffect(() => {
     function load() {
       get("/api/incidents/summary")
@@ -47,10 +42,7 @@ export default function Layout({ user, onLoggedOut }) {
     };
   }, [user.role]);
 
-  // Every tab of a browser shares one sign-in. If another tab signs in as a different
-  // account, or signs out, this tab would keep showing the old role's screens while the
-  // backend answers as the new one. Check whenever the tab comes back into view and reload
-  // so the screens match whoever is really signed in.
+  // Tabs share one sign-in, so reload when the tab returns if another tab changed the account.
   useEffect(() => {
     function checkSession() {
       if (document.visibilityState !== "visible") return;

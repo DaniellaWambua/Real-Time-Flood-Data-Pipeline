@@ -1,13 +1,8 @@
 """
-CLI script to attach (or clear) a Gmail address on an existing,
-already-provisioned user, so that account can also sign in with Google
-(routes_auth.py's POST /login/google). From the backend/ directory:
+Set or clear an existing user's email, used for Google sign-in. From backend/:
 
     python set_user_email.py <username> <email>
     python set_user_email.py <username> --clear
-
-This never creates an account; run create_user.py first if the username
-doesn't exist yet.
 """
 
 import sys

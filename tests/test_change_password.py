@@ -1,12 +1,5 @@
 """
-Sanity checks for models.update_password (backend/models.py), the
-helper behind backend/change_password.py. Run directly with plain
-Python, no pytest, no live Postgres, same style as
-tests/test_preprocessing.py and tests/test_dashboard_api.py.
-
-db.get_connection() is mocked with a MagicMock cursor/connection pair,
-so this checks the SQL shape, the hashing, and the found/not-found
-return value, not real SQL against a live database.
+Checks for models.update_password with a mocked connection: the SQL, the hashing and the return value.
 """
 
 import sys

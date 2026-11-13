@@ -1,10 +1,6 @@
 """
-Minimal database connection helper for the ingestion/stream processing
-layer. Deliberately self-contained (not shared with backend/db.py): both
-live in a folder with their own config.py, and importing across folders
-by manipulating sys.path caused the two config modules to shadow each
-other. Same small query_one/query_all/execute pattern as backend/db.py,
-just kept local to this layer.
+Database helper for the ingestion layer. Kept separate from backend/db.py because the two
+folders each have their own config.py, which shadow each other if imported across folders.
 """
 
 import psycopg2

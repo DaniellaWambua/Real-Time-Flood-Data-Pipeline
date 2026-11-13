@@ -11,11 +11,9 @@ import { formatSpan } from "../incidentFormat";
 import { get, post } from "../api";
 import "./Incidents.css";
 
-// The proposal's Alert Management screen, worked as incidents: consecutive flagged days in one catchment
-// are one incident (GET /api/incidents). Disaster Management officers verify or dismiss each new incident
-// first; only verified incidents reach Emergency Responders and Government Officials, who see nothing else.
-// Emergency Responders acknowledge and resolve, recording what they found; responses are recorded in the
-// incident's detail row (IncidentDetail.jsx).
+// Consecutive flagged days in one catchment form an incident. Disaster Management verifies or
+// dismisses each one; only verified incidents reach Emergency Responders and Government Officials.
+// Responders acknowledge and resolve, recording what they found (IncidentDetail.jsx).
 const TAB_SEVERITIES = ["high", "medium", "low"];
 const SEVERITY_LABEL = { low: "Low", medium: "Medium", high: "High" };
 const STATUSES = ["active", "acknowledged", "resolved"];

@@ -1,15 +1,10 @@
 """
-CLI script to enrol an existing user in TOTP-based 2FA (db/add_2fa_columns.py,
-models.set_totp_secret/enable_totp), without needing the /totp/setup and
-/totp/enable routes' QR-code round trip through the frontend. From the
-backend/ directory:
+Enrol a user in two-factor authentication from the command line. From backend/:
 
     python enable_totp.py <username>
 
-Prints the manual-entry key and, if the qrcode package is available, saves
-a scannable PNG next to this script. Scan it (or type the key) into an
-authenticator app, then re-run with the --confirm flag and the 6-digit code
-it shows to actually switch 2FA on:
+Prints the key (and saves a QR code if qrcode is installed). Add it to an authenticator app,
+then confirm with the code it shows:
 
     python enable_totp.py <username> --confirm <code>
 """

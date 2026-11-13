@@ -3,10 +3,8 @@ import StatusChip from "../../components/StatusChip";
 import { severityRole } from "../../statusRoles";
 import { get } from "../../api";
 
-// Look up one day. The calendar shades every day of the month by its score so a
-// wet spell is visible at a glance, and picking a day fetches that day in full:
-// the score against the flag line, the alert it raised, and the measured inputs
-// behind it. This is what lets a date named in the defence be answered directly.
+// One day in full: the calendar shades each day by score; picking one shows its score,
+// any alert it raised and the inputs behind it.
 const DOW = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",

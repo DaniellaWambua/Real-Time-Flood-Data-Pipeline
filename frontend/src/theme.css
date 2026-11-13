@@ -1,55 +1,7 @@
 /*
- * Design tokens for the dashboard, one hue per role rather than ad hoc
- * colors in component files.
- *
- * Palette: Daniella's "Forest Green + Powder Denim Blue" moodboard spec
- * (2026), layered onto the earlier "Soft Blue + White" tokens rather
- * than replacing them outright:
- *   - --accent / --accent-soft are unchanged from the moodboard's
- *     Powder Denim Blue (#8DB4D6) / Pale Ice Blue (#D6E6F2) - these
- *     already matched exactly. --accent-strong is still a darker
- *     shade of the same hue, kept for anywhere text sits directly on
- *     an accent-colored fill and needs the extra contrast (the
- *     sidebar's active state, the alert-workflow "active" status
- *     text) - the moodboard doesn't name a dark-blue role, so this is
- *     carried over rather than specified.
- *   - --brand-deep is new: the moodboard's Forest Green (#31493C),
- *     scoped specifically to headline/"hero" KPI numbers (MetricCard's
- *     big value, the Alerts page hero count) - the one place the
- *     moodboard shows it used for a number rather than a UI surface.
- *     It is deliberately NOT used for the line/bar chart series
- *     (still --accent-strong/--accent/--accent-soft): a single chart
- *     already mixes those three consistently across its line, area
- *     and bar variants, and splitting that into a second hue per
- *     chart would break the one-hue-per-series rule this dashboard
- *     otherwise follows. It is also deliberately NOT used for
- *     --status-good: that green is reserved for alert severity/
- *     connection-status specifically (see below) and is a visibly
- *     different, brighter green from this dark pine shade, so there
- *     is no risk of the two reading as the same color.
- *   - Card radius/shadow follow the moodboard's "12px-16px, soft
- *     ambient elevation" guidance as the sitewide default (see
- *     --radius-md/--shadow-card below). The 24px radius Daniella
- *     asked for specifically on the Alerts and Admin panel cards
- *     (to match Data Stream's buttons) is a deliberate, more specific
- *     exception to that default and is left as-is in Alerts.css/
- *     Admin.css - the new default governs everywhere she didn't
- *     already call out a different radius.
- *
- * Light-only: Daniella asked for every screen to stay on a light
- * background rather than following the OS's dark mode setting.
- *
- * Status colors (good/warning/serious/critical) are reserved for alert
- * severity and connection status specifically, and are never reused as
- * a generic "series 4" color, or for branding/chrome, elsewhere in the
- * dashboard. --status-warning/--status-critical below are the
- * moodboard's "Alert Semantics" colors (Watch/Rising Streamflow and
- * Critical Flash Flood respectively) mapped onto the medium/high
- * severities that already used those two roles; --status-good and
- * --status-serious are unchanged (the moodboard doesn't name them,
- * and --status-serious is an unreached fallback - see statusRoles.js -
- * so its small Delta-E gap from the new --status-critical next to it
- * never actually shows up on screen).
+ * Design tokens for the dashboard. The site stays on a light background.
+ * Status colours (good, warning, serious, critical) are kept for alert severity
+ * and connection status only, never as general series or branding colours.
  */
 
 :root {
@@ -68,8 +20,7 @@
   --accent-soft: #d6e6f2;
   --accent-strong: #3f6e99;
 
-  /* Hero/headline KPI number color - see the file comment above for
-     why this is scoped to numbers only, not chart series or status. */
+  /* Headline KPI numbers only */
   --brand-deep: #31493c;
 
   --status-good: #0ca30c;
@@ -77,14 +28,6 @@
   --status-serious: #ec835a;
   --status-critical: #e05656;
 
-  /* Sidebar chrome, switched from the earlier dark-navy rail to the
-     moodboard's own primary blue (--accent) as the sidebar fill,
-     matching Daniella's HydroPulse reference: dark text/icons instead
-     of light-on-dark, and a white "pill" for the active item instead
-     of a filled accent-strong one (the reference's active row is a
-     white card sitting on the blue sidebar, not a darker blue one).
-     --text-primary on --accent clears WCAG AA comfortably (~7.3:1),
-     so no separate light/dark sidebar-text split is needed any more. */
   --sidebar-bg: var(--accent);
   --sidebar-bg-raised: color-mix(in srgb, var(--accent) 85%, black);
   --sidebar-text: var(--text-primary);
@@ -93,14 +36,6 @@
   --sidebar-active-bg: var(--surface-1);
   --sidebar-active-text: var(--text-primary);
 
-  /* Form controls and cards, kept as tokens so every page's inputs,
-     selects and panels pick up the same look rather than each page
-     defining its own border/radius numbers. --radius-md and
-     --shadow-card follow Daniella's palette spec ("12px-16px rounded
-     corners", "soft ambient elevation, rgba(15, 23, 42, 0.04)"); the
-     shadow keeps its existing two-layer recipe (a tight contact
-     shadow plus a soft ambient one) but moves to the spec's slate
-     color at a lighter, "soft" alpha on each layer. */
   --input-border: rgba(19, 35, 49, 0.2);
   --input-border-hover: rgba(19, 35, 49, 0.36);
   --focus-ring: rgba(141, 180, 214, 0.45);
@@ -109,13 +44,7 @@
   --radius-lg: 16px;
   --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 14px rgba(15, 23, 42, 0.06);
 
-  /* One sans-serif family everywhere, per Daniella's request - the
-     app previously split body/heading/figure text across three
-     different self-hosted typefaces; --font-heading and --font-mono
-     now just point back to --font-sans instead of naming a second
-     or third face, so every existing var(--font-heading)/
-     var(--font-mono) usage across the CSS picks up Lato too without
-     needing to touch each of those rules individually. */
+  /* One typeface everywhere; heading and mono point back to it */
   --font-sans: "Lato", system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-heading: var(--font-sans);
   --font-mono: var(--font-sans);

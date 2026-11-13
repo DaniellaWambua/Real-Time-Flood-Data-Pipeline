@@ -2,14 +2,8 @@ import { useEffect, useState } from "react";
 import EmptyState from "../../components/EmptyState";
 import { get } from "../../api";
 
-// How the headline scores above were arrived at: four figures, each drawn as
-// the shape it actually is - a share of events caught, a rate per year, a
-// score on a nought-to-one scale, and a split between measured and unknown
-// days - and filled in the same two tones the Overview and Administration
-// screens use. No live fetch of its own: everything comes from the model card
-// the page already loaded, which reads models/flood_lstm/evaluation.json,
-// saved beside the weights, so retraining updates this rather than needing
-// numbers edited in here.
+// The four evaluation figures, read from the model's evaluation.json via the model card,
+// so retraining updates them without editing this file.
 
 const MONTH_INITIAL = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
 // Kenya's two wet seasons, shaded behind the months strip. Nothing is computed
@@ -145,10 +139,7 @@ function ProvisionalModel({ card }) {
   );
 }
 
-// When the model actually fired, month by month across the measured period.
-// One short bar chart rather than another figure: it shows at a glance that the
-// flags fall in Nairobi's two wet seasons rather than scattered through the
-// year, which is the thing a reader most wants to check about a flood model.
+// Flags by month, to show they fall in Nairobi's two wet seasons.
 function WhenItFlagged({ evaluation }) {
   const [counts, setCounts] = useState(null);
   const [error, setError] = useState(null);

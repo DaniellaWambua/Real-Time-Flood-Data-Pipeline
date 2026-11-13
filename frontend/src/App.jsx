@@ -16,10 +16,7 @@ import Admin from "./pages/Admin";
 import SetPassword from "./pages/SetPassword";
 import SecondFactor from "./components/SecondFactor";
 
-// Set by index.html's Google Identity Services script tag. Read once
-// here rather than hardcoded, so a build with no client id configured
-// (e.g. VITE_GOOGLE_CLIENT_ID unset) simply never renders the button,
-// instead of rendering one that would fail on every click.
+// With no client ID configured the Google button is not shown.
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 
 function LoginForm({ onLoggedIn }) {
@@ -51,13 +48,7 @@ function LoginForm({ onLoggedIn }) {
     }
   }
 
-  // Google Identity Services loads from index.html as a separate
-  // <script>, so it may not be ready the instant this component mounts
-  // (and, deliberately, this whole system still has to work with no
-  // internet at all - see docs/system-overview-simple.md - so the
-  // script may never load). Poll briefly for window.google and just
-  // leave the button area empty if it never turns up, rather than
-  // showing a button that would fail on every click.
+  // The Google script loads separately and may never load offline, so poll briefly for it.
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID || step !== "credentials") {
       return;
@@ -98,10 +89,7 @@ function LoginForm({ onLoggedIn }) {
     setError(null);
     try {
       const result = await login(username, password);
-      // Password was correct, but if this account has 2FA on (backend/
-      // routes_auth.py's /login doesn't open a full session yet),
-      // handleLoginResult asks for the authenticator code instead of
-      // calling onLoggedIn straight away.
+      // With two-factor authentication on, this asks for the authenticator code first.
       handleLoginResult(result);
     } catch (err) {
       setError(err.message);
@@ -159,10 +147,7 @@ function LoginForm({ onLoggedIn }) {
             {GOOGLE_CLIENT_ID && (
               <>
                 <p className="auth-divider">or</p>
-                {/* Google Identity Services renders its own button into
-                    this div once index.html's script has loaded (see
-                    the effect above); left empty otherwise, e.g. with
-                    no internet connection. */}
+                {/* Google renders its button here once its script has loaded */}
                 <div ref={googleButtonRef} className="google-signin-button" />
               </>
             )}
@@ -219,11 +204,7 @@ export default function App() {
     return <LoginForm onLoggedIn={setUser} />;
   }
 
-  // Each restricted screen checks roleAccess.js's canAccess itself, in
-  // addition to Layout.jsx hiding its nav link: that stops a role from
-  // reaching a screen by typing its URL directly, not just by clicking
-  // a link that was never shown. Dashboard and role-switcher are open
-  // to every role, so they need no check.
+  // Each restricted screen checks access itself, so a hidden URL cannot be opened directly.
   function guarded(path, element) {
     return canAccess(user.role, path) ? element : <Navigate to="/" replace />;
   }

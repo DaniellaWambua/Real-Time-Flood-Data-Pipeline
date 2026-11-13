@@ -29,13 +29,10 @@ DB_PASSWORD = _required("DB_PASSWORD")
 SECRET_KEY = _required("SECRET_KEY")
 INTERNAL_API_TOKEN = _required("INTERNAL_API_TOKEN")
 
-# Not 5000: macOS's AirPlay Receiver (System Settings, General, AirDrop
-# and Handoff) also listens on 127.0.0.1:5000 and answers with its own
-# 403 page before Flask ever sees the request, which looks like an auth
-# failure but is not one. Override via env if 5001 is also taken.
+# Not 5000: the macOS AirPlay Receiver listens there and answers with its own 403.
 API_PORT = int(_env("API_PORT", "5001"))
 
-# Actor roles, per Chapter 3's use case diagram.
+# Actor roles
 ROLES = [
     "disaster_management_agency",
     "emergency_responder",
@@ -43,20 +40,13 @@ ROLES = [
     "system_administrator",
 ]
 
-# The dashboard's React dev server. Vite's default port (5173) and
-# Create React App's default port (3000) are both allowed out of the
-# box; override via env if the frontend ends up running elsewhere.
+# Origins allowed to call the API (the Vite and Create React App dev servers by default).
 FRONTEND_ORIGINS = _env(
     "FRONTEND_ORIGINS", "http://localhost:5173,http://localhost:3000"
 ).split(",")
 
-# Google Sign-In (routes_auth.py's POST /login/google): the OAuth 2.0
-# Client ID from Google Cloud Console (APIs & Services, Credentials),
-# needed to verify that an incoming ID token was actually issued for
-# this app, not some other one. Must match the frontend's
-# VITE_GOOGLE_CLIENT_ID exactly, since that is the client id Google
-# Identity Services stamps into the token's audience claim. Login with
-# Google is disabled (the endpoint returns an error) while this is unset.
+# OAuth client ID from Google Cloud Console; must match the frontend's VITE_GOOGLE_CLIENT_ID.
+# Google sign-in is off while it is unset.
 GOOGLE_CLIENT_ID = _env("GOOGLE_CLIENT_ID", "")
 
 # Email (invites and password resets), sent through an SMTP account such as Gmail
@@ -71,9 +61,7 @@ MAIL_FROM_ADDRESS = _env("MAIL_FROM_ADDRESS", "") or SMTP_USERNAME
 # Where the links in emails point (the React app), and how long they last
 FRONTEND_URL = _env("FRONTEND_URL", "http://localhost:5173").rstrip("/")
 
-# Web Push for the installed app (notify.py). Generate a key pair once with
-# python generate_vapid_keys.py and paste the lines it prints into backend/.env.
-# Without them notifications still appear in the app; they are just not pushed.
+# Web Push keys (python generate_vapid_keys.py). Without them notifications still appear in the app.
 VAPID_PUBLIC_KEY = _env("VAPID_PUBLIC_KEY", "")
 VAPID_PRIVATE_KEY = _env("VAPID_PRIVATE_KEY", "")
 # Field roles are told about a verified incident only if its last day is this recent, so verifying a

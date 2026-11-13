@@ -1,32 +1,8 @@
 import "./MetricCard.css";
 
 /**
- * A richer stat card than StatTile: a big headline value (with an
- * optional muted suffix, e.g. "6 of 6"), then either a segmented
- * progress bar (proportions of a whole, e.g. severity counts) or a
- * status badge when there's nothing to show a proportion of (the
- * Overview screen's LSTM card, which has no live scoring yet), and a
- * one-line description underneath.
- *
- * `segments` is `[{ amount, color }]` plotted against `segmentsTotal`;
- * leftover width (segments summing to less than the total) shows the
- * track's own neutral background, same as an unfilled progress bar.
- * `badge` is `{ role, glyph, label }` and takes the bar's place when
- * there's no meaningful proportion to show.
- *
- * `glyph` is an optional icon component drawn large and faint in the
- * card's bottom corner, the way a stat card in a music or media app
- * carries a watermark of what it counts. It is decorative only: the
- * label already says what the number is.
- *
- * `tone` is the optional filled-card treatment from Daniella's
- * palette spec - "soft" (Pale Ice Blue fill, plain dark text) or
- * "deep" (Forest Green fill, white text), alternated across the
- * Overview screen's four hero cards to match the reference's
- * checkerboard of pale-blue/forest-green cards. Left unset, a card
- * stays the plain white panel it always was (used for Admin's
- * smaller database-overview tiles, which aren't "hero" cards in the
- * same sense).
+ * Stat card: a headline value, then a segmented bar (segments against segmentsTotal) or a badge,
+ * and a one-line description. glyph is a faint decorative icon; tone is "soft" or "deep" fill.
  */
 export default function MetricCard({
   label,

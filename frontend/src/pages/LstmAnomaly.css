@@ -1,8 +1,4 @@
-/* The LSTM screen: a model status strip, then one panel with three tabs
-   (Overview, Recent scores, Day lookup). Colours all come from theme.css -
-   the calendar's four score bands are steps of the same accent hue, with the
-   critical red reserved for a flagged day, the way severity is coloured
-   everywhere else in the dashboard. */
+/* The LSTM screen: a model status strip and one panel with three tabs. */
 
 .lstm-panel {
   border-radius: 24px;
@@ -53,9 +49,7 @@
   margin-top: 0;
 }
 
-/* The three score cards under the status strip, in the same two filled tones
-   the Overview and Administration screens use. Three across, since each one
-   carries a sentence of context under its number. */
+/* The three score cards under the status strip. */
 .lstm-metric-row {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -122,11 +116,7 @@
   color: var(--text-muted);
 }
 
-/* --- Overview: the four measurement figures ---
-   Each one is drawn as the shape it is (a share, a rate, a nought-to-one
-   score, a split) rather than four identical boxes of text. Same two
-   colours as everywhere else: Forest Green for the number, Powder Denim
-   Blue for whatever is filled. */
+/* --- Overview: the four measurement figures --- */
 
 .lstm-stat-grid {
   display: grid;
@@ -143,10 +133,7 @@
   padding: 0.9rem 1rem;
 }
 
-/* Same two fills as the cards above and the Administration row: Pale Ice Blue
-   and Forest Green, alternating. Everything drawn inside a card (the ring, the
-   month marks, the scales) switches to white on the deep fill so each one keeps
-   the same contrast against whatever it sits on. */
+/* Alternating pale and deep fills; content inside the deep fill switches to white. */
 .lstm-stat--soft {
   background: var(--accent-soft);
 }
@@ -352,10 +339,7 @@
   color: var(--text-secondary);
 }
 
-/* --- Overview: when it flagged ---
-   One bar per month, one block per year. The wet-season months carry a faint
-   tint behind them so the seasonal pattern is visible without a second colour
-   for the bars themselves. */
+/* --- Overview: when it flagged (one bar per month, wet seasons tinted) --- */
 
 .lstm-when {
   display: flex;

@@ -2,45 +2,23 @@ import { CircleMarker, MapContainer, TileLayer, Tooltip, useMapEvents } from "re
 import "leaflet/dist/leaflet.css";
 import "./CatchmentMap.css";
 
-// Leaflet's CircleMarker takes a literal color prop, it cannot read CSS
-// custom properties, so these stay literal hex matching theme.css
-// rather than themed values. Default marker color is --accent (light
-// mode); callers that need risk-based coloring (the main dashboard)
-// pass their own colorFor() instead.
+// Leaflet cannot read CSS variables, so marker colours are literal hex matching theme.css.
 const DEFAULT_COLOR = "#2a78d6";
 const SELECTED_RING = "#0b0b0b";
 
-// A single catchment (the data stream monitor, after Daniella asked for
-// the one selected river rather than the whole-country view) gets a
-// close, fixed zoom centred on it instead of a bounds fit: fitBounds on
-// a single point zooms Leaflet all the way to its max level, giving an
-// oddly block-by-block view rather than the neighbourhood-level view a
-// labelled river pin wants (see the Google Maps reference Daniella sent).
+// One catchment gets a fixed neighbourhood zoom; fitBounds on a single point zooms in too far.
 const FOCUSED_ZOOM = 14;
 
-// Clicking empty map background (not a marker) clears the selection.
-// react-leaflet has no prop for this, it has to be a map event listener,
-// which only works as its own component inside <MapContainer>.
+// Clicking empty map background clears the selection (needs its own component inside MapContainer).
 function ClearSelectionOnMapClick({ onClear }) {
   useMapEvents({ click: onClear });
   return null;
 }
 
 /**
- * A catchment-location map, shared by the main dashboard and the data
- * stream monitor so both screens show the same markers and the same
- * click-to-select behaviour instead of two separate implementations.
- *
- * `colorFor(catchment)` is optional and lets a caller encode something
- * per marker (the dashboard uses it for alert-severity risk colour);
- * without it every marker uses the one default accent colour.
- * `onSelect` is optional too, a map with nothing to select (none here
- * yet) just shows the catchments.
- *
- * Pass a single-item `catchments` array (the data stream monitor, for
- * its one selected river) to switch into the focused, labelled, fixed-
- * zoom mode described above; pass the full list (the main dashboard)
- * for the usual all-catchments bounds-fit view.
+ * Catchment map shared by the dashboard and the data stream monitor.
+ * colorFor(catchment) sets each marker's colour; onSelect is optional.
+ * A single catchment switches to the focused, labelled view.
  */
 export default function CatchmentMap({
   catchments,
@@ -56,15 +34,7 @@ export default function CatchmentMap({
     ? { center: [catchments[0].latitude, catchments[0].longitude], zoom: FOCUSED_ZOOM }
     : { bounds: catchments.map((c) => [c.latitude, c.longitude]) };
 
-  // MapContainer only reads center/zoom/bounds on first mount; Leaflet
-  // treats the map as stateful afterwards (it assumes the viewer may
-  // have panned manually) and never recentres on a prop change alone.
-  // In focused mode that silently broke switching rivers, the map just
-  // kept showing wherever it first centred. Keying by the focused
-  // catchment forces a fresh map instance, and therefore a fresh
-  // initial view, each time the selection changes. The all-catchments
-  // bounds view keeps one stable key, so it is unaffected, it never
-  // needed to recentre after the first fit.
+  // MapContainer only reads its view on mount, so keying by the focused catchment recentres it.
   const mapKey = focused ? `focused-${catchments[0].id}` : "all";
 
   return (

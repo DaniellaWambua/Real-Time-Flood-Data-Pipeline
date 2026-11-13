@@ -1,7 +1,5 @@
-// Service worker for the installed app (registered by src/push.js).
-// Shows push notifications from the backend and opens the right screen when one is tapped. Pages are
-// fetched from the network first; only the app shell is kept for when the connection drops, and API
-// answers are never cached, so nobody is shown out-of-date flood data.
+// Service worker (registered by src/push.js): shows push notifications and opens the right screen.
+// Network first; only the app shell is cached, never API answers, so flood data is never stale.
 const SHELL = "flood-shell-v1";
 
 self.addEventListener("install", (event) => {
