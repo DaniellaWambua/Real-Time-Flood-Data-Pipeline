@@ -1,0 +1,4 @@
+target,mode,val,base_rate,avg_precision,recall_top5pct
+today,weights,2019,0.012,0.257,0.67
+today,weights,2021,0.005,0.06,0.24
+today,weights,2023,0.027,0.052,0.06

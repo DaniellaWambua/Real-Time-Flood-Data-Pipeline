@@ -56,3 +56,16 @@ def execute(sql, params=None):
         conn.commit()
     finally:
         conn.close()
+
+
+def execute_returning(sql, params=None):
+    """Run an INSERT ... RETURNING statement, commit, and return the returned row as a dict."""
+    conn = get_connection()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(sql, params or ())
+            row = cur.fetchone()
+        conn.commit()
+        return dict(row) if row is not None else None
+    finally:
+        conn.close()

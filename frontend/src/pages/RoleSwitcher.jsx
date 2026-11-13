@@ -29,11 +29,13 @@ const ROLES = [
   },
   {
     role: "emergency_responder",
-    description: "Overview and Alerts - the active/historical alert list, for coordinating field-level evacuation.",
+    description:
+      "Overview and Alerts - acknowledges and resolves alerts, records field updates and recovery work, and is emailed each new alert and heavy rain warning.",
   },
   {
     role: "government_official",
-    description: "Overview and Alerts - the same alert list, for monitoring high-risk areas and allocating resources.",
+    description:
+      "Overview and Alerts - monitors high-risk areas, records the resources allocated to each alert and recovery work, and is emailed each new alert and heavy rain warning.",
   },
 ];
 

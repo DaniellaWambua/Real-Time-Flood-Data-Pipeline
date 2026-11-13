@@ -251,3 +251,58 @@
 .alert-table-by {
   color: var(--text-muted);
 }
+
+.alert-wards {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* Responses recorded against one alert, opened under its row */
+.alert-responses-toggle {
+  white-space: nowrap;
+}
+
+.alert-responses-row td {
+  background: var(--surface-muted, rgba(0, 0, 0, 0.02));
+}
+
+.alert-responses {
+  display: grid;
+  gap: 10px;
+  padding: 6px 4px;
+}
+
+.alert-responses-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.alert-responses-list li {
+  display: grid;
+  grid-template-columns: 160px 1fr auto;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.alert-responses-kind {
+  font-weight: 600;
+}
+
+.alert-responses-by,
+.alert-responses-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.alert-responses-form {
+  display: flex;
+  gap: 8px;
+}
+
+.alert-responses-form input {
+  flex: 1;
+}

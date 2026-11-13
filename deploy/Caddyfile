@@ -1,0 +1,26 @@
+# Public entry point. Caddy obtains and renews the HTTPS certificate automatically.
+# The dashboard is served from the built React files; the API sits under /backend on the same address,
+# so the session cookie stays first-party. The internal scoring endpoint is never exposed.
+{$SITE_ADDRESS} {
+	encode gzip
+
+	handle /backend/internal/* {
+		respond 404
+	}
+
+	handle_path /backend/* {
+		reverse_proxy backend:5001
+	}
+
+	handle {
+		root * /srv/dashboard
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# Other names for the site (the www name and the original Azure address) send visitors to the main address,
+# so sign-in and Google sign-in only ever see one origin.
+{$REDIRECT_ADDRESSES} {
+	redir https://{$SITE_ADDRESS}{uri} permanent
+}

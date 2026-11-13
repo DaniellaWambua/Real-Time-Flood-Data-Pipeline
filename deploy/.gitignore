@@ -1,0 +1,6 @@
+# Server-only files: secrets, the built dashboard, backups and logs
+.env
+secrets/
+dashboard/
+backups/
+logs/

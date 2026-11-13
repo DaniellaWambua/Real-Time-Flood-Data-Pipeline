@@ -83,8 +83,9 @@ def score_window(window):
     return float(np.mean([float(m(x, training=False)[0, 0]) for m in models]))
 
 
-def detect(catchment_id, day, hydro_data_record_id=None):
-    """Score one catchment-day, save the result and return it."""
+def detect(catchment_id, day, hydro_data_record_id=None, notify=False):
+    """Score one catchment-day, save the result and return it. With notify, a new alert is also
+    emailed to responders and officials (live readings only; replays and rescoring pass False)."""
     window, reason = build_window(catchment_id, day)
     if window is None:
         return {"scored": False, "reason": reason}
@@ -114,5 +115,11 @@ def detect(catchment_id, day, hydro_data_record_id=None):
         conn.commit()
     finally:
         conn.close()
+    notified = None
+    if alert_id is not None and notify:
+        import notify as notifier  # noqa: PLC0415 - mail settings are only needed when an alert is sent
+        place = db.query_one("SELECT name, wards FROM catchment_areas WHERE id = %s", (catchment_id,))
+        notified = notifier.flood_alert(place["name"], place.get("wards"), day, severity, score, cfg["threshold"])
     return {"scored": True, "id": result_id, "score": score, "threshold": cfg["threshold"],
-            "flagged": flagged, "model": model_name, "alert_id": alert_id, "severity": severity}
+            "flagged": flagged, "model": model_name, "alert_id": alert_id, "severity": severity,
+            "notified": notified}

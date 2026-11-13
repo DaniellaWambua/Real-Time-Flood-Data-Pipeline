@@ -348,9 +348,9 @@ def log_category(action):
     alerts or the data pipeline. db/add_log_categories.py applies the same rules to old rows."""
     if action.startswith(("login_", "totp_")) or action == "password_reset_completed":
         return "sign_in"
-    if action.startswith("alert_"):
+    if action.startswith("alert_") or action == "rainfall_warning":
         return "alerts"
-    if action.startswith("reading_"):
+    if action.startswith(("reading_", "source_")):
         return "pipeline"
     return "accounts"
 

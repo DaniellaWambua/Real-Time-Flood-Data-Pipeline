@@ -1,6 +1,6 @@
 """
 Tests for backend/flood_detection.py on two real days from the features table
-whose 8-seed scores are known from the saved-model check.
+whose 8-seed scores (model v2) are known from data_collection/src/check_saved_model.py.
 """
 import sys
 from pathlib import Path
@@ -47,8 +47,8 @@ def run(code, day, drop=None):
 
 
 @pytest.mark.parametrize("code, day, stored, flagged", [
-    ("mathare", "2024-04-29", 0.7532, True),
-    ("ngong", "2024-07-15", 0.0006, False),
+    ("mathare", "2024-04-29", 0.7728, True),
+    ("ngong", "2024-07-15", 0.0007, False),
 ])
 def test_window_and_score_match_the_offline_model(code, day, stored, flagged):
     cfg, _ = fd.load_models()
@@ -59,7 +59,7 @@ def test_window_and_score_match_the_offline_model(code, day, stored, flagged):
         expected = (g["catchment"] == f[3:]).astype(float) if f.startswith("is_") else g[f]
         assert np.allclose(window[:, cfg["features"].index(f)], expected.values, atol=1e-5), f
     score = fd.score_window(window)
-    assert abs(score - stored) < 0.06  # saved and stored 8-seed averages differ by at most 0.056
+    assert abs(score - stored) < 0.001  # the backend scores exactly as the saved-model check did
     assert (score >= cfg["threshold"]) == flagged
 
 

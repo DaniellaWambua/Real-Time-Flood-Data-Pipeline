@@ -1,0 +1,27 @@
+serial,date,decision,confidence,clean_location,places,supported,possible,place_decision,share_mathare,share_nairobi,share_ngong,label_mathare,label_nairobi,label_ngong
+962,2002-05-14,KEEP,Medium-High,Kilimani,kilimani -> Kilimani,nairobi,ngong,matched,0.0,0.616,0.384,,,
+961,2002-05-14,KEEP,Medium,Nairobi (location unspecified),,,,no place found,0.0,0.0,0.0,,,
+960,2002-05-14,KEEP,Medium-High,Buruburu,,,,no place found,0.0,0.0,0.0,,,
+1290,2009-12-22,VERIFY,High event / Low spatial label,Makadara,,,,no place found,0.0,0.0,0.0,,,
+1289,2009-12-22,KEEP,High,Kibera,"kibera -> Laini Saba, Lindi, Makina, Sarangombe, Woodley/Kenyatta Golf",ngong,,matched,0.0,0.005,0.995,,,
+262,2009-12-23,VERIFY,High event / Low flood-specific row,Nairobi (location unspecified),,,,no place found,0.0,0.0,0.0,,,
+79,2009-12-23,KEEP,High,Nairobi (unspecified),,,,no place found,0.0,0.0,0.0,,,
+1214,2010-04-20,VERIFY,Medium,Nairobi (location unspecified in DesInventar),,,,no place found,0.0,0.0,0.0,,,
+1179,2010-07-01,VERIFY,Medium,Ngando,ngando -> Ngando,nairobi,ngong,matched,0.0,0.517,0.483,,,
+1178,2010-07-01,VERIFY,Medium,Kitisuru,kitisuru -> Kitisuru,mathare,,matched,0.956,0.044,0.0,,,
+1177,2010-07-01,VERIFY,Medium,Uthiru,"uthiru -> Uthiru, Uthiru/Ruthimitu",nairobi,mathare,matched,0.354,0.646,0.0,,,
+1176,2010-07-01,VERIFY,Medium,Kawangware,kawangware -> Kawangware,nairobi,,matched,0.0,1.0,0.0,,,
+1299,2012-05-04,KEEP,High,Ruai,ruai -> Ruai,,,outside catchments,0.0,0.014,0.0,,,
+1315,2012-05-13,KEEP,High,Mathare River area,"mathare -> Hospital, Huruma, Kiamaiko, Mabatini, Mathare North, Mlango Kubwa, Ngei",mathare,,matched,0.883,0.117,0.0,,,
+7032,2013-03-13,KEEP,High,Nairobi CBD,cbd -> Nairobi Central,nairobi,,matched,0.0,0.771,0.229,,,
+7029,2013-03-13,KEEP,High,Ngoro (unresolved locality),,,,no place found,0.0,0.0,0.0,,,
+7028,2013-03-13,KEEP,Medium-High,Kawangware,kawangware -> Kawangware,nairobi,,matched,0.0,1.0,0.0,,,
+5446,2013-03-29,KEEP,High,Nairobi CBD,cbd -> Nairobi Central,nairobi,,matched,0.0,0.771,0.229,,,
+5445,2013-03-29,KEEP,High,Ngoro (unresolved locality),,,,no place found,0.0,0.0,0.0,,,
+5441,2013-03-29,KEEP,Medium-High,Kawangware,kawangware -> Kawangware,nairobi,,matched,0.0,1.0,0.0,,,
+7005,2015-03-24,VERIFY,Low-Medium,"Laini Saba, Kibera","laini saba -> Laini Saba; kibera -> Laini Saba, Lindi, Makina, Sarangombe, Woodley/Kenyatta Golf",ngong,,matched,0.0,0.005,1.0,no_flood,no_flood,no_flood
+6815,2015-10-15,KEEP,High,Industrial Area,"industrial area -> Landimawe, Viwandani",ngong,,matched,0.0,0.122,0.878,no_flood,no_flood,no_flood
+6876,2015-11-14,KEEP,High,Nairobi (unspecified),,,,no place found,0.0,0.0,0.0,no_flood,no_flood,no_flood
+5577,2015-12-13,VERIFY,Medium,Nairobi (unspecified),,,,no place found,0.0,0.0,0.0,no_flood,no_flood,no_flood
+5578,2015-12-13,KEEP,High,Ruai,ruai -> Ruai,,,outside catchments,0.0,0.014,0.0,no_flood,no_flood,no_flood
+31444,2022-04-29,VERIFY,Low-Medium,Kibarage/Mowlem,mowlem -> Mowlem,nairobi,,matched,0.0,1.0,0.0,no_flood,no_flood,no_flood

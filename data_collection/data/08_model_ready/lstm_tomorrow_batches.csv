@@ -1,0 +1,4 @@
+target,mode,val,base_rate,avg_precision,recall_top5pct
+tomorrow,batches,2019,0.012,0.238,0.51
+tomorrow,batches,2021,0.005,0.022,0.27
+tomorrow,batches,2023,0.027,0.021,0.02

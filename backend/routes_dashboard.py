@@ -33,7 +33,7 @@ dashboard_bp = Blueprint("dashboard", __name__, url_prefix="/api")
 @login_required
 def list_catchments():
     rows = db.query_all(
-        "SELECT id, name, county, "
+        "SELECT id, name, county, wards, "
         "ST_X(geom) AS longitude, ST_Y(geom) AS latitude "
         "FROM catchment_areas WHERE is_active ORDER BY name"
     )
@@ -102,8 +102,9 @@ def list_alerts():
     sql = (
         "SELECT a.id, a.severity, a.status, a.created_at, a.updated_at, "
         "a.acknowledged_at, a.acknowledged_by, a.resolved_at, a.resolved_by, "
-        "ca.name AS catchment, a.anomaly_detection_result_id, "
-        "ar.detected_at AS flood_day, ar.anomaly_score, ar.threshold_used "
+        "ca.name AS catchment, ca.wards, a.anomaly_detection_result_id, "
+        "ar.detected_at AS flood_day, ar.anomaly_score, ar.threshold_used, "
+        "(SELECT COUNT(*) FROM alert_responses r WHERE r.alert_id = a.id) AS responses "
         + ALERT_FROM
     )
     params = [flood_detection.current_model_name()]
@@ -200,6 +201,75 @@ def update_alert(alert_id):
     )
     models.log_event(username, f"alert_{new_status}", f"alert {alert_id} ({alert['catchment']})")
     return jsonify({"id": alert_id, "status": new_status})
+
+
+# kind -> roles that may record it. 'recovery' is for after an alert is resolved.
+RESPONSE_KINDS = {"field": ("emergency_responder",), "resources": ("government_official",),
+                  "recovery": ("emergency_responder", "government_official")}
+MAX_NOTE = 1000
+
+
+@dashboard_bp.route("/alerts/<int:alert_id>/responses", methods=["GET"])
+@login_required
+def list_responses(alert_id):
+    """What has been done about one alert, oldest first, for everyone who can see the alert."""
+    rows = db.query_all(
+        "SELECT id, kind, note, author, author_role, created_at FROM alert_responses "
+        "WHERE alert_id = %s ORDER BY created_at, id",
+        (alert_id,),
+    )
+    return jsonify(_serialize(rows))
+
+
+@dashboard_bp.route("/alerts/<int:alert_id>/responses", methods=["POST"])
+@role_required("emergency_responder", "government_official")
+def add_response(alert_id):
+    """Emergency Responders record field updates, Government Officials record resources they
+    allocated, and either records recovery work once the alert is resolved."""
+    data = request.get_json(silent=True) or {}
+    kind, note = data.get("kind"), (data.get("note") or "").strip()
+    role = session.get("role")
+    if kind not in RESPONSE_KINDS:
+        return jsonify({"error": "kind must be field, resources or recovery"}), 400
+    if role not in RESPONSE_KINDS[kind]:
+        return jsonify({"error": f"a {role.replace('_', ' ')} cannot record a {kind} response"}), 403
+    if not note or len(note) > MAX_NOTE:
+        return jsonify({"error": f"note must be 1 to {MAX_NOTE} characters"}), 400
+    alert = db.query_one(
+        "SELECT a.id, a.status, ca.name AS catchment FROM alerts a "
+        "JOIN catchment_areas ca ON ca.id = a.catchment_id WHERE a.id = %s",
+        (alert_id,),
+    )
+    if alert is None:
+        return jsonify({"error": "no such alert"}), 404
+    if kind == "recovery" and alert["status"] != "resolved":
+        return jsonify({"error": "recovery work is recorded once the alert is resolved"}), 409
+    if kind != "recovery" and alert["status"] == "resolved":
+        return jsonify({"error": "this alert is resolved; record recovery work instead"}), 409
+    username = session.get("username")
+    row = db.execute_returning(
+        "INSERT INTO alert_responses (alert_id, kind, note, author, author_role) VALUES (%s, %s, %s, %s, %s) "
+        "RETURNING id, kind, note, author, author_role, created_at",
+        (alert_id, kind, note, username, role),
+    )
+    models.log_event(username, f"alert_response_{kind}", f"alert {alert_id} ({alert['catchment']})")
+    return jsonify(_serialize([row])[0]), 201
+
+
+@dashboard_bp.route("/forecast", methods=["GET"])
+@login_required
+def rainfall_forecast():
+    """The rainfall outlook: each active catchment's latest Open-Meteo forecast from today
+    onwards, with days at or above the warning level marked. A rule-based warning,
+    separate from the LSTM's alerts."""
+    rows = db.query_all(
+        "SELECT ca.name AS catchment, ca.wards, rf.forecast_date, rf.precipitation_mm, "
+        "rf.threshold_mm, rf.is_warning, rf.issued_at "
+        "FROM rainfall_forecasts rf JOIN catchment_areas ca ON ca.id = rf.catchment_id "
+        "WHERE ca.is_active AND rf.forecast_date >= (now() AT TIME ZONE 'Africa/Nairobi')::date "
+        "ORDER BY ca.name, rf.forecast_date"
+    )
+    return jsonify(_serialize(rows))
 
 
 @dashboard_bp.route("/sources", methods=["GET"])
