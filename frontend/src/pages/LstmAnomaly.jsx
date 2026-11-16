@@ -15,42 +15,38 @@ const TABS = [
   { id: "lookup", label: "Day lookup" },
 ];
 
-// From the proposal's success criteria (3.7), kept on the cards as the bar the
-// model is being held to rather than quietly dropped.
-const PROPOSAL_TARGET = { f1: 0.7, recall: 0.75 };
-
-// Precision, recall and F1, each with the counts behind it (F1 shows the proposal target).
+// The deployed model's event-level results on the held-out years: what an officer sees as one
+// warning per flood, rather than one score per day.
 function ScoreCards({ evaluation }) {
-  const flags = evaluation.true_positives + evaluation.false_positives;
+  const realEpisodes = evaluation.alarm_episodes - evaluation.false_alarm_episodes;
   return (
     <div className="metric-card-row lstm-metric-row">
       <MetricCard
         tone="soft"
-        label="Precision"
-        value={evaluation.precision.toFixed(3)}
+        label="Floods detected"
+        value={evaluation.events_detected}
+        valueSuffix={`of ${evaluation.events_total}`}
         glyph={IconTarget}
-        segments={[{ amount: evaluation.true_positives, color: "var(--accent-strong)" }]}
-        segmentsTotal={flags}
-        description={`${evaluation.true_positives} of ${flags} flagged days with a known label were flood days`}
+        segments={[{ amount: evaluation.events_detected, color: "var(--accent-strong)" }]}
+        segmentsTotal={evaluation.events_total}
+        description="flood events with at least one alarm"
       />
       <MetricCard
         tone="deep"
-        label="Recall"
-        value={evaluation.recall.toFixed(3)}
-        valueSuffix={`target ≥ ${PROPOSAL_TARGET.recall}`}
+        label="Alarms that were real"
+        value={`${Math.round(evaluation.event_precision * 100)}%`}
         glyph={IconPulse}
-        segments={[{ amount: evaluation.true_positives, color: "#ffffff" }]}
-        segmentsTotal={evaluation.flood_days}
-        description={`${evaluation.true_positives} of ${evaluation.flood_days} flood days flagged`}
+        segments={[{ amount: realEpisodes, color: "#ffffff" }]}
+        segmentsTotal={evaluation.alarm_episodes}
+        description={`${realEpisodes} of ${evaluation.alarm_episodes} alarm periods matched a flood`}
       />
       <MetricCard
         tone="soft"
-        label="F1-score"
-        value={evaluation.f1.toFixed(3)}
-        valueSuffix={`target ≥ ${PROPOSAL_TARGET.f1}`}
+        label="False alarms"
+        value={evaluation.false_episodes_per_catchment_year.toFixed(1)}
+        valueSuffix="per catchment a year"
         glyph={IconBrain}
-        badge={{ role: "muted", glyph: "○", label: "Below proposal target" }}
-        description={`Precision and recall together, at the ${evaluation.threshold.toFixed(3)} flag line`}
+        description="alarm periods that matched no flood"
       />
     </div>
   );
@@ -74,8 +70,8 @@ export default function LstmAnomaly() {
   return (
     <section>
       <PageHeader
-        title="LSTM anomaly model"
-        subtitle="The deployed model's own results, the days it has scored, and any day looked up in full"
+        title="LSTM flood model"
+        subtitle="The deployed model's results on 2024 and 2025, the days it has scored, and any day looked up in full"
       />
 
       {error && <p className="error">{error}</p>}

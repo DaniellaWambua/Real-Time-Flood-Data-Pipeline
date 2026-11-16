@@ -89,10 +89,13 @@ def rainfall_forecast():
 @dashboard_bp.route("/sources", methods=["GET"])
 @login_required
 def list_sources():
-    """System Administration: each data source's status, last ingested record and record count."""
+    """System Administration: each data source's status, latest reading and record count.
+    The forecast feed's rows are in rainfall_forecasts, not hydro_data_records, so they are counted there."""
     rows = db.query_all(
         "SELECT ds.id, ds.name, ds.source_type, ds.connection_status, ds.datasets, ds.created_at, "
-        "MAX(hdr.recorded_at) AS last_ingested_at, COUNT(hdr.id) AS record_count "
+        "COALESCE(MAX(hdr.recorded_at), "
+        "(SELECT MAX(rf.issued_at) FROM rainfall_forecasts rf WHERE rf.source = ds.name)) AS last_ingested_at, "
+        "COUNT(hdr.id) + (SELECT COUNT(*) FROM rainfall_forecasts rf WHERE rf.source = ds.name) AS record_count "
         "FROM data_sources ds "
         "LEFT JOIN hydro_data_records hdr ON hdr.data_source_id = ds.id "
         "WHERE ds.is_active "
