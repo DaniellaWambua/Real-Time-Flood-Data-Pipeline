@@ -329,10 +329,23 @@ def disable_totp(user_id):
 LOG_CATEGORIES = ("sign_in", "accounts", "alerts", "pipeline")
 
 
+def last_password_change(username):
+    """When the user last chose a password (set-password link or Settings), from the activity log, or None."""
+    row = db.query_one(
+        "SELECT MAX(occurred_at) AS at FROM system_logs WHERE actor = %s "
+        "AND action IN ('user_activated', 'password_reset_completed', 'password_changed')",
+        (username,),
+    )
+    return row["at"] if row else None
+
+
+SIGN_IN_PASSWORD_EVENTS = ("password_reset_completed", "password_changed", "password_change_failure")
+
+
 def log_category(action):
     """Which Activity log area an event belongs to: sign-ins and security, user accounts,
     alerts or the data pipeline. db/add_log_categories.py applies the same rules to old rows."""
-    if action.startswith(("login_", "totp_")) or action == "password_reset_completed":
+    if action.startswith(("login_", "totp_")) or action in SIGN_IN_PASSWORD_EVENTS:
         return "sign_in"
     if action.startswith(("alert_", "incident_", "notification_")) or action == "rainfall_warning":
         return "alerts"

@@ -3,7 +3,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { logout, get, me } from "../api";
 import { roleLabel } from "../roleLabel";
 import { canAccess } from "../roleAccess";
-import { IconGrid, IconPulse, IconBell, IconSliders, IconBrain, IconSwitch, IconInbox } from "./icons";
+import { IconGrid, IconPulse, IconBell, IconSliders, IconBrain, IconGear, IconInbox } from "./icons";
 import Footer from "./Footer";
 import "./Layout.css";
 
@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   { to: "/incidents", label: "Incidents", Icon: IconBell, badge: "incidents" },
   { to: "/notifications", label: "Notifications", Icon: IconInbox, badge: "unread" },
   { to: "/admin", label: "Administration", Icon: IconSliders },
-  { to: "/role-switcher", label: "Role switcher", Icon: IconSwitch },
+  { to: "/settings", label: "Settings", Icon: IconGear },
 ];
 
 export default function Layout({ user, onLoggedOut }) {

@@ -17,3 +17,4 @@ tensorflow-cpu==2.19.1
 keras==3.10.0
 confluent-kafka==2.16.0
 earthengine-api==1.6.15
+zxcvbn==4.5.0

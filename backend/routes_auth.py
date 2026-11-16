@@ -18,6 +18,8 @@ from google.oauth2 import id_token as google_id_token
 
 import config
 import models
+import password_policy
+from decorators import login_required
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -152,14 +154,13 @@ def use_account_link(code):
     sign-in step: entering a code, or setting up 2FA for a new account."""
     data = request.get_json(silent=True) or {}
     password = data.get("password") or ""
-    if len(password) < 8:
-        return jsonify({"error": "password must be at least 8 characters"}), 400
-    if len(password) > 128:
-        return jsonify({"error": "password must be at most 128 characters"}), 400
 
     link = models.find_link(code)
     if link is None or not link["is_active"]:
         return jsonify({"error": "this link is no longer valid. Ask your administrator for a new one."}), 404
+    problem = password_policy.check(password, link["username"], link.get("full_name"), link.get("email"))
+    if problem:
+        return jsonify({"error": problem}), 400
     if not models.set_password_with_link(link["link_id"], link["user_id"], password):
         return jsonify({"error": "this link has already been used"}), 409
 
@@ -186,6 +187,58 @@ def me():
             "role": session["role"],
         }
     )
+
+
+@auth_bp.route("/account", methods=["GET"])
+@login_required
+def account():
+    """The signed-in user's own details for the Settings page. Never returns the password hash or 2FA secret."""
+    user = models.get_user_by_id(session["user_id"])
+    if user is None:
+        return jsonify({"error": "authentication required"}), 401
+    return jsonify({
+        "username": user["username"],
+        "full_name": user.get("full_name"),
+        "email": user.get("email"),
+        "organisation": user.get("organisation"),
+        "role": user["role"],
+        "totp_enabled": bool(user.get("totp_enabled")),
+        "created_at": user["created_at"].isoformat() if user.get("created_at") else None,
+        "password_changed_at": _iso(models.last_password_change(user["username"])),
+    })
+
+
+def _iso(value):
+    return value.isoformat() if value else None
+
+
+@auth_bp.route("/account/password", methods=["POST"])
+@login_required
+def change_password():
+    """Change the signed-in user's own password. The current password is required, so a session left
+    open on a shared computer cannot be used to take over the account."""
+    data = request.get_json(silent=True) or {}
+    current = data.get("current_password") or ""
+    new = data.get("new_password") or ""
+    if not current or not new:
+        return jsonify({"error": "current and new password are required"}), 400
+    if new == current:
+        return jsonify({"error": "the new password must be different from the current one"}), 400
+
+    user = models.get_user_by_id(session["user_id"])
+    if user is None:
+        return jsonify({"error": "authentication required"}), 401
+    problem = password_policy.check(new, user["username"], user.get("full_name"), user.get("email"),
+                                    user.get("organisation"))
+    if problem:
+        return jsonify({"error": problem}), 400
+    if not models.verify_password(user, current):
+        models.log_event(user["username"], "password_change_failure", "wrong current password")
+        return jsonify({"error": "the current password is not correct"}), 403
+
+    models.update_password(user["username"], new)
+    models.log_event(user["username"], "password_changed", None)
+    return jsonify({"message": "password changed"})
 
 
 def _enrolling_user():

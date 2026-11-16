@@ -175,9 +175,9 @@ def test_using_a_link_sets_the_password_then_asks_for_2fa_setup():
         patch("routes_auth.models.get_user_by_id", return_value={**ROW, "password_hash": "x"}),
         patch("routes_auth.models.log_event") as mock_log,
     ):
-        resp = client.post("/account/link/CODE", json={"password": "a-long-password"})
+        resp = client.post("/account/link/CODE", json={"password": "kettle sings at dawn"})
     assert resp.status_code == 200 and resp.get_json() == {"requires_totp_setup": True}
-    mock_set.assert_called_once_with(9, 5, "a-long-password")
+    mock_set.assert_called_once_with(9, 5, "kettle sings at dawn")
     assert [c.args[1] for c in mock_log.call_args_list] == ["user_activated", "login_password_ok_awaiting_2fa_setup"]
     with client.session_transaction() as sess:
         assert "user_id" not in sess and sess["setup_user_id"] == 5
@@ -188,7 +188,7 @@ def test_a_used_link_cannot_be_used_again():
         patch("routes_auth.models.find_link", return_value=LINK),
         patch("routes_auth.models.set_password_with_link", return_value=False),
     ):
-        assert _client().post("/account/link/CODE", json={"password": "a-long-password"}).status_code == 409
+        assert _client().post("/account/link/CODE", json={"password": "kettle sings at dawn"}).status_code == 409
 
 
 def test_a_reset_does_not_skip_two_factor_sign_in():
@@ -199,7 +199,7 @@ def test_a_reset_does_not_skip_two_factor_sign_in():
         patch("routes_auth.models.get_user_by_id", return_value={**ROW, "totp_enabled": True}),
         patch("routes_auth.models.log_event"),
     ):
-        resp = client.post("/account/link/CODE", json={"password": "a-long-password"})
+        resp = client.post("/account/link/CODE", json={"password": "kettle sings at dawn"})
     assert resp.get_json() == {"requires_totp": True}
     with client.session_transaction() as sess:
         assert "user_id" not in sess

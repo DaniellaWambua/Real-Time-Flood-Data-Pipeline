@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Footer from "../components/Footer";
 import { IconBell } from "../components/icons";
 import SecondFactor from "../components/SecondFactor";
+import PasswordStrength from "../components/PasswordStrength";
 import { get, post } from "../api";
 
 // Opened from an invite or password-reset email (/account/<code>). The person chooses their
@@ -13,6 +14,7 @@ export default function SetPassword({ code, onSignedIn, onDone }) {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
+  const [strongEnough, setStrongEnough] = useState(false);
   const [secondStep, setSecondStep] = useState(null); // "setup" or "verify" once the password is saved
 
   useEffect(() => {
@@ -23,6 +25,10 @@ export default function SetPassword({ code, onSignedIn, onDone }) {
 
   function handleSubmit(event) {
     event.preventDefault();
+    if (!strongEnough) {
+      setError("Choose a stronger password, as the meter shows.");
+      return;
+    }
     if (password !== confirm) {
       setError("The two passwords do not match.");
       return;
@@ -81,25 +87,30 @@ export default function SetPassword({ code, onSignedIn, onDone }) {
               <input
                 type="password"
                 autoComplete="new-password"
-                minLength={8}
+                minLength={12}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoFocus
                 required
               />
             </label>
+            <PasswordStrength
+              password={password}
+              person={{ username: link.username, fullName: link.full_name, email: link.email }}
+              onChange={setStrongEnough}
+            />
             <label>
               Confirm password
               <input
                 type="password"
                 autoComplete="new-password"
-                minLength={8}
+                minLength={12}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 required
               />
             </label>
-            <p className="subtitle">At least 8 characters. This link works once.</p>
+            <p className="subtitle">This link works once.</p>
 
             {error && <p className="error">{error}</p>}
 

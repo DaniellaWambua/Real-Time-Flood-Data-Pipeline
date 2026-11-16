@@ -4,17 +4,17 @@ export const ROLE_OPTIONS = [
   {
     value: "disaster_management_agency",
     label: "Disaster Management Officer",
-    description: "Views the overview, data stream, model results and alerts.",
+    description: "Monitors the readings and the model, and verifies or dismisses each new incident before the field is told.",
   },
   {
     value: "emergency_responder",
     label: "Emergency Responder",
-    description: "Views alerts and acknowledges and resolves them.",
+    description: "Acknowledges and resolves verified incidents, recording whether flooding was found.",
   },
   {
     value: "government_official",
     label: "Government Official",
-    description: "Views the overview and alerts.",
+    description: "Follows verified incidents and records the resources allocated to them.",
   },
   {
     value: "system_administrator",
