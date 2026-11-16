@@ -127,10 +127,18 @@ def _provisional_card():
 def list_scores():
     """The scores list: newest first, filtered by catchment, date range and flagged,
     with the matching total so "load more" knows when to stop. Days the full model has not
-    scored yet carry the fast model's provisional score."""
+    scored yet carry the fast model's provisional score. stage narrows the list to
+    provisional or confirmed scores."""
     where, params = _filters()
     full = flood_detection.current_model_name()
     visible = flood_detection.visible_results_params()
+    stage = request.args.get("stage")
+    if stage == "provisional":
+        where += "AND ar.model_name <> %s "
+        params.append(full)
+    elif stage == "confirmed":
+        where += "AND ar.model_name = %s "
+        params.append(full)
     joins = (
         "FROM anomaly_detection_results ar "
         "JOIN catchment_areas ca ON ca.id = ar.catchment_id "

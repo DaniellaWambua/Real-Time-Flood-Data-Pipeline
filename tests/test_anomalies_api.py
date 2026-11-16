@@ -10,6 +10,8 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 import app as app_module  # noqa: E402
 import flood_detection  # noqa: E402
@@ -80,6 +82,22 @@ def test_scores_filters_by_catchment_date_range_and_flagged():
     assert "NOT EXISTS" in seen["sql"] and "AS provisional" in seen["sql"]
     visible = tuple(flood_detection.visible_results_params())
     assert seen["params"] == (MODEL, *visible, "Ngong", datetime.date(2024, 5, 1), datetime.date(2024, 5, 31), 10, 5)
+
+
+@pytest.mark.parametrize("stage, clause", [("provisional", "AND ar.model_name <> %s"), ("confirmed", "AND ar.model_name = %s")])
+def test_scores_filters_by_stage(stage, clause):
+    client = _client()
+    _login(client)
+    seen = {}
+
+    with patch("routes_anomalies.db.query_one", return_value={"count": 0}), patch(
+        "routes_anomalies.db.query_all", side_effect=lambda sql, params: seen.update(sql=sql, params=params) or []
+    ):
+        resp = client.get(f"/api/anomalies/scores?stage={stage}")
+    assert resp.status_code == 200
+    assert clause in seen["sql"]
+    # the stage compares against the full model's name, after the shared filters and before paging
+    assert seen["params"] == (MODEL, *flood_detection.visible_results_params(), MODEL, 50, 0)
 
 
 def test_scores_ignores_an_unparseable_date():
