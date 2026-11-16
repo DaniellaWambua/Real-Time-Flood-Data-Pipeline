@@ -17,6 +17,13 @@ const PERIODS = [
   { id: "", label: "All time" },
 ];
 
+// Provisional: the fast model's score, waiting for CHIRPS. Confirmed: the full model's.
+const STAGES = [
+  { id: "", label: "All" },
+  { id: "provisional", label: "Provisional" },
+  { id: "confirmed", label: "Confirmed" },
+];
+
 function formatDay(iso) {
   return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { timeZone: "UTC" });
 }
@@ -31,7 +38,7 @@ function rangeFrom(period, lastDay) {
 }
 
 export default function ScoresTab({ catchments }) {
-  const [filters, setFilters] = useState({ catchment: "", period: "30", flagged: false });
+  const [filters, setFilters] = useState({ catchment: "", period: "30", stage: "", flagged: false });
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [data, setData] = useState(null);
   const [lastDay, setLastDay] = useState(null);
@@ -59,7 +66,9 @@ export default function ScoresTab({ catchments }) {
     let current = true;
     get("/api/anomalies/scores", {
       catchment: filters.catchment,
-      from: rangeFrom(filters.period, lastDay),
+      // confirmed scores end before the provisional ones, so their period counts back from the last confirmed day
+      from: rangeFrom(filters.period, filters.stage === "confirmed" && confirmedDay ? confirmedDay : lastDay),
+      stage: filters.stage,
       flagged: filters.flagged ? "true" : "",
       limit,
     })
@@ -68,7 +77,7 @@ export default function ScoresTab({ catchments }) {
     return () => {
       current = false;
     };
-  }, [filters, limit, lastDay]);
+  }, [filters, limit, lastDay, confirmedDay]);
 
   function updateFilter(key, value) {
     setData(null);
@@ -117,6 +126,19 @@ export default function ScoresTab({ catchments }) {
           ))}
         </div>
 
+        <div className="lstm-seg" role="group" aria-label="Score stage">
+          {STAGES.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              className={filters.stage === s.id ? "active" : ""}
+              onClick={() => updateFilter("stage", s.id)}
+            >
+              {s.label}
+            </button>
+          ))}
+        </div>
+
         <label className="pill-select">
           <span className="pill-select-key">Period</span>
           <select value={filters.period} onChange={(e) => updateFilter("period", e.target.value)}>
@@ -158,7 +180,13 @@ export default function ScoresTab({ catchments }) {
       )}
 
       {error && <p className="error">{error}</p>}
-      {data && rows.length === 0 && <EmptyState>No scores match these filters.</EmptyState>}
+      {data && rows.length === 0 && (
+        <EmptyState>
+          {filters.stage === "provisional"
+            ? "No provisional scores in this period. Every day has been confirmed."
+            : "No scores match these filters."}
+        </EmptyState>
+      )}
 
       {rows.length > 0 && (
         <>
