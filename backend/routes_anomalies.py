@@ -126,27 +126,30 @@ def _provisional_card():
 @login_required
 def list_scores():
     """The scores list: newest first, filtered by catchment, date range and flagged,
-    with the matching total so "load more" knows when to stop."""
+    with the matching total so "load more" knows when to stop. Days the full model has not
+    scored yet carry the fast model's provisional score."""
     where, params = _filters()
-    model = [flood_detection.current_model_name()]
+    full = flood_detection.current_model_name()
+    visible = flood_detection.visible_results_params()
     joins = (
         "FROM anomaly_detection_results ar "
         "JOIN catchment_areas ca ON ca.id = ar.catchment_id "
         "LEFT JOIN alerts a ON a.anomaly_detection_result_id = ar.id "
         "LEFT JOIN incidents i ON i.id = a.incident_id "
-        "WHERE ca.is_active AND ar.model_name = %s "
+        "WHERE ca.is_active AND " + flood_detection.VISIBLE_RESULTS
     )
-    total = db.query_one(f"SELECT COUNT(*) AS count {joins}{where}", tuple(model + params))["count"]
+    total = db.query_one(f"SELECT COUNT(*) AS count {joins}{where}", tuple(visible + params))["count"]
 
     limit = min(request.args.get("limit", default=50, type=int) or 50, 500)
     offset = max(request.args.get("offset", default=0, type=int) or 0, 0)
     rows = db.query_all(
         "SELECT ar.id, ar.detected_at::date AS day, ca.name AS catchment, ar.anomaly_score, "
-        "ar.threshold_used, ar.is_anomalous, a.severity AS alert_severity, i.status AS alert_status, a.incident_id "
+        "ar.threshold_used, ar.is_anomalous, (ar.model_name <> %s) AS provisional, "
+        "a.severity AS alert_severity, i.status AS alert_status, a.incident_id "
         + joins
         + where
         + "ORDER BY ar.detected_at DESC, ca.name LIMIT %s OFFSET %s",
-        tuple(model + params + [limit, offset]),
+        tuple([full] + visible + params + [limit, offset]),
     )
     return jsonify({"total": total, "limit": limit, "offset": offset, "rows": _iso(rows)})
 
