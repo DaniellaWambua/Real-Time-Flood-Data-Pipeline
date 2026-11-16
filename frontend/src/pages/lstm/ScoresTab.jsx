@@ -35,14 +35,21 @@ export default function ScoresTab({ catchments }) {
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [data, setData] = useState(null);
   const [lastDay, setLastDay] = useState(null);
+  const [confirmedDay, setConfirmedDay] = useState(null);
   const [modelName, setModelName] = useState("");
+  const [fastName, setFastName] = useState("");
   const [error, setError] = useState(null);
 
+  // Periods count back from the newest scored day, provisional or confirmed.
   useEffect(() => {
     get("/api/anomalies/model")
       .then((model) => {
-        setLastDay(model.live?.last_day ?? null);
+        const confirmed = model.live?.last_day ?? null;
+        const provisional = model.provisional?.live?.last_day ?? null;
+        setConfirmedDay(confirmed);
+        setLastDay(provisional && (!confirmed || provisional > confirmed) ? provisional : confirmed);
         setModelName(model.name);
+        setFastName(model.provisional?.name ?? "");
       })
       .catch((err) => setError(err.message));
   }, []);
@@ -72,13 +79,14 @@ export default function ScoresTab({ catchments }) {
   function exportCsv() {
     downloadCsv(
       "anomaly-scores",
-      ["Date", "Catchment", "Score", "Threshold", "Flagged", "Alert"],
+      ["Date", "Catchment", "Score", "Threshold", "Flagged", "Stage", "Alert"],
       (data?.rows ?? []).map((row) => [
         row.day,
         row.catchment,
         Number(row.anomaly_score).toFixed(3),
         Number(row.threshold_used).toFixed(3),
         row.is_anomalous ? "yes" : "no",
+        row.provisional ? "provisional" : "confirmed",
         row.alert_severity ?? "",
       ]),
     );
@@ -137,9 +145,15 @@ export default function ScoresTab({ catchments }) {
         </button>
       </div>
 
-      {modelName && lastDay && (
+      {modelName && confirmedDay && (
         <p className="lstm-source-note">
-          Scored by <strong>{modelName}</strong>, up to {formatDay(lastDay)}
+          Confirmed by <strong>{modelName}</strong> up to {formatDay(confirmedDay)}
+          {fastName && lastDay > confirmedDay && (
+            <>
+              . Later days are provisional, scored by <strong>{fastName}</strong> up to {formatDay(lastDay)}{" "}
+              until CHIRPS rainfall arrives
+            </>
+          )}
         </p>
       )}
 
@@ -156,6 +170,7 @@ export default function ScoresTab({ catchments }) {
                   <th>Catchment</th>
                   <th>Score</th>
                   <th>Flagged</th>
+                  <th>Stage</th>
                   <th>Alert</th>
                 </tr>
               </thead>
@@ -171,6 +186,13 @@ export default function ScoresTab({ catchments }) {
                       </span>
                     </td>
                     <td>{row.is_anomalous ? "Yes" : <span className="lstm-dash">No</span>}</td>
+                    <td>
+                      {row.provisional ? (
+                        <StatusChip role="warning" label="provisional" />
+                      ) : (
+                        <span className="lstm-dash">confirmed</span>
+                      )}
+                    </td>
                     <td>
                       {row.alert_severity ? (
                         <StatusChip role={severityRole(row.alert_severity)} label={row.alert_severity} />

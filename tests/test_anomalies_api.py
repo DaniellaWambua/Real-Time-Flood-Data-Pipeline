@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
 import app as app_module  # noqa: E402
+import flood_detection  # noqa: E402
 
 MODEL_DIR = Path(__file__).resolve().parent.parent / "models" / "flood_lstm"
 CONFIG = json.loads((MODEL_DIR / "config.json").read_text())
@@ -75,7 +76,10 @@ def test_scores_filters_by_catchment_date_range_and_flagged():
     assert resp.status_code == 200
     assert resp.get_json()["total"] == 0
     assert "AND ca.name = %s" in seen["sql"] and "AND ar.is_anomalous" in seen["sql"]
-    assert seen["params"] == (MODEL, "Ngong", datetime.date(2024, 5, 1), datetime.date(2024, 5, 31), 10, 5)
+    # the full model's scores, and the fast model's for days the full model has not scored yet
+    assert "NOT EXISTS" in seen["sql"] and "AS provisional" in seen["sql"]
+    visible = tuple(flood_detection.visible_results_params())
+    assert seen["params"] == (MODEL, *visible, "Ngong", datetime.date(2024, 5, 1), datetime.date(2024, 5, 31), 10, 5)
 
 
 def test_scores_ignores_an_unparseable_date():
@@ -88,7 +92,7 @@ def test_scores_ignores_an_unparseable_date():
     ):
         resp = client.get("/api/anomalies/scores?from=not-a-date")
     assert resp.status_code == 200
-    assert seen["params"] == (MODEL, 50, 0)
+    assert seen["params"] == (MODEL, *flood_detection.visible_results_params(), 50, 0)
 
 
 def test_calendar_defaults_to_the_last_month_scored():
