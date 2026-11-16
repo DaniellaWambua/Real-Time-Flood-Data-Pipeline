@@ -2,142 +2,14 @@ import { useEffect, useState } from "react";
 import EmptyState from "../../components/EmptyState";
 import { get } from "../../api";
 
-// The four evaluation figures, read from the model's evaluation.json via the model card,
-// so retraining updates them without editing this file.
+// When the deployed model flagged, month by month over the held-out years. Its results are on the cards
+// above the tabs, read from evaluation.json, so retraining updates them without editing this file.
 
 const MONTH_INITIAL = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"];
 // Kenya's two wet seasons, shaded behind the months strip. Nothing is computed
 // from them; they are there so the pattern in the bars can be read at a glance.
 const LONG_RAINS = [2, 3, 4];
 const SHORT_RAINS = [9, 10, 11];
-
-function formatDay(iso) {
-  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", { timeZone: "UTC" });
-}
-
-// A ring is the honest shape for "x of y caught": the gap is as readable as
-// the fill, which a bar of its own does not give you at this size.
-function Ring({ value, total }) {
-  const radius = 26;
-  const circumference = 2 * Math.PI * radius;
-  const filled = total > 0 ? value / total : 0;
-  return (
-    <svg className="lstm-stat-ring" viewBox="0 0 64 64" role="presentation">
-      <circle cx="32" cy="32" r={radius} className="lstm-stat-ring-track" />
-      <circle
-        cx="32"
-        cy="32"
-        r={radius}
-        className="lstm-stat-ring-fill"
-        strokeDasharray={`${circumference * filled} ${circumference}`}
-      />
-      <text x="32" y="36" className="lstm-stat-ring-text">
-        {Math.round(filled * 100)}%
-      </text>
-    </svg>
-  );
-}
-
-// Twelve marks for twelve months, so "3.3 a year" reads as how often rather
-// than as a bare number.
-function Months({ rate }) {
-  const whole = Math.floor(rate);
-  return (
-    <div className="lstm-stat-months" role="presentation">
-      {Array.from({ length: 12 }, (_, i) => (
-        <span
-          key={i}
-          className={`lstm-stat-month${i < whole ? " lstm-stat-month--on" : ""}${
-            i === whole && rate % 1 > 0 ? " lstm-stat-month--part" : ""
-          }`}
-        />
-      ))}
-    </div>
-  );
-}
-
-function Scale({ value }) {
-  return (
-    <div className="lstm-stat-scale">
-      <div className="lstm-stat-scale-track">
-        <span className="lstm-stat-scale-fill" style={{ width: `${value * 100}%` }} />
-      </div>
-      <div className="lstm-stat-scale-ticks">
-        <span>0</span>
-        <span>0.5</span>
-        <span>1</span>
-      </div>
-    </div>
-  );
-}
-
-function Split({ measured, total }) {
-  return (
-    <div className="lstm-stat-split">
-      <div className="lstm-stat-scale-track">
-        <span className="lstm-stat-scale-fill" style={{ width: `${(measured / total) * 100}%` }} />
-      </div>
-      <div className="lstm-stat-split-key">
-        <span>
-          <i className="lstm-stat-swatch lstm-stat-swatch--on" />
-          labelled
-        </span>
-        <span>
-          <i className="lstm-stat-swatch" />
-          {(total - measured).toLocaleString()} unknown
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// The fast model scores each day from IMERG and ERA5-Land, about a week after it happens, instead of
-// waiting about six weeks for CHIRPS. Its alerts are provisional until the model above confirms them.
-function ProvisionalModel({ card }) {
-  const e = card.evaluation;
-  return (
-    <>
-      <div className="lstm-section-head">
-        <h2 className="panel-title">Provisional model: {card.name}</h2>
-        <span className="panel-caption">
-          same network without CHIRPS, flag line {card.threshold}; {card.live.days_scored.toLocaleString()} days
-          scored so far{card.live.last_day ? `, latest ${formatDay(card.live.last_day)}` : ""}
-        </span>
-      </div>
-      {e ? (
-        <div className="lstm-stat-grid">
-          <div className="lstm-stat lstm-stat--soft">
-            <div className="lstm-stat-label">Events caught</div>
-            <div className="lstm-stat-value figure">
-              {e.events_detected}
-              <span className="lstm-stat-of">of {e.events_total}</span>
-            </div>
-            <p className="lstm-stat-note">on the same held-out years</p>
-          </div>
-          <div className="lstm-stat lstm-stat--deep">
-            <div className="lstm-stat-label">Real alarm episodes</div>
-            <div className="lstm-stat-value figure">{Math.round(e.event_precision * 100)}%</div>
-            <p className="lstm-stat-note">{e.false_episodes_per_catchment_year.toFixed(1)} false a year per catchment</p>
-          </div>
-          <div className="lstm-stat lstm-stat--soft">
-            <div className="lstm-stat-label">Average precision</div>
-            <div className="lstm-stat-value figure">{e.average_precision.toFixed(3)}</div>
-            <Scale value={e.average_precision} />
-          </div>
-          <div className="lstm-stat lstm-stat--deep">
-            <div className="lstm-stat-label">Waits for</div>
-            <div className="lstm-stat-value figure">
-              ~8<span className="lstm-stat-of">days</span>
-            </div>
-            <p className="lstm-stat-note">ERA5-Land, the slowest input it uses</p>
-          </div>
-        </div>
-      ) : (
-        <EmptyState>No evaluation saved for the provisional model yet.</EmptyState>
-      )}
-    </>
-  );
-}
 
 // Flags by month, to show they fall in Nairobi's two wet seasons.
 function WhenItFlagged({ evaluation }) {
@@ -173,7 +45,8 @@ function WhenItFlagged({ evaluation }) {
       <div className="lstm-section-head">
         <h2 className="panel-title">When it flagged</h2>
         <span className="panel-caption">
-          {evaluation.flagged_total} flagged days, by month, all three catchments
+          {evaluation.flagged_total} flagged days by month, all three catchments, {firstYear} to {lastYear}: years
+          the model never trained on
         </span>
       </div>
 
@@ -205,6 +78,10 @@ function WhenItFlagged({ evaluation }) {
 
       <p className="lstm-when-key">
         <span>
+          <i className="lstm-when-swatch lstm-when-swatch--bar" />
+          flagged days in the month
+        </span>
+        <span>
           <i className="lstm-when-swatch" />
           long rains, March to May, and short rains, October to December
         </span>
@@ -226,60 +103,6 @@ export default function OverviewTab({ model }) {
 
   return (
     <div className="lstm-tab">
-      <div className="lstm-section-head">
-        <h2 className="panel-title">How {model.name} was measured</h2>
-        <span className="panel-caption">
-          {formatDay(evaluation.test_period[0])} to {formatDay(evaluation.test_period[1])}, years the model
-          never trained on
-        </span>
-      </div>
-
-      <div className="lstm-stat-grid">
-        <div className="lstm-stat lstm-stat--soft lstm-stat--ring">
-          <div>
-            <div className="lstm-stat-label">Events caught</div>
-            <div className="lstm-stat-value figure">
-              {evaluation.events_detected}
-              <span className="lstm-stat-of">of {evaluation.events_total}</span>
-            </div>
-            <p className="lstm-stat-note">events with at least one flag</p>
-          </div>
-          <Ring value={evaluation.events_detected} total={evaluation.events_total} />
-        </div>
-
-        <div className="lstm-stat lstm-stat--deep">
-          <div className="lstm-stat-label">False alarms</div>
-          <div className="lstm-stat-value figure">
-            {evaluation.false_episodes_per_catchment_year.toFixed(1)}
-            <span className="lstm-stat-of">a year</span>
-          </div>
-          <Months rate={evaluation.false_episodes_per_catchment_year} />
-          <p className="lstm-stat-note">
-            alarm episodes per catchment that matched no flood; {Math.round(evaluation.event_precision * 100)}% of
-            episodes were real
-          </p>
-        </div>
-
-        <div className="lstm-stat lstm-stat--soft">
-          <div className="lstm-stat-label">Average precision</div>
-          <div className="lstm-stat-value figure">{evaluation.average_precision.toFixed(3)}</div>
-          <Scale value={evaluation.average_precision} />
-          <p className="lstm-stat-note">across all flag lines</p>
-        </div>
-
-        <div className="lstm-stat lstm-stat--deep">
-          <div className="lstm-stat-label">Days measured</div>
-          <div className="lstm-stat-value figure">
-            {evaluation.days_with_label.toLocaleString()}
-            <span className="lstm-stat-of">of {evaluation.days_scored.toLocaleString()}</span>
-          </div>
-          <Split measured={evaluation.days_with_label} total={evaluation.days_scored} />
-          <p className="lstm-stat-note">days the audit settled</p>
-        </div>
-      </div>
-
-      {model.provisional && <ProvisionalModel card={model.provisional} />}
-
       <WhenItFlagged evaluation={evaluation} />
     </div>
   );

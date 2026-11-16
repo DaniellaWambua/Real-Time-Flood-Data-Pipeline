@@ -149,7 +149,7 @@ function SourcesPanel() {
             {source.datasets && <p className="pipeline-health-tile-datasets">Carries {source.datasets}</p>}
             <dl className="pipeline-health-tile-stats">
               <div>
-                <dt>Last ingested</dt>
+                <dt>Latest reading</dt>
                 <dd className="figure">
                   {source.last_ingested_at ? new Date(source.last_ingested_at).toLocaleString() : "No data yet"}
                 </dd>
@@ -170,7 +170,7 @@ function SourcesPanel() {
             <th>Datasets</th>
             <th>Type</th>
             <th>Status</th>
-            <th>Last ingested</th>
+            <th>Latest reading</th>
             <th>Records</th>
             <th>Added</th>
             <th aria-hidden="true" />
@@ -188,7 +188,7 @@ function SourcesPanel() {
                   label={source.connection_status}
                 />
               </td>
-              {/* When ingestion last ran, not a live freshness check */}
+              {/* Date of the newest stored reading (latest issue time for the forecast feed) */}
               <td className="figure">
                 {source.last_ingested_at
                   ? new Date(source.last_ingested_at).toLocaleString()

@@ -404,6 +404,9 @@
 }
 
 .lstm-when-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
   margin: 0;
   font-size: 0.74rem;
   color: var(--text-muted);
@@ -741,4 +744,9 @@
   .lstm-querybar-count {
     margin-left: 0;
   }
+}
+
+.lstm-when-swatch--bar {
+  border-color: var(--accent-strong);
+  background: var(--accent-strong);
 }
