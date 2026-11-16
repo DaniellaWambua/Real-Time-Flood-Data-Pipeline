@@ -7,6 +7,7 @@ Change a user's password. From backend/:
 import sys
 
 import models
+import password_policy
 
 
 def main():
@@ -16,8 +17,15 @@ def main():
 
     username, new_password = sys.argv[1], sys.argv[2]
 
-    if models.get_user_by_username(username) is None:
+    user = models.get_user_by_username(username)
+    if user is None:
         print(f"Error: no user named '{username}' exists.")
+        sys.exit(1)
+
+    problem = password_policy.check(new_password, username, user.get("full_name"), user.get("email"),
+                                    user.get("organisation"))
+    if problem:
+        print(f"Error: {problem}.")
         sys.exit(1)
 
     models.update_password(username, new_password)

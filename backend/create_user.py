@@ -12,6 +12,7 @@ import sys
 
 import config
 import models
+import password_policy
 
 
 def main():
@@ -34,6 +35,11 @@ def main():
 
     if email is not None and models.get_user_by_email(email) is not None:
         print(f"Error: '{email}' is already linked to another account.")
+        sys.exit(1)
+
+    problem = password_policy.check(password, username, email=email)
+    if problem:
+        print(f"Error: {problem}.")
         sys.exit(1)
 
     user_id = models.create_user(username, password, role, email=email)

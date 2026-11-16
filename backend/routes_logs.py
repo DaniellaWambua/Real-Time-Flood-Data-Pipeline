@@ -14,7 +14,10 @@ from decorators import role_required
 logs_bp = Blueprint("logs", __name__, url_prefix="/api")
 
 PERIODS = {"1d": "1 day", "7d": "7 days", "30d": "30 days"}  # anything else means all time
-OUTCOMES = {"success": ("login_success", "totp_enabled"), "failed": ("login_failure",)}
+OUTCOMES = {
+    "success": ("login_success", "totp_enabled", "password_changed"),
+    "failed": ("login_failure", "password_change_failure"),
+}
 ALERT_IN_DETAIL = re.compile(r"alert (\d+)")
 
 

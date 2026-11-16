@@ -9,7 +9,7 @@ import { IconBell } from "./components/icons";
 import Dashboard from "./pages/Dashboard";
 import DataStream from "./pages/DataStream";
 import LstmAnomaly from "./pages/LstmAnomaly";
-import RoleSwitcher from "./pages/RoleSwitcher";
+import Settings from "./pages/Settings";
 import Incidents from "./pages/Incidents";
 import Notifications from "./pages/Notifications";
 import Admin from "./pages/Admin";
@@ -220,7 +220,8 @@ export default function App() {
           <Route path="alerts" element={<Navigate to="/incidents" replace />} />
           <Route path="notifications" element={guarded("/notifications", <Notifications />)} />
           <Route path="admin" element={guarded("/admin", <Admin />)} />
-          <Route path="role-switcher" element={<RoleSwitcher />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="role-switcher" element={<Navigate to="/settings" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

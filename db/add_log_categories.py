@@ -13,7 +13,7 @@ db.execute("ALTER TABLE system_logs ADD COLUMN IF NOT EXISTS category TEXT NOT N
 # Same rules as backend/models.py log_category()
 db.execute(
     "UPDATE system_logs SET category = CASE "
-    "WHEN action LIKE 'login\\_%%' OR action LIKE 'totp\\_%%' OR action = 'password_reset_completed' THEN 'sign_in' "
+    "WHEN action LIKE 'login\\_%%' OR action LIKE 'totp\\_%%' OR action IN ('password_reset_completed', 'password_changed', 'password_change_failure') THEN 'sign_in' "
     "WHEN action LIKE 'alert\\_%%' THEN 'alerts' "
     "WHEN action LIKE 'reading\\_%%' THEN 'pipeline' "
     "ELSE 'accounts' END"

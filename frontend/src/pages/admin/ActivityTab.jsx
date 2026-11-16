@@ -39,6 +39,8 @@ const SIGN_IN = {
   totp_enabled: ["Turned on two-factor sign-in", "success"],
   totp_disabled: ["Turned off two-factor sign-in", "progress"],
   password_reset_completed: ["Chose a new password", "success"],
+  password_changed: ["Changed their password", "success"],
+  password_change_failure: ["Failed password change", "failed"],
 };
 const OUTCOME = { success: ["Success", "good"], failed: ["Failed", "critical"], progress: ["In progress", "active"] };
 
