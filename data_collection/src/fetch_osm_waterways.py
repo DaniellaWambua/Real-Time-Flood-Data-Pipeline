@@ -10,7 +10,7 @@ out geom;
 out = "data_collection/data/05_spatial/raw/osm_waterways_nairobi.json"
 
 headers = {
-    "User-Agent": "nairobi-flood-data-capstone/0.1 (student project, youngkyper254@gmail.com)",
+    "User-Agent": "nairobi-flood-data-capstone/0.1 (student project, nairobifloodsews@gmail.com)",
     "Accept": "*/*",
 }
 
