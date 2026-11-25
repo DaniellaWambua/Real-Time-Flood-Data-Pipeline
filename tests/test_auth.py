@@ -4,8 +4,11 @@ account, success) and the event it logs.
 """
 
 import sys
+import time
 from pathlib import Path
 from unittest.mock import patch
+
+import pyotp
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent / "backend"
 sys.path.insert(0, str(BACKEND_DIR))
@@ -103,13 +106,14 @@ def test_finishing_2fa_setup_signs_in():
     client = _client()
     with client.session_transaction() as sess:
         sess["setup_user_id"] = 1
+        sess["step_started"] = int(time.time())
     with (
         patch("routes_auth.models.get_user_by_id", return_value={**ACTIVE_USER, "totp_secret": "BASE32SECRET3232"}),
-        patch("routes_auth.pyotp.TOTP.verify", return_value=True),
+        patch("routes_auth.models.claim_totp_step", return_value=True),
         patch("routes_auth.models.enable_totp") as mock_enable,
         patch("routes_auth.models.log_event") as mock_log,
     ):
-        resp = client.post("/totp/enable", json={"code": "123456"})
+        resp = client.post("/totp/enable", json={"code": pyotp.TOTP("BASE32SECRET3232").now()})
     assert resp.status_code == 200 and resp.get_json()["username"] == "root-admin"
     mock_enable.assert_called_once_with(1)
     assert [c.args[1] for c in mock_log.call_args_list] == ["totp_enabled", "login_success"]
@@ -136,8 +140,10 @@ def test_logout_clears_session():
         sess["username"] = "root-admin"
         sess["role"] = "system_administrator"
 
-    resp = client.post("/logout")
+    with patch("routes_auth.models.end_sessions") as mock_end, patch("routes_auth.models.log_event"):
+        resp = client.post("/logout", json={})
     assert resp.status_code == 200
+    mock_end.assert_called_once_with(1)
 
     with client.session_transaction() as sess:
         assert "user_id" not in sess

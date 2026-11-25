@@ -137,6 +137,10 @@ CREATE TABLE users (
     -- so an unfinished enrolment never locks anyone out.
     totp_secret     TEXT,
     totp_enabled    BOOLEAN NOT NULL DEFAULT false,
+    totp_last_step  BIGINT,          -- the last 30-second step whose code was used, so a code works once
+    -- Raised whenever the account's sessions must end (logout, deactivation, role, password or
+    -- email change, 2FA reset); a session cookie carrying an older value is refused.
+    session_version INTEGER NOT NULL DEFAULT 0,
     -- Used for Google sign-in, which only works for an email already on an account.
     email           TEXT UNIQUE
 );

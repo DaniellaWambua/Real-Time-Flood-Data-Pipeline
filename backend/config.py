@@ -32,6 +32,19 @@ INTERNAL_API_TOKEN = _required("INTERNAL_API_TOKEN")
 # Not 5000: the macOS AirPlay Receiver listens there and answers with its own 403.
 API_PORT = int(_env("API_PORT", "5001"))
 
+# How many reverse proxies sit in front of the backend (Caddy in production: 1). Their
+# X-Forwarded-For header gives the client's address for rate limiting; 0 trusts no such header.
+TRUSTED_PROXIES = int(_env("TRUSTED_PROXIES", "0"))
+
+# Limits on sign-in attempts (security.limit). "off" only for tests.
+RATE_LIMITS = _env("RATE_LIMITS", "on").lower() != "off"
+
+# How long the password step of a sign-in stays usable for entering or setting up the 2FA code.
+SIGN_IN_STEP_SECONDS = int(_env("SIGN_IN_STEP_SECONDS", "300"))
+
+# A signed-in session lasts at most this long, then the person signs in again.
+SESSION_HOURS = int(_env("SESSION_HOURS", "12"))
+
 # Actor roles
 ROLES = [
     "disaster_management_agency",
@@ -60,6 +73,9 @@ MAIL_FROM_ADDRESS = _env("MAIL_FROM_ADDRESS", "") or SMTP_USERNAME
 
 # Where the links in emails point (the React app), and how long they last
 FRONTEND_URL = _env("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+
+# The session cookie is marked Secure whenever the dashboard is served over HTTPS (production).
+SECURE_COOKIES = FRONTEND_URL.startswith("https://")
 
 # Web Push keys (python generate_vapid_keys.py). Without them notifications still appear in the app.
 VAPID_PUBLIC_KEY = _env("VAPID_PUBLIC_KEY", "")

@@ -117,7 +117,7 @@ def test_each_user_reads_only_their_own_notifications():
         client.get("/api/notifications?unread=true")
     assert q.call_args.args[1][0] == 3 and "read_at IS NULL" in q.call_args.args[0]
     with patch("routes_notifications.db.execute") as execute:
-        client.post("/api/notifications/9/read")
+        client.post("/api/notifications/9/read", json={})
     assert execute.call_args.args[1] == (9, 3)
 
 

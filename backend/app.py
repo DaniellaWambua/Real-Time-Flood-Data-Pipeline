@@ -7,10 +7,14 @@ Run directly for local development:
     python app.py
 """
 
+import datetime
+
 from flask import Flask
 from flask_cors import CORS
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import config
+import security
 from routes_auth import auth_bp
 from routes_anomalies import anomalies_bp
 from routes_dashboard import dashboard_bp
@@ -24,6 +28,19 @@ from routes_notifications import notifications_bp
 def create_app():
     app = Flask(__name__)
     app.secret_key = config.SECRET_KEY
+    app.config.update(
+        # HttpOnly keeps the cookie away from page scripts; SameSite=Strict means the browser never
+        # sends it with a request started by another site; Secure keeps it off plain HTTP.
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE="Strict",
+        SESSION_COOKIE_SECURE=config.SECURE_COOKIES,
+        PERMANENT_SESSION_LIFETIME=datetime.timedelta(hours=config.SESSION_HOURS),
+        RATE_LIMITS=config.RATE_LIMITS,
+        MAX_CONTENT_LENGTH=1024 * 1024,  # no request here needs more than a few kilobytes
+    )
+    if config.TRUSTED_PROXIES:
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=config.TRUSTED_PROXIES)
+    app.before_request(security.require_json)
 
     # supports_credentials so the React dev server can send/receive the
     # session cookie set by routes_auth.py's /login.

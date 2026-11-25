@@ -12,7 +12,7 @@ import db
 
 USER_COLUMNS = (
     "id, username, password_hash, role, is_active, created_at, "
-    "totp_secret, totp_enabled, email, full_name, organisation"
+    "totp_secret, totp_enabled, email, full_name, organisation, session_version"
 )
 
 
@@ -34,6 +34,39 @@ def get_user_by_id(user_id):
         f"SELECT {USER_COLUMNS} FROM users WHERE id = %s",
         (user_id,),
     )
+
+
+def session_state(user_id):
+    """What every signed-in request is checked against (decorators.current_user): the account's
+    role, whether it is active, and its session_version, or None if the account is gone."""
+    return db.query_one(
+        "SELECT id, username, role, is_active, session_version FROM users WHERE id = %s",
+        (user_id,),
+    )
+
+
+def end_sessions(user_id):
+    """Sign the account out everywhere: every session cookie issued before this stops working,
+    because it carries the old session_version (see decorators.current_user)."""
+    db.execute("UPDATE users SET session_version = session_version + 1 WHERE id = %s", (user_id,))
+
+
+def claim_totp_step(user_id, step):
+    """Record that the authenticator code for this 30-second time step has been used. Returns
+    False if that step, or a later one, was already used, so a code cannot be replayed."""
+    conn = db.get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE users SET totp_last_step = %s "
+                "WHERE id = %s AND (totp_last_step IS NULL OR totp_last_step < %s)",
+                (step, user_id, step),
+            )
+            claimed = cur.rowcount == 1
+        conn.commit()
+        return claimed
+    finally:
+        conn.close()
 
 
 def get_user_by_email(email):
@@ -188,8 +221,8 @@ def set_password_with_link(link_id, user_id, plain_password):
             if cur.rowcount != 1:
                 conn.rollback()
                 return False
-            cur.execute("UPDATE users SET password_hash = %s WHERE id = %s",
-                        (_hash_password(plain_password), user_id))
+            cur.execute("UPDATE users SET password_hash = %s, session_version = session_version + 1 "
+                        "WHERE id = %s", (_hash_password(plain_password), user_id))
         conn.commit()
         return True
     finally:
@@ -233,7 +266,9 @@ def set_user_email(user_id, email):
     conn = db.get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("UPDATE users SET email = %s WHERE id = %s", (email, user_id))
+            # A new address changes who can sign in with Google, so existing sessions end
+            cur.execute("UPDATE users SET email = %s, session_version = session_version + 1 WHERE id = %s",
+                        (email, user_id))
             updated = cur.rowcount > 0
         conn.commit()
         return updated
@@ -251,7 +286,8 @@ def update_password(username, new_password):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "UPDATE users SET password_hash = %s WHERE username = %s",
+                "UPDATE users SET password_hash = %s, session_version = session_version + 1 "
+                "WHERE username = %s",
                 (password_hash, username),
             )
             updated = cur.rowcount > 0
@@ -266,7 +302,8 @@ def update_user_role(user_id, new_role):
     conn = db.get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("UPDATE users SET role = %s WHERE id = %s", (new_role, user_id))
+            cur.execute("UPDATE users SET role = %s, session_version = session_version + 1 WHERE id = %s",
+                        (new_role, user_id))
             updated = cur.rowcount > 0
         conn.commit()
         return updated
@@ -283,7 +320,8 @@ def set_user_active(user_id, is_active):
     conn = db.get_connection()
     try:
         with conn.cursor() as cur:
-            cur.execute("UPDATE users SET is_active = %s WHERE id = %s", (is_active, user_id))
+            cur.execute("UPDATE users SET is_active = %s, session_version = session_version + 1 WHERE id = %s",
+                        (is_active, user_id))
             updated = cur.rowcount > 0
         conn.commit()
         return updated
@@ -297,7 +335,7 @@ def set_totp_secret(user_id, secret):
     each time it's hit, so re-running setup before confirming simply
     replaces the pending secret."""
     db.execute(
-        "UPDATE users SET totp_secret = %s WHERE id = %s",
+        "UPDATE users SET totp_secret = %s, totp_last_step = NULL WHERE id = %s",
         (secret, user_id),
     )
 
@@ -321,7 +359,8 @@ def disable_totp(user_id):
     """Turn off 2FA and clear the stored secret, so a later re-enrolment
     starts from a fresh secret rather than reusing the old one."""
     db.execute(
-        "UPDATE users SET totp_enabled = false, totp_secret = NULL WHERE id = %s",
+        "UPDATE users SET totp_enabled = false, totp_secret = NULL, totp_last_step = NULL, "
+        "session_version = session_version + 1 WHERE id = %s",
         (user_id,),
     )
 
@@ -339,7 +378,7 @@ def last_password_change(username):
     return row["at"] if row else None
 
 
-SIGN_IN_PASSWORD_EVENTS = ("password_reset_completed", "password_changed", "password_change_failure")
+SIGN_IN_PASSWORD_EVENTS = ("password_reset_completed", "password_changed", "password_change_failure", "logout")
 
 
 def log_category(action):

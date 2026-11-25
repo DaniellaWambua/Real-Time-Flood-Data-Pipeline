@@ -44,6 +44,8 @@ services:
     environment:
       DB_HOST: db
       KAFKA_BROKER: kafka:9092
+      # Caddy is the one proxy in front, so the client address for rate limits comes from its X-Forwarded-For
+      TRUSTED_PROXIES: "1"
     depends_on: [db]
     restart: unless-stopped
 
