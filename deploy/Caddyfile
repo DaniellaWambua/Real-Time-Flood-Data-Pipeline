@@ -4,6 +4,19 @@
 {$SITE_ADDRESS} {
 	encode gzip
 
+	# Browser protections for every response, the API included.
+	# The policy allows this site's own files plus what Google sign-in and the OpenStreetMap tiles need.
+	# Inline styles stay allowed because Google's sign-in button sets its own.
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://*.googleusercontent.com; font-src 'self'; connect-src 'self' https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		-Server
+	}
+
 	handle /backend/internal/* {
 		respond 404
 	}

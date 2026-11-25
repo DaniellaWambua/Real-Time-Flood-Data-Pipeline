@@ -8,8 +8,9 @@ services:
       POSTGRES_DB: ${DB_NAME:-flood_pipeline}
       POSTGRES_USER: ${DB_USER:-flood_pipeline}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is not set, run with --env-file ../backend/.env}
+    # Only this computer can reach the database and Kafka, not others on the same Wi-Fi.
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - flood_pipeline_data:/home/postgres/pgdata/data
       - ./init:/docker-entrypoint-initdb.d
@@ -20,7 +21,7 @@ services:
     image: apache/kafka:4.2.2
     container_name: flood_pipeline_kafka
     ports:
-      - "9092:9092"
+      - "127.0.0.1:9092:9092"
     environment:
       # Single-node KRaft mode: this one container is both broker and
       # controller, so no separate Zookeeper service is needed.
