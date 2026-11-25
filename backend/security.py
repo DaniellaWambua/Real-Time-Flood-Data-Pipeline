@@ -82,6 +82,26 @@ def limit(name, count, seconds, key=client_ip):
     return decorator
 
 
+def failures_wait(name, who, count, seconds):
+    """Seconds until another attempt is allowed once count failures were recorded under name for who
+    within seconds, or 0. Unlike limit(), only failures count (see record_failure)."""
+    now = time.monotonic()
+    with _lock:
+        entry = _hits.get(f"{name}:{who}")
+        if entry is None:
+            return 0
+        _, times = entry
+        while times and times[0] <= now - seconds:
+            times.popleft()
+        return max(1, int(times[0] + seconds - now) + 1) if len(times) >= count else 0
+
+
+def record_failure(name, who, seconds):
+    now = time.monotonic()
+    with _lock:
+        _hits.setdefault(f"{name}:{who}", (seconds, deque()))[1].append(now)
+
+
 STATE_CHANGING = ("POST", "PUT", "PATCH", "DELETE")
 
 

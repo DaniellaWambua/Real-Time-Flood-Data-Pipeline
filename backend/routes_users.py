@@ -12,6 +12,7 @@ import config
 import db
 import mailer
 import models
+import security
 from decorators import role_required
 
 users_bp = Blueprint("users", __name__, url_prefix="/api")
@@ -49,6 +50,43 @@ def _find(user_id):
 def _clean(value):
     value = (value or "").strip()
     return value or None
+
+
+REAUTH_FAILURES, REAUTH_WINDOW = 5, 900  # wrong passwords allowed per administrator per 15 minutes
+
+
+def _reauthenticate(data):
+    """None when the request carries the signed-in administrator's current password, otherwise the
+    error response. Resetting 2FA, changing an email address and changing a role decide who can sign
+    in as whom, so a session left open or stolen is not enough for them on its own."""
+    admin_id = session.get("user_id")
+    wait = security.failures_wait("reauth", admin_id, REAUTH_FAILURES, REAUTH_WINDOW)
+    if wait:
+        return jsonify({"error": f"too many wrong passwords. Wait about {max(1, round(wait / 60))} "
+                                 "minutes and try again."}), 429
+    password = data.get("password") or ""
+    if not password:
+        return jsonify({"error": "enter your own password to confirm this change", "needs_password": True}), 401
+    admin = models.get_user_by_id(admin_id)
+    if admin is None or not models.verify_password(admin, password):
+        security.record_failure("reauth", admin_id, REAUTH_WINDOW)
+        models.log_event(session.get("username"), "admin_reauth_failure", None)
+        return jsonify({"error": "your password is not correct", "needs_password": True}), 403
+    return None
+
+
+def _notify(user, change, address=None):
+    """Email the person about a change to how their account signs in. Best effort: the change is
+    already made, so a failed email is logged rather than undoing it."""
+    to = address or user.get("email")
+    if not to:
+        return
+    subject, text, html = mailer.security_notice_email(user.get("full_name"), user["username"], change,
+                                                       session.get("username"))
+    try:
+        mailer.send_email(to, subject, text, html)
+    except Exception as exc:  # noqa: BLE001 - see docstring
+        models.log_event(session.get("username"), "security_notice_failed", f"{user['username']}: {exc}")
 
 
 def _mail_error(exc):
@@ -158,8 +196,12 @@ def reset_two_factor(user_id):
     target = models.get_user_by_id(user_id)
     if target is None:
         return jsonify({"error": "no such user"}), 404
+    problem = _reauthenticate(request.get_json(silent=True) or {})
+    if problem:
+        return problem
     models.disable_totp(user_id)
     models.log_event(session.get("username"), "user_2fa_reset", target["username"])
+    _notify(target, "reset two-factor sign-in, so the next sign-in sets up a new authenticator,")
     return jsonify(_public(_find(user_id)))
 
 
@@ -190,9 +232,17 @@ def update_user(user_id):
         if other is not None and other["id"] != user_id:
             return jsonify({"error": f"{new_email} already belongs to another account"}), 409
 
-    if "role" in data and data["role"] != target["role"]:
+    role_changes = "role" in data and data["role"] != target["role"]
+    email_changes = bool(new_email) and new_email != (target["email"] or "").lower()
+    if role_changes or email_changes:
+        problem = _reauthenticate(data)
+        if problem:
+            return problem
+
+    if role_changes:
         models.update_user_role(user_id, data["role"])
         models.log_event(admin, "user_role_changed", f"{target['username']} -> {data['role']}")
+        _notify(target, f"changed your role to {ROLE_LABELS[data['role']]}")
     if "is_active" in data and bool(data["is_active"]) != target["is_active"]:
         models.set_user_active(user_id, bool(data["is_active"]))
         models.log_event(admin, "user_reactivated" if data["is_active"] else "user_deactivated",
@@ -203,9 +253,12 @@ def update_user(user_id):
         if (full_name, organisation) != (target["full_name"], target["organisation"]):
             models.update_user_details(user_id, full_name, organisation)
             models.log_event(admin, "user_details_changed", target["username"])
-    if new_email and new_email != (target["email"] or "").lower():
+    if email_changes:
         models.set_user_email(user_id, new_email)
         models.log_event(admin, "user_email_changed", f"{target['username']} -> {new_email}")
+        # Told at the old address too, since that is the one the owner is sure to read
+        _notify(target, f"changed the sign-in email address to {new_email}")
+        _notify(target, f"changed the sign-in email address to {new_email}", address=new_email)
         if user_id == session.get("user_id"):  # an administrator editing their own email stays signed in
             state = models.session_state(user_id)
             session["sv"] = state["session_version"] if state else None

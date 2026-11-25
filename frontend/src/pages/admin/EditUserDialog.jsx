@@ -5,20 +5,31 @@ import { patch } from "../../api";
 
 // Edit a user's name, organisation, email and role. Passwords are never set here: the person
 // is sent a reset link instead. The email is where links are sent and the Google account
-// they can sign in with.
+// they can sign in with. Changing the email or the role decides who can sign in as whom, so the
+// administrator confirms it with their own password, and the person is emailed about it.
 export default function EditUserDialog({ user, isSelf, onClose, onSaved }) {
   const [fullName, setFullName] = useState(user.full_name ?? "");
   const [organisation, setOrganisation] = useState(user.organisation ?? "");
   const [email, setEmail] = useState(user.email ?? "");
   const [role, setRole] = useState(user.role);
+  const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  const emailChanged = email.trim().toLowerCase() !== (user.email ?? "").toLowerCase();
+  const needsPassword = role !== user.role || (Boolean(email) && emailChanged);
 
   function handleSubmit(event) {
     event.preventDefault();
     setSaving(true);
     setError(null);
-    patch(`/api/users/${user.id}`, { full_name: fullName, organisation, role, ...(email ? { email } : {}) })
+    patch(`/api/users/${user.id}`, {
+      full_name: fullName,
+      organisation,
+      role,
+      ...(email ? { email } : {}),
+      ...(needsPassword ? { password } : {}),
+    })
       .then((updated) => {
         onSaved(updated);
         onClose();
@@ -60,6 +71,23 @@ export default function EditUserDialog({ user, isSelf, onClose, onSaved }) {
           </select>
           {isSelf && <span className="invite-hint">You cannot change your own role.</span>}
         </label>
+
+        {needsPassword && (
+          <label className="invite-field">
+            Your password
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+            <span className="invite-hint">
+              Changing the email address or role needs your own password. {user.full_name || user.username} will be
+              emailed about the change.
+            </span>
+          </label>
+        )}
 
         {error && <p className="error">{error}</p>}
 
