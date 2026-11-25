@@ -125,10 +125,11 @@ def test_a_push_subscription_needs_an_https_endpoint_and_keys():
     client = _client()
     _login(client)
     assert client.post("/api/push/subscribe", json={"endpoint": "http://x"}).status_code == 400
-    sub = {"endpoint": "https://push.example/abc", "keys": {"p256dh": "p", "auth": "a"}}
-    with patch("routes_notifications.db.execute") as execute:
+    sub = {"endpoint": "https://fcm.googleapis.com/fcm/send/abc", "keys": {"p256dh": "p", "auth": "a"}}
+    with patch("routes_notifications.db.execute") as execute, \
+         patch("routes_notifications.db.query_one", return_value={"n": 0}):
         assert client.post("/api/push/subscribe", json=sub).status_code == 201
-    assert execute.call_args.args[1] == (3, "https://push.example/abc", "p", "a")
+    assert execute.call_args.args[1] == (3, "https://fcm.googleapis.com/fcm/send/abc", "p", "a")
 
 
 def test_notify_warning_needs_the_token_and_complete_details():

@@ -62,15 +62,15 @@ def list_logs():
     before = request.args.get("before", type=int)
     limit = min(request.args.get("limit", default=50, type=int) or 50, 500)
 
-    sql = "SELECT id, occurred_at, actor, action, detail, category FROM system_logs WHERE true "
+    sql = "SELECT id, occurred_at, actor, action, detail, category, ip_address FROM system_logs WHERE true "
     params = []
     if category in models.LOG_CATEGORIES:
         sql += "AND category = %s "
         params.append(category)
     sql = _period_filter(sql, params)
     if q:
-        sql += "AND (actor ILIKE %s OR detail ILIKE %s OR action ILIKE %s) "
-        params += [f"%{q}%"] * 3
+        sql += "AND (actor ILIKE %s OR detail ILIKE %s OR action ILIKE %s OR ip_address ILIKE %s) "
+        params += [f"%{q}%"] * 4
     if outcome in OUTCOMES:
         sql += "AND action = ANY(%s) "
         params.append(list(OUTCOMES[outcome]))

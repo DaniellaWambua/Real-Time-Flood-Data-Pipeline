@@ -96,7 +96,7 @@ def login():
         return jsonify({"error": "username and password are required"}), 400
 
     user = models.get_user_by_login(username)
-    if user is None or not models.verify_password(user, password):
+    if not models.verify_password(user, password):  # runs the slow hash even when there is no account
         # Logged under the attempted name, so repeated failures show in the activity log.
         models.log_event(username, "login_failure", "invalid username or password")
         return jsonify({"error": "invalid username or password"}), 401
@@ -149,8 +149,8 @@ def login_google():
         idinfo = google_id_token.verify_oauth2_token(
             credential, _google_request, config.GOOGLE_CLIENT_ID
         )
-    except ValueError as exc:
-        return jsonify({"error": f"invalid Google credential: {exc}"}), 401
+    except ValueError:
+        return jsonify({"error": "the Google sign-in could not be checked. Try again."}), 401
 
     if not idinfo.get("email_verified"):
         return jsonify({"error": "Google account email is not verified"}), 401

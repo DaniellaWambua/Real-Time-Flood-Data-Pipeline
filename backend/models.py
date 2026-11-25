@@ -6,6 +6,7 @@ import hashlib
 import re
 import secrets
 
+from flask import has_request_context, request
 from werkzeug.security import check_password_hash, generate_password_hash
 
 import db
@@ -90,10 +91,16 @@ def get_user_by_login(identifier):
     )
 
 
+# A real hash of a random value, checked when there is no account (or no password yet), so a sign-in
+# takes as long whether or not the account exists and the response time does not reveal which do.
+_DUMMY_HASH = generate_password_hash(secrets.token_urlsafe(16), method="pbkdf2:sha256")
+
+
 def verify_password(user, plain_password):
     """Check a plain-text password against a user row's stored hash. An invited user who
-    has not set a password yet never matches."""
-    if not user.get("password_hash"):
+    has not set a password yet never matches. user may be None (no such account)."""
+    if not user or not user.get("password_hash"):
+        check_password_hash(_DUMMY_HASH, plain_password or "")
         return False
     return check_password_hash(user["password_hash"], plain_password)
 
@@ -394,9 +401,11 @@ def log_category(action):
 
 
 def log_event(actor, action, detail=None):
-    """Append one row to system_logs, filed under its area. actor is a username, or None
-    for a sign-in attempt that never matched a real account."""
+    """Append one row to system_logs, filed under its area, with the client's address when the event
+    comes from a web request (backend/app.py takes it from Caddy's X-Forwarded-For in production).
+    actor is a username, or the name typed in a failed sign-in, cut short so it cannot flood the log."""
+    ip = request.remote_addr if has_request_context() else None
     db.execute(
-        "INSERT INTO system_logs (actor, action, detail, category) VALUES (%s, %s, %s, %s)",
-        (actor, action, detail, log_category(action)),
+        "INSERT INTO system_logs (actor, action, detail, category, ip_address) VALUES (%s, %s, %s, %s, %s)",
+        (actor[:120] if actor else actor, action, detail[:1000] if detail else detail, log_category(action), ip),
     )

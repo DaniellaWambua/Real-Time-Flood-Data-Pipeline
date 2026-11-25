@@ -8,6 +8,7 @@ Run directly for local development:
 """
 
 import datetime
+import os
 
 from flask import Flask
 from flask_cors import CORS
@@ -65,4 +66,6 @@ def create_app():
 app = create_app()
 
 if __name__ == "__main__":
-    app.run(debug=True, port=config.API_PORT)
+    # Local development only (production runs Gunicorn). The debugger can run code, so the server
+    # listens on this computer alone; set FLASK_DEBUG=0 to turn the debugger off.
+    app.run(debug=os.environ.get("FLASK_DEBUG", "1") == "1", host="127.0.0.1", port=config.API_PORT)
