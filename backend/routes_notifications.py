@@ -3,6 +3,7 @@ The Notifications screen (each user's own notifications, newest first) and Web P
 installed app. Notifications are created by notify.py; nothing here creates them.
 """
 import datetime
+from urllib.parse import urlsplit
 
 from flask import Blueprint, jsonify, request, session
 
@@ -63,6 +64,18 @@ def push_key():
     return jsonify({"key": config.VAPID_PUBLIC_KEY or None})
 
 
+# The Web Push services browsers use. A subscription naming any other address is refused, so the server
+# never sends requests to a host a user chose.
+PUSH_HOSTS = ("fcm.googleapis.com", "updates.push.services.mozilla.com", "web.push.apple.com")
+PUSH_HOST_SUFFIXES = (".push.apple.com", ".notify.windows.com")
+MAX_SUBSCRIPTIONS = 10  # browsers and phones per user
+
+
+def _push_service(endpoint):
+    host = urlsplit(endpoint).hostname or ""
+    return urlsplit(endpoint).scheme == "https" and (host in PUSH_HOSTS or host.endswith(PUSH_HOST_SUFFIXES))
+
+
 @notifications_bp.route("/push/subscribe", methods=["POST"])
 @login_required
 def push_subscribe():
@@ -70,12 +83,23 @@ def push_subscribe():
     data = request.get_json(silent=True) or {}
     keys = data.get("keys") or {}
     endpoint, p256dh, auth = data.get("endpoint"), keys.get("p256dh"), keys.get("auth")
-    if not (isinstance(endpoint, str) and endpoint.startswith("https://") and p256dh and auth):
+    if not (isinstance(endpoint, str) and len(endpoint) <= 1000 and isinstance(p256dh, str) and isinstance(auth, str)
+            and p256dh and auth and len(p256dh) <= 200 and len(auth) <= 100):
         return jsonify({"error": "a push subscription with endpoint and keys is required"}), 400
+    if not _push_service(endpoint):
+        return jsonify({"error": "this push service is not supported"}), 400
+    owned = db.query_one("SELECT COUNT(*) AS n FROM push_subscriptions WHERE user_id = %s AND endpoint <> %s",
+                         (session["user_id"], endpoint))
+    if owned and owned["n"] >= MAX_SUBSCRIPTIONS:
+        return jsonify({"error": f"at most {MAX_SUBSCRIPTIONS} devices can receive notifications. "
+                                 "Turn them off on one you no longer use."}), 409
+    # A browser that signs in as someone else moves its subscription over, but only with the same keys,
+    # which only that browser holds, so knowing another person's endpoint is not enough to take it.
     db.execute(
         "INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth) VALUES (%s, %s, %s, %s) "
-        "ON CONFLICT (endpoint) DO UPDATE SET user_id = EXCLUDED.user_id, p256dh = EXCLUDED.p256dh, "
-        "auth = EXCLUDED.auth", (session["user_id"], endpoint, p256dh, auth))
+        "ON CONFLICT (endpoint) DO UPDATE SET user_id = EXCLUDED.user_id "
+        "WHERE push_subscriptions.p256dh = EXCLUDED.p256dh AND push_subscriptions.auth = EXCLUDED.auth",
+        (session["user_id"], endpoint, p256dh, auth))
     return jsonify({"subscribed": True}), 201
 
 

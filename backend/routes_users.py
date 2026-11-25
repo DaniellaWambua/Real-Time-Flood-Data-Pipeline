@@ -54,7 +54,10 @@ def _clean(value):
 def _mail_error(exc):
     if isinstance(exc, mailer.MailNotConfigured):
         return jsonify({"error": str(exc)}), 503
-    return jsonify({"error": f"the email could not be sent ({exc}). Nothing was saved, so you can try again."}), 502
+    # The mail server's own message can name internal hosts or accounts, so it goes to the activity log only
+    models.log_event(session.get("username"), "email_send_failed", str(exc)[:500])
+    return jsonify({"error": "the email could not be sent, so nothing was saved. Try again, and if it keeps "
+                             "failing, check the email settings on the server (the activity log has the reason)."}), 502
 
 
 @users_bp.route("/users", methods=["GET"])

@@ -52,7 +52,7 @@ def test_filters_reach_the_query():
     assert resp.status_code == 200
     sql, params = mocked.call_args.args
     assert "category = %s" in sql and "id < %s" in sql and "ILIKE" in sql
-    assert params == ("sign_in", "1 day", "%jane%", "%jane%", "%jane%", ["login_failure", "password_change_failure"], 40, 25)
+    assert params == ("sign_in", "1 day", "%jane%", "%jane%", "%jane%", "%jane%", ["login_failure", "password_change_failure"], 40, 25)
 
 
 def test_all_time_and_unknown_values_are_ignored_safely():

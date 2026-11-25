@@ -41,6 +41,7 @@ const SIGN_IN = {
   password_reset_completed: ["Chose a new password", "success"],
   password_changed: ["Changed their password", "success"],
   password_change_failure: ["Failed password change", "failed"],
+  logout: ["Signed out on every device", "success"],
 };
 const OUTCOME = { success: ["Success", "good"], failed: ["Failed", "critical"], progress: ["In progress", "active"] };
 
@@ -141,6 +142,7 @@ function SignInTable({ rows }) {
           <th>User</th>
           <th>Event</th>
           <th>Detail</th>
+          <th>Address</th>
           <th>Outcome</th>
         </tr>
       </thead>
@@ -153,6 +155,7 @@ function SignInTable({ rows }) {
               <td className="admin-table-strong">{r.actor ?? "—"}</td>
               <td>{label}</td>
               <td>{r.detail ?? "—"}</td>
+              <td className="figure">{r.ip_address ?? "—"}</td>
               <td>
                 <StatusChip role={OUTCOME[outcome][1]} label={OUTCOME[outcome][0]} />
               </td>
@@ -219,9 +222,9 @@ function Feed({ rows, area }) {
 
 function exportRows(area, rows) {
   if (area === "sign_in") {
-    downloadCsv("sign-ins", ["Time", "User", "Event", "Detail", "Outcome"], rows.map((r) => {
+    downloadCsv("sign-ins", ["Time", "User", "Event", "Detail", "Address", "Outcome"], rows.map((r) => {
       const [label, outcome] = SIGN_IN[r.action] ?? [r.action, "progress"];
-      return [r.occurred_at, r.actor, label, r.detail, OUTCOME[outcome][0]];
+      return [r.occurred_at, r.actor, label, r.detail, r.ip_address, OUTCOME[outcome][0]];
     }));
   } else if (area === "pipeline") {
     downloadCsv("rejected-readings", ["Time", "Catchment", "Reading for", "Reason"], rows.map((r) => {
@@ -300,7 +303,7 @@ export default function ActivityTab() {
         <input
           type="search"
           className="activity-search"
-          placeholder={area === "pipeline" ? "Search catchment or reason" : "Search user or detail"}
+          placeholder={area === "pipeline" ? "Search catchment or reason" : area === "sign_in" ? "Search user, detail or address" : "Search user or detail"}
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           aria-label="Search activity"

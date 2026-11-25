@@ -190,7 +190,8 @@ CREATE TABLE system_logs (
     action          TEXT NOT NULL,
     detail          TEXT,
     -- Activity log area: 'sign_in', 'accounts', 'alerts' or 'pipeline' (models.log_category)
-    category        TEXT NOT NULL DEFAULT 'accounts'
+    category        TEXT NOT NULL DEFAULT 'accounts',
+    ip_address      TEXT             -- the client's address for events from a web request
 );
 CREATE INDEX idx_system_logs_occurred_at ON system_logs (occurred_at DESC);
 CREATE INDEX idx_system_logs_category ON system_logs (category, id DESC);
