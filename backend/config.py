@@ -53,6 +53,11 @@ ROLES = [
     "system_administrator",
 ]
 
+# Roles that may see the model's day-by-day scores (the LSTM anomaly screen), which name pending
+# and dismissed incidents. Emergency Responders and Government Officials only see an incident once
+# Disaster Management has verified it. Keep in step with frontend/src/roleAccess.js.
+DATA_ROLES = ("disaster_management_agency", "system_administrator")
+
 # Origins allowed to call the API (the Vite and Create React App dev servers by default).
 FRONTEND_ORIGINS = _env(
     "FRONTEND_ORIGINS", "http://localhost:5173,http://localhost:3000"

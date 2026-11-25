@@ -143,11 +143,13 @@ def test_role_change_is_logged():
     _login(client)
     with (
         patch("routes_users.models.get_user_by_id", return_value=ROW),
+        patch("routes_users.models.verify_password", return_value=True),
+        patch("routes_users._notify"),
         patch("routes_users.models.update_user_role") as mock_role,
         patch("routes_users.models.log_event") as mock_log,
         patch("routes_users._find", return_value={**ROW, "role": "government_official"}),
     ):
-        resp = client.patch("/api/users/5", json={"role": "government_official"})
+        resp = client.patch("/api/users/5", json={"role": "government_official", "password": "admin-pass"})
     assert resp.status_code == 200
     mock_role.assert_called_once_with(5, "government_official")
     mock_log.assert_called_once_with("root-admin", "user_role_changed", "jane.doe -> government_official")
@@ -210,11 +212,13 @@ def test_admin_can_reset_someone_elses_2fa_but_not_their_own():
     _login(client, user_id=1)
     with (
         patch("routes_users.models.get_user_by_id", return_value=ROW),
+        patch("routes_users.models.verify_password", return_value=True),
+        patch("routes_users._notify"),
         patch("routes_users.models.disable_totp") as mock_disable,
         patch("routes_users.models.log_event") as mock_log,
         patch("routes_users._find", return_value=ROW),
     ):
-        assert client.post("/api/users/5/reset-2fa", json={}).status_code == 200
+        assert client.post("/api/users/5/reset-2fa", json={"password": "admin-pass"}).status_code == 200
     mock_disable.assert_called_once_with(5)
     mock_log.assert_called_once_with("root-admin", "user_2fa_reset", "jane.doe")
     assert client.post("/api/users/1/reset-2fa", json={}).status_code == 400
@@ -231,11 +235,13 @@ def test_email_can_be_changed_but_not_to_one_already_used():
     with (
         patch("routes_users.models.get_user_by_id", return_value=ROW),
         patch("routes_users.models.get_user_by_email", return_value=None),
+        patch("routes_users.models.verify_password", return_value=True),
+        patch("routes_users._notify"),
         patch("routes_users.models.set_user_email") as mock_set,
         patch("routes_users.models.log_event"),
         patch("routes_users._find", return_value=ROW),
     ):
-        assert client.patch("/api/users/5", json={"email": "New@Example.org"}).status_code == 200
+        assert client.patch("/api/users/5", json={"email": "New@Example.org", "password": "x"}).status_code == 200
     mock_set.assert_called_once_with(5, "new@example.org")
 
 

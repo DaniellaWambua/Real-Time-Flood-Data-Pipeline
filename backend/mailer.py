@@ -86,6 +86,32 @@ def invite_email(full_name, username, role_label, inviter, link, hours):
     return subject, text, html
 
 
+def security_notice_email(full_name, username, change, admin):
+    """Subject and plain text and HTML telling someone that an administrator changed how their account
+    signs in, so a change they did not expect is noticed."""
+    name = full_name or username
+    subject = "A change was made to your Flood Early Warning account"
+    text = (
+        f"Hello {name},\n\nThe administrator {admin} {change} for your account {username}.\n\n"
+        "If you did not ask for this, contact your system administrator straight away.\n"
+    )
+    paragraphs = [
+        f"Hello {escape(name)},",
+        f"The administrator <strong>{escape(admin)}</strong> {escape(change)} for your account "
+        f"<strong>{escape(username)}</strong>.",
+        "If you did not ask for this, contact your system administrator straight away.",
+    ]
+    html = f"""<!doctype html>
+<html><body style="margin:0;background:#f4f7fb;font-family:Arial,Helvetica,sans-serif;color:#1f2933">
+  <div style="max-width:520px;margin:32px auto;background:#ffffff;border-radius:12px;padding:32px">
+    <p style="margin:0 0 8px;font-size:13px;color:#52606d">Flood Early Warning, Nairobi river catchments</p>
+    <h1 style="margin:0 0 20px;font-size:22px">{escape(subject)}</h1>
+    {"".join(f'<p style="margin:0 0 14px">{p}</p>' for p in paragraphs)}
+  </div>
+</body></html>"""
+    return subject, text, html
+
+
 def reset_email(full_name, username, link, hours):
     """Subject, plain text and HTML for a password reset."""
     name = full_name or username

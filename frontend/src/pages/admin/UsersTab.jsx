@@ -97,6 +97,8 @@ export default function UsersTab({ currentUserId }) {
   const [inviting, setInviting] = useState(false);
   const [editing, setEditing] = useState(null);
   const [confirming, setConfirming] = useState(null);
+  const [resetting2fa, setResetting2fa] = useState(null);
+  const [adminPassword, setAdminPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -138,14 +140,39 @@ export default function UsersTab({ currentUserId }) {
       });
   }
 
+  // Resetting 2FA lets the next sign-in set up a new authenticator, so it needs the administrator's
+  // own password; the dialog stays open on a wrong one so it can be typed again.
+  function resetTwoFactor(event) {
+    event.preventDefault();
+    const user = resetting2fa;
+    setBusy(true);
+    setNotice(null);
+    post(`/api/users/${user.id}/reset-2fa`, { password: adminPassword })
+      .then((updated) => {
+        if (updated && updated.id) replaceUser(updated);
+        setNotice({
+          type: "success",
+          text: `${displayName(user)} will set up two-factor sign-in again at their next sign-in, and has been emailed about it.`,
+        });
+        setResetting2fa(null);
+      })
+      .catch((err) => setNotice({ type: "error", text: err.message }))
+      .finally(() => {
+        setBusy(false);
+        setAdminPassword("");
+      });
+  }
+
   function handleAction(action, user) {
     if (action === "edit") setEditing(user);
     if (action === "resend") run(post(`/api/users/${user.id}/resend-invite`, {}), `A new invite was sent to ${user.email}.`);
     if (action === "reset") run(post(`/api/users/${user.id}/send-reset`, {}), `A password reset link was sent to ${user.email}.`);
     if (action === "reactivate") run(patch(`/api/users/${user.id}`, { is_active: true }), `${displayName(user)} can sign in again.`);
     if (action === "deactivate") setConfirming(user);
-    if (action === "reset2fa")
-      run(post(`/api/users/${user.id}/reset-2fa`, {}), `${displayName(user)} will set up two-factor sign-in again at their next sign-in.`);
+    if (action === "reset2fa") {
+      setAdminPassword("");
+      setResetting2fa(user);
+    }
   }
 
   if (error) return <p className="error">{error}</p>;
@@ -281,6 +308,40 @@ export default function UsersTab({ currentUserId }) {
             setNotice({ type: "success", text: `Saved changes to ${displayName(user)}.` });
           }}
         />
+      )}
+
+      {resetting2fa && (
+        <Dialog
+          title={`Reset two-factor sign-in for ${displayName(resetting2fa)}?`}
+          onClose={() => setResetting2fa(null)}
+          width={440}
+        >
+          <form onSubmit={resetTwoFactor} className="invite-form">
+            <p className="invite-sent-text">
+              Their current authenticator stops working and they set up a new one at their next sign-in. They will be
+              emailed about this. Only do it for someone who has lost their phone.
+            </p>
+            <label className="invite-field">
+              Your password
+              <input
+                type="password"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </label>
+            {notice?.type === "error" && <p className="error">{notice.text}</p>}
+            <div className="app-dialog-actions">
+              <button type="button" onClick={() => setResetting2fa(null)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn-danger" disabled={busy || !adminPassword}>
+                Reset two-factor sign-in
+              </button>
+            </div>
+          </form>
+        </Dialog>
       )}
 
       {confirming && (

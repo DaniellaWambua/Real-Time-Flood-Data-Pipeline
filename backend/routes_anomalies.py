@@ -9,9 +9,10 @@ from calendar import monthrange
 
 from flask import Blueprint, jsonify, request
 
+import config
 import db
 import flood_detection
-from decorators import login_required
+from decorators import role_required
 
 anomalies_bp = Blueprint("anomalies", __name__, url_prefix="/api/anomalies")
 
@@ -69,7 +70,7 @@ def _filters():
 
 
 @anomalies_bp.route("/model", methods=["GET"])
-@login_required
+@role_required(*config.DATA_ROLES)
 def model_status():
     """The deployed model card. The evaluation is read from evaluation.json, saved with the weights,
         because computing it needs the audited labels, which are not in the operational database."""
@@ -123,7 +124,7 @@ def _provisional_card():
 
 
 @anomalies_bp.route("/scores", methods=["GET"])
-@login_required
+@role_required(*config.DATA_ROLES)
 def list_scores():
     """The scores list: newest first, filtered by catchment, date range and flagged,
     with the matching total so "load more" knows when to stop. Days the full model has not
@@ -163,7 +164,7 @@ def list_scores():
 
 
 @anomalies_bp.route("/calendar", methods=["GET"])
-@login_required
+@role_required(*config.DATA_ROLES)
 def month_calendar():
     """One catchment, one month: a score per day so the day-lookup calendar can shade
     each square. month is YYYY-MM and defaults to the last month the model scored."""
@@ -211,7 +212,7 @@ def month_calendar():
 
 
 @anomalies_bp.route("/day", methods=["GET"])
-@login_required
+@role_required(*config.DATA_ROLES)
 def one_day():
     """One catchment on one day: the score against the threshold, the alert it raised
     if any, and the measured inputs for that day, so a date can be looked up and
