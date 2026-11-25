@@ -206,6 +206,9 @@ def update_user(user_id):
     if new_email and new_email != (target["email"] or "").lower():
         models.set_user_email(user_id, new_email)
         models.log_event(admin, "user_email_changed", f"{target['username']} -> {new_email}")
+        if user_id == session.get("user_id"):  # an administrator editing their own email stays signed in
+            state = models.session_state(user_id)
+            session["sv"] = state["session_version"] if state else None
 
     return jsonify(_public(_find(user_id)))
 

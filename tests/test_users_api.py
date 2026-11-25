@@ -119,9 +119,9 @@ def test_resend_and_reset_only_apply_to_the_right_accounts():
     client = _client()
     _login(client)
     with patch("routes_users._find", return_value={**ROW, "has_password": True}):
-        assert client.post("/api/users/5/resend-invite").status_code == 409
+        assert client.post("/api/users/5/resend-invite", json={}).status_code == 409
     with patch("routes_users._find", return_value=ROW):
-        assert client.post("/api/users/5/send-reset").status_code == 409
+        assert client.post("/api/users/5/send-reset", json={}).status_code == 409
 
 
 def test_admin_cannot_deactivate_themselves():
@@ -214,10 +214,10 @@ def test_admin_can_reset_someone_elses_2fa_but_not_their_own():
         patch("routes_users.models.log_event") as mock_log,
         patch("routes_users._find", return_value=ROW),
     ):
-        assert client.post("/api/users/5/reset-2fa").status_code == 200
+        assert client.post("/api/users/5/reset-2fa", json={}).status_code == 200
     mock_disable.assert_called_once_with(5)
     mock_log.assert_called_once_with("root-admin", "user_2fa_reset", "jane.doe")
-    assert client.post("/api/users/1/reset-2fa").status_code == 400
+    assert client.post("/api/users/1/reset-2fa", json={}).status_code == 400
 
 
 def test_email_can_be_changed_but_not_to_one_already_used():
